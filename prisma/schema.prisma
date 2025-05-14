@@ -1,0 +1,173 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../node_modules/.prisma/client"
+}
+
+model admin {
+  id       Int     @id @default(autoincrement())
+  nama     String? @db.VarChar(100)
+  password String? @db.VarChar(100)
+  email    String? @unique(map: "email") @db.VarChar(120)
+  event    event[]
+}
+
+model asisten {
+  id             Int              @id @default(autoincrement())
+  nim            String?          @unique(map: "nim") @db.VarChar(12)
+  email          String?          @unique(map: "email") @db.VarChar(120)
+  nama           String?          @db.VarChar(120)
+  status         asisten_status?
+  komitmen_url   String?          @db.Text
+  event_id       Int?
+  event          event?           @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "asisten_ibfk_1")
+  kelaspraktikum kelaspraktikum[]
+
+  @@index([event_id], map: "event_id")
+}
+
+model detailpenilaian {
+  id           Int                        @id @default(autoincrement())
+  penilaian_id Int?
+  praktikan_id Int?
+  kehadiran    detailpenilaian_kehadiran?
+  tipe         detailpenilaian_tipe?
+  nilai        Float?
+  penilaian    penilaian?                 @relation(fields: [penilaian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "detailpenilaian_ibfk_1")
+  praktikan    praktikan?                 @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "detailpenilaian_ibfk_2")
+
+  @@index([penilaian_id], map: "penilaian_id")
+  @@index([praktikan_id], map: "praktikan_id")
+}
+
+model event {
+  id        Int          @id @default(autoincrement())
+  admin_id  Int?
+  jenis     event_jenis?
+  mulai     DateTime?    @db.Timestamp(0)
+  selesai   DateTime?    @db.Timestamp(0)
+  asisten   asisten[]
+  admin     admin?       @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "event_ibfk_1")
+  praktikan praktikan[]
+
+  @@index([admin_id], map: "admin_id")
+}
+
+model jadwalpraktikum {
+  id                 Int                     @id @default(autoincrement())
+  ruang_id           Int?
+  kelas_praktikum_id Int?
+  mulai              DateTime?               @db.Timestamp(0)
+  selesai            DateTime?               @db.Timestamp(0)
+  status             jadwalpraktikum_status?
+  ruang              ruang?                  @relation(fields: [ruang_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_1")
+  kelaspraktikum     kelaspraktikum?         @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_2")
+
+  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
+  @@index([ruang_id], map: "ruang_id")
+}
+
+model kelaspraktikum {
+  id                       Int                       @id @default(autoincrement())
+  nama                     String?                   @db.VarChar(120)
+  kuota_praktikan          Int?
+  mata_kuliah_praktikum_id Int?
+  asisten_id               Int?
+  jadwalpraktikum          jadwalpraktikum[]
+  matakuliahpraktikum      matakuliahpraktikum?      @relation(fields: [mata_kuliah_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_1")
+  asisten                  asisten?                  @relation(fields: [asisten_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_2")
+  kelaspraktikumpraktikan  kelaspraktikumpraktikan[]
+  penilaian                penilaian[]
+
+  @@index([asisten_id], map: "asisten_id")
+  @@index([mata_kuliah_praktikum_id], map: "mata_kuliah_praktikum_id")
+}
+
+model kelaspraktikumpraktikan {
+  id                 Int             @id @default(autoincrement())
+  praktikan_id       Int?
+  kelas_praktikum_id Int?
+  praktikan          praktikan?      @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_1")
+  kelaspraktikum     kelaspraktikum? @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_2")
+
+  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
+  @@index([praktikan_id], map: "praktikan_id")
+}
+
+model matakuliahpraktikum {
+  id             Int              @id @default(autoincrement())
+  kode           String?          @unique(map: "kode") @db.VarChar(120)
+  nama           String?          @db.VarChar(120)
+  kelaspraktikum kelaspraktikum[]
+}
+
+model penilaian {
+  id                 Int               @id @default(autoincrement())
+  kelas_praktikum_id Int?
+  judul              String?           @db.VarChar(120)
+  bukti_pertemuan    String?           @db.Text
+  detailpenilaian    detailpenilaian[]
+  kelaspraktikum     kelaspraktikum?   @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_1")
+
+  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
+}
+
+model praktikan {
+  id                      Int                       @id @default(autoincrement())
+  nim                     String?                   @unique(map: "nim") @db.VarChar(12)
+  email                   String?                   @unique(map: "email") @db.VarChar(120)
+  nama                    String?                   @db.VarChar(120)
+  perangkat               praktikan_perangkat?
+  event_id                Int?
+  detailpenilaian         detailpenilaian[]
+  kelaspraktikumpraktikan kelaspraktikumpraktikan[]
+  event                   event?                    @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "praktikan_ibfk_1")
+
+  @@index([event_id], map: "event_id")
+}
+
+model ruang {
+  id              Int               @id @default(autoincrement())
+  nama            String?           @db.VarChar(100)
+  kuota           Json?
+  jadwalpraktikum jadwalpraktikum[]
+}
+
+enum event_jenis {
+  pendaftaran_asisten
+  pendaftaran_praktikan
+  praktikum
+}
+
+enum detailpenilaian_kehadiran {
+  hadir
+  izin
+  alpha
+}
+
+enum detailpenilaian_tipe {
+  pretest
+  posttest
+  praktikum
+  responsi
+}
+
+enum asisten_status {
+  pending
+  diterima
+  ditolak
+}
+
+enum praktikan_perangkat {
+  laptop
+  komputer_lab
+}
+
+enum jadwalpraktikum_status {
+  belum_dilaksanakan
+  telah_dilaksanakan
+}
