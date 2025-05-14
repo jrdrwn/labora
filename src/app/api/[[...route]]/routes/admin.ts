@@ -31,7 +31,7 @@ app.post('/login', async (c) => {
     password: string;
   }>();
 
-  const user = await prisma.admin.findFirst({
+  const user = await prisma.admin.findUnique({
     where: {
       email: json.identifier,
     },
