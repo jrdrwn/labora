@@ -1,11 +1,16 @@
 import { Hono } from 'hono';
+import { type JwtVariables } from 'hono/jwt';
 import { handle } from 'hono/vercel';
 
 import * as admin from './routes/admin';
 import * as asisten from './routes/asisten';
 import * as praktikan from './routes/praktikan';
 
-const app = new Hono().basePath('/api');
+type Variables = JwtVariables;
+
+const app = new Hono<{
+  Variables: Variables;
+}>().basePath('/api');
 
 app.route('/', admin.app);
 app.route('/', asisten.app);
