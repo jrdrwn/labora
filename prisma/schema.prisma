@@ -1,11 +1,11 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-  output = "../node_modules/.prisma/client"
 }
 
 model admin {
@@ -14,6 +14,7 @@ model admin {
   password String? @db.VarChar(100)
   email    String? @unique(map: "email") @db.VarChar(120)
   event    event[]
+  ruang    ruang[]
 }
 
 model asisten {
@@ -47,6 +48,7 @@ model detailpenilaian {
 model event {
   id        Int          @id @default(autoincrement())
   admin_id  Int?
+  nama      String?      @db.VarChar(120)
   jenis     event_jenis?
   mulai     DateTime?    @db.Timestamp(0)
   selesai   DateTime?    @db.Timestamp(0)
@@ -134,7 +136,11 @@ model ruang {
   id              Int               @id @default(autoincrement())
   nama            String?           @db.VarChar(100)
   kuota           Json?
+  admin_id        Int?
   jadwalpraktikum jadwalpraktikum[]
+  admin           admin?            @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ruang_ibfk_1")
+
+  @@index([admin_id], map: "admin_id")
 }
 
 enum event_jenis {
@@ -147,13 +153,6 @@ enum detailpenilaian_kehadiran {
   hadir
   izin
   alpha
-}
-
-enum detailpenilaian_tipe {
-  pretest
-  posttest
-  praktikum
-  responsi
 }
 
 enum asisten_status {
@@ -170,4 +169,11 @@ enum praktikan_perangkat {
 enum jadwalpraktikum_status {
   belum_dilaksanakan
   telah_dilaksanakan
+}
+
+enum detailpenilaian_tipe {
+  pretest
+  laporan
+  praktikum
+  responsi
 }
