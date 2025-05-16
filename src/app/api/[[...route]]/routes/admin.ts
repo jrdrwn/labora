@@ -86,6 +86,7 @@ app.post('/event', async (c) => {
     jenis: 'pendaftaran_asisten' | 'pendaftaran_praktikan' | 'praktikum';
     mulai: Date;
     selesai: Date;
+    nama: string;
   }>();
 
   const event = await prisma.event.findFirst({
@@ -110,6 +111,7 @@ app.post('/event', async (c) => {
       jenis: json.jenis,
       mulai: new Date(json.mulai),
       selesai: new Date(json.selesai),
+      nama: json.nama ? json.nama : undefined,
     },
   });
 
@@ -161,6 +163,7 @@ app.put('/event', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     event_id: number;
+    nama?: string;
     jenis: 'pendaftaran_asisten' | 'pendaftaran_praktikan' | 'praktikum';
     mulai: Date;
     selesai: Date;
@@ -202,6 +205,7 @@ app.put('/event', async (c) => {
       jenis: json.jenis,
       mulai: new Date(json.mulai),
       selesai: new Date(json.selesai),
+      nama: json.nama ? json.nama : undefined,
     },
   });
 
@@ -349,7 +353,6 @@ app.get('/ruangan/:id', async (c) => {
   });
 });
 
-
 app.get('/mata-kuliah-praktikum', async (c) => {
   const mata_kuliah_praktikum = await prisma.matakuliahpraktikum.findMany({
     skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
@@ -384,9 +387,12 @@ app.post('/mata-kuliah-praktikum', async (c) => {
       nama: json.nama,
     },
   });
-  return c.json({
-    status: true,
-  }, 201);
+  return c.json(
+    {
+      status: true,
+    },
+    201,
+  );
 });
 
 app.put('/mata-kuliah-praktikum', async (c) => {
@@ -412,7 +418,7 @@ app.put('/mata-kuliah-praktikum', async (c) => {
       nama: json.nama,
     },
   });
-  
+
   return c.json({
     status: true,
   });
@@ -420,25 +426,25 @@ app.put('/mata-kuliah-praktikum', async (c) => {
 
 app.delete('/mata-kuliah-praktikum', async (c) => {
   const json = await c.req.json<{
-      matakuliahpraktikum_id: number;
-    }>();
-    const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
-      where: {
-        id: json.matakuliahpraktikum_id,
-      },
-    });
-    if (!matakuliahpraktikum) {
-      return c.json({ status: false, message: 'Ruang not found' }, 404);
-    }
-    await prisma.matakuliahpraktikum.delete({
-      where: {
-        id: json.matakuliahpraktikum_id,
-      },
-    });
+    matakuliahpraktikum_id: number;
+  }>();
+  const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
+    where: {
+      id: json.matakuliahpraktikum_id,
+    },
+  });
+  if (!matakuliahpraktikum) {
+    return c.json({ status: false, message: 'Ruang not found' }, 404);
+  }
+  await prisma.matakuliahpraktikum.delete({
+    where: {
+      id: json.matakuliahpraktikum_id,
+    },
+  });
 
-    return c.json({
-      status: true,
-    });
+  return c.json({
+    status: true,
+  });
 });
 
 app.get('/mata-kuliah-praktikum/:id', async (c) => {
@@ -451,7 +457,7 @@ app.get('/mata-kuliah-praktikum/:id', async (c) => {
       id: true,
       kode: true,
       nama: true,
-      },
+    },
   });
   if (!matakuliahpraktikum) {
     return c.json({ status: false, message: 'Ruang not found' }, 404);
@@ -462,8 +468,6 @@ app.get('/mata-kuliah-praktikum/:id', async (c) => {
     data: matakuliahpraktikum,
   });
 });
-
-
 
 app.get('/kelas', async (c) => {
   const kelas = await prisma.kelaspraktikum.findMany({
