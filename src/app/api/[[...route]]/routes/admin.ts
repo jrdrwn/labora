@@ -7,10 +7,12 @@ import { jwt, sign } from 'hono/jwt';
 import jwtTypes from 'hono/utils/jwt/types';
 import { handle } from 'hono/vercel';
 
+import generateDates from '../utils/generateDates';
+
 type JWTPayload = jwtTypes.JWTPayload & {
   sub: number;
   role: 'admin' | 'asisten' | 'praktikan';
-}
+};
 
 export const app = new Hono().basePath('/admin');
 
@@ -25,13 +27,16 @@ app.use(
   }),
 );
 
-app.use('/*', except('*/*/login', async (c, next) => {
-  const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  if (jwtPayload.role !== 'admin') {
-    return c.json({ status: false, message: 'Unauthorized' }, 401);
-  }
-  return next();
-}));
+app.use(
+  '/*',
+  except('*/*/login', async (c, next) => {
+    const jwtPayload = c.get('jwtPayload') as JWTPayload;
+    if (jwtPayload.role !== 'admin') {
+      return c.json({ status: false, message: 'Unauthorized' }, 401);
+    }
+    return next();
+  }),
+);
 
 app.get('/echo', (c) => {
   return c.json({ message: 'Hello from admin!' });
@@ -249,9 +254,12 @@ app.post('/ruangan', async (c) => {
     },
   });
 
-  return c.json({
-    status: true,
-  }, 201);
+  return c.json(
+    {
+      status: true,
+    },
+    201,
+  );
 });
 
 app.put('/ruangan', async (c) => {
@@ -456,6 +464,289 @@ app.get('/mata-kuliah-praktikum/:id', async (c) => {
 });
 
 
+
+app.get('/kelas', async (c) => {
+  const kelas = await prisma.kelaspraktikum.findMany({
+    skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
+    take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
+    where: {
+      nama: {
+        search: c.req.query('q') ? String(c.req.query('q')) : undefined,
+      },
+    },
+    select: {
+      id: true,
+      nama: true,
+      kuota_praktikan: true,
+      asisten: {
+        select: {
+          id: true,
+          nama: true,
+          nim: true,
+        },
+      },
+      matakuliahpraktikum: {
+        select: {
+          id: true,
+          nama: true,
+          kode: true,
+        },
+      },
+    },
+  });
+
+  return c.json({
+    status: true,
+    data: kelas,
+  });
+});
+
+app.post('/kelas', async (c) => {
+  const json = await c.req.json<{
+    nama: string;
+    kuota_praktikan: number;
+    mata_kuliah_praktikum: number;
+  }>();
+
+  await prisma.kelaspraktikum.create({
+    data: {
+      nama: json.nama,
+      kuota_praktikan: json.kuota_praktikan,
+      mata_kuliah_praktikum_id: json.mata_kuliah_praktikum,
+    },
+  });
+
+  return c.json(
+    {
+      status: true,
+    },
+    201,
+  );
+});
+
+app.put('/kelas', async (c) => {
+  const json = await c.req.json<{
+    kelas_id: number;
+    nama: string;
+    kuota_praktikan: number;
+    mata_kuliah_praktikum: number;
+  }>();
+  const kelas = await prisma.kelaspraktikum.findFirst({
+    where: {
+      id: json.kelas_id,
+    },
+  });
+  if (!kelas) {
+    return c.json({ status: false, message: 'Kelas not found' }, 404);
+  }
+  await prisma.kelaspraktikum.update({
+    where: {
+      id: json.kelas_id,
+    },
+    data: {
+      nama: json.nama,
+      kuota_praktikan: json.kuota_praktikan,
+      mata_kuliah_praktikum_id: json.mata_kuliah_praktikum,
+    },
+  });
+
+  return c.json(
+    {
+      status: true,
+    },
+    202,
+  );
+});
+
+app.delete('/kelas', async (c) => {
+  const json = await c.req.json<{
+    kelas_id: number;
+  }>();
+  const kelas = await prisma.kelaspraktikum.findFirst({
+    where: {
+      id: json.kelas_id,
+    },
+  });
+  if (!kelas) {
+    return c.json({ status: false, message: 'Kelas not found' }, 404);
+  }
+  await prisma.kelaspraktikum.delete({
+    where: {
+      id: json.kelas_id,
+    },
+  });
+
+  return c.json(
+    {
+      status: true,
+    },
+    202,
+  );
+});
+
+app.get('/kelas/:id', async (c) => {
+  const kelasId = +c.req.param('id');
+  const kelas = await prisma.kelaspraktikum.findFirst({
+    where: {
+      id: kelasId,
+    },
+    select: {
+      id: true,
+      nama: true,
+      kuota_praktikan: true,
+      asisten: {
+        select: {
+          id: true,
+          nama: true,
+          nim: true,
+        },
+      },
+      matakuliahpraktikum: {
+        select: {
+          id: true,
+          nama: true,
+          kode: true,
+        },
+      },
+    },
+  });
+  if (!kelas) {
+    return c.json({ status: false, message: 'Kelas not found' }, 404);
+  }
+  return c.json({
+    status: true,
+    data: kelas,
+  });
+});
+
+app.get('/jadwal', async (c) => {
+  const jadwal = await prisma.jadwalpraktikum.findMany({
+    skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
+    take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
+    select: {
+      id: true,
+      mulai: true,
+      selesai: true,
+      status: true,
+      ruang: {
+        select: {
+          id: true,
+          nama: true,
+        },
+      },
+      kelaspraktikum: {
+        select: {
+          id: true,
+          nama: true,
+        },
+      },
+    },
+  });
+
+  return c.json({
+    status: true,
+    data: jadwal,
+  });
+});
+
+app.post('/jadwal', async (c) => {
+  const json = await c.req.json<{
+    kelas_praktikum_id: number;
+    ruang_id: number;
+    tanggal_mulai: Date;
+    jam_mulai: string;
+    jam_selesai: string;
+    hari: number;
+    jumlah_pertemuan: number;
+  }>();
+
+  const ruang = await prisma.ruang.findFirst({
+    where: {
+      id: json.ruang_id,
+    },
+  });
+  if (!ruang) {
+    return c.json({ status: false, message: 'Ruang not found' }, 404);
+  }
+
+  const kelas = await prisma.kelaspraktikum.findFirst({
+    where: {
+      id: json.kelas_praktikum_id,
+    },
+  });
+  if (!kelas) {
+    return c.json({ status: false, message: 'Kelas not found' }, 404);
+  }
+
+  const meetingsDates = generateDates(
+    json.tanggal_mulai,
+    json.hari,
+    json.jam_mulai,
+    json.jam_selesai,
+    json.jumlah_pertemuan,
+  );
+
+  const existingBookings = await prisma.jadwalpraktikum.findMany({
+    where: {
+      ruang_id: json.ruang_id,
+      OR: meetingsDates.map((date) => {
+        const endDate = new Date(date.selesai);
+        const startDate = new Date(date.mulai);
+        startDate.setSeconds(startDate.getSeconds() + 1);
+        endDate.setSeconds(endDate.getSeconds() - 1);
+        return {
+          mulai: {
+            lte: endDate,
+          },
+          selesai: {
+            gte: startDate,
+          },
+        };
+      }),
+    },
+  });
+
+  if (existingBookings.length > 0) {
+    return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
+  }
+
+  // cek jika event sudah ada
+  const event = await prisma.event.findFirst({
+    where: {
+      jenis: 'praktikum',
+      mulai: {
+        lte: meetingsDates[0].mulai,
+      },
+      selesai: {
+        gte: meetingsDates[meetingsDates.length - 1].selesai,
+      },
+    },
+  });
+
+  if (!event) {
+    return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
+  }
+
+  await prisma.jadwalpraktikum.createMany({
+    data: meetingsDates.map((date) => ({
+      kelas_praktikum_id: json.kelas_praktikum_id,
+      ruang_id: json.ruang_id,
+      mulai: date.mulai,
+      selesai: date.selesai,
+    })),
+  });
+
+  return c.json(
+    {
+      status: true,
+    },
+    201,
+  );
+});
+
+// PUT /jadwal
+// DELETE /jadwal
+// GET /jadwal/:id
 
 export const GET = handle(app);
 export const POST = handle(app);
