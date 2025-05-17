@@ -1,6 +1,5 @@
 const generateDates = (
   tanggal_mulai: Date,
-  hari: number,
   jam_mulai: string,
   jam_selesai: string,
   jumlah_pertemuan: number,
