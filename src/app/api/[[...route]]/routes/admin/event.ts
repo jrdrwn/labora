@@ -1,7 +1,7 @@
 import prisma from '@db';
 import { Hono } from 'hono';
 
-import { JWTPayload } from './types';
+import { JWTPayload } from '../../types';
 
 export const event = new Hono().basePath('/event');
 

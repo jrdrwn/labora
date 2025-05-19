@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 import { except } from 'hono/combine';
 import { jwt } from 'hono/jwt';
-import jwtTypes from 'hono/utils/jwt/types';
 
+import { JWTPayload } from '../../types';
 import { asisten } from './asisten';
 import { auth } from './auth';
 import { event } from './event';
@@ -11,11 +11,6 @@ import { jadwal } from './jadwal';
 import { kelas } from './kelas';
 import { mataKuliahPraktikum } from './mata-kuliah-praktikum';
 import { ruangan } from './ruangan';
-
-type JWTPayload = jwtTypes.JWTPayload & {
-  sub: number;
-  role: 'admin' | 'asisten' | 'praktikan';
-};
 
 export const admin = new Hono().basePath('/admin');
 

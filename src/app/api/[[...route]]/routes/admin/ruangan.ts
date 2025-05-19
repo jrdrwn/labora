@@ -1,7 +1,7 @@
 import prisma from '@db';
 import { Hono } from 'hono';
 
-import { JWTPayload } from './types';
+import { JWTPayload } from '../../types';
 
 export const ruangan = new Hono().basePath('/ruangan');
 
