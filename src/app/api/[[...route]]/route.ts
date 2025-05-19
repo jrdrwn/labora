@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 import { type JwtVariables } from 'hono/jwt';
 import { handle } from 'hono/vercel';
 
-import * as admin from './routes/admin';
-import * as asisten from './routes/asisten';
-import * as praktikan from './routes/praktikan';
+import { admin } from './routes/admin';
+import { asisten } from './routes/asisten';
+import { praktikan } from './routes/praktikan';
 
 type Variables = JwtVariables;
 
@@ -12,9 +12,9 @@ const app = new Hono<{
   Variables: Variables;
 }>().basePath('/api');
 
-app.route('/', admin.app);
-app.route('/', asisten.app);
-app.route('/', praktikan.app);
+app.route('/', admin);
+app.route('/', asisten);
+app.route('/', praktikan);
 
 export const GET = handle(app);
 export const POST = handle(app);
