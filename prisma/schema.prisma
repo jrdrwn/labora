@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
   previewFeatures = ["typedSql"]
 }
 
@@ -19,15 +19,16 @@ model admin {
 }
 
 model asisten {
-  id             Int              @id @default(autoincrement())
-  nim            String?          @unique(map: "nim") @db.VarChar(12)
-  email          String?          @unique(map: "email") @db.VarChar(120)
-  nama           String?          @db.VarChar(120)
-  status         asisten_status?
-  komitmen_url   String?          @db.Text
-  event_id       Int?
-  event          event?           @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "asisten_ibfk_1")
-  kelaspraktikum kelaspraktikum[]
+  id                        Int              @id @default(autoincrement())
+  nim                       String?          @unique(map: "nim") @db.VarChar(24)
+  email                     String?          @unique(map: "email") @db.VarChar(120)
+  nama                      String?          @db.VarChar(120)
+  status                    asisten_status?
+  komitmen_url              String?          @db.Text
+  event_id                  Int?
+  pre_mata_kuliah_praktikum Json?
+  event                     event?           @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "asisten_ibfk_1")
+  kelaspraktikum            kelaspraktikum[]
 
   @@index([event_id], map: "event_id")
 }
@@ -121,7 +122,7 @@ model penilaian {
 
 model praktikan {
   id                      Int                       @id @default(autoincrement())
-  nim                     String?                   @unique(map: "nim") @db.VarChar(12)
+  nim                     String?                   @unique(map: "nim") @db.VarChar(24)
   email                   String?                   @unique(map: "email") @db.VarChar(120)
   nama                    String?                   @db.VarChar(120)
   perangkat               praktikan_perangkat?
