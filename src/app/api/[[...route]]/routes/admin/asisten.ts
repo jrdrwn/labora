@@ -18,6 +18,8 @@ asisten.get('/', async (c) => {
       nama: true,
       email: true,
       status: true,
+      pre_mata_kuliah_praktikum: true,
+      komitmen_url: true,
       kelaspraktikum: {
         select: {
           id: true,
@@ -141,6 +143,8 @@ asisten.get('/:id', async (c) => {
       nama: true,
       email: true,
       status: true,
+      pre_mata_kuliah_praktikum: true,
+      komitmen_url: true,
       kelaspraktikum: {
         select: {
           id: true,
