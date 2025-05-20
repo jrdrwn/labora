@@ -1,0 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/cloud"
+  previewFeatures = ["typedSql"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("CLOUD_DATABASE_URL")
+}

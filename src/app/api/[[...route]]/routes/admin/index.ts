@@ -10,6 +10,7 @@ import { event } from './event';
 import { jadwal } from './jadwal';
 import { kelas } from './kelas';
 import { mataKuliahPraktikum } from './mata-kuliah-praktikum';
+import { praktikan } from './praktikan';
 import { ruangan } from './ruangan';
 
 export const admin = new Hono().basePath('/admin');
@@ -47,3 +48,4 @@ admin.route('/', mataKuliahPraktikum);
 admin.route('/', kelas);
 admin.route('/', jadwal);
 admin.route('/', asisten);
+admin.route('/', praktikan);

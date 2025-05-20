@@ -1,0 +1,1 @@
+select semaktifSemester as value from sia_t_semester_aktif
