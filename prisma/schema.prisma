@@ -95,6 +95,7 @@ model kelaspraktikumpraktikan {
   id                 Int             @id @default(autoincrement())
   praktikan_id       Int?
   kelas_praktikum_id Int?
+  perangkat          String?         @db.VarChar(120)
   praktikan          praktikan?      @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_1")
   kelaspraktikum     kelaspraktikum? @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_2")
 
@@ -125,7 +126,6 @@ model praktikan {
   nim                     String?                   @unique(map: "nim") @db.VarChar(24)
   email                   String?                   @unique(map: "email") @db.VarChar(120)
   nama                    String?                   @db.VarChar(120)
-  perangkat               praktikan_perangkat?
   event_id                Int?
   detailpenilaian         detailpenilaian[]
   kelaspraktikumpraktikan kelaspraktikumpraktikan[]
@@ -161,11 +161,6 @@ enum asisten_status {
   pending
   diterima
   ditolak
-}
-
-enum praktikan_perangkat {
-  laptop
-  komputer_lab
 }
 
 enum jadwalpraktikum_status {
