@@ -70,6 +70,7 @@ model jadwalpraktikum {
   status             jadwalpraktikum_status?
   ruang              ruang?                  @relation(fields: [ruang_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_1")
   kelaspraktikum     kelaspraktikum?         @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_2")
+  penilaian          penilaian[]
 
   @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
   @@index([ruang_id], map: "ruang_id")
@@ -85,7 +86,6 @@ model kelaspraktikum {
   matakuliahpraktikum      matakuliahpraktikum?      @relation(fields: [mata_kuliah_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_1")
   asisten                  asisten?                  @relation(fields: [asisten_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_2")
   kelaspraktikumpraktikan  kelaspraktikumpraktikan[]
-  penilaian                penilaian[]
 
   @@index([asisten_id], map: "asisten_id")
   @@index([mata_kuliah_praktikum_id], map: "mata_kuliah_praktikum_id")
@@ -111,14 +111,14 @@ model matakuliahpraktikum {
 }
 
 model penilaian {
-  id                 Int               @id @default(autoincrement())
-  kelas_praktikum_id Int?
-  judul              String?           @db.VarChar(120)
-  bukti_pertemuan    String?           @db.Text
-  detailpenilaian    detailpenilaian[]
-  kelaspraktikum     kelaspraktikum?   @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_1")
+  id                  Int               @id @default(autoincrement())
+  judul               String?           @db.VarChar(120)
+  bukti_pertemuan     String?           @db.Text
+  jadwal_praktikum_id Int?
+  detailpenilaian     detailpenilaian[]
+  jadwalpraktikum     jadwalpraktikum?  @relation(fields: [jadwal_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_1")
 
-  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
+  @@index([jadwal_praktikum_id], map: "jadwal_praktikum_id")
 }
 
 model praktikan {
