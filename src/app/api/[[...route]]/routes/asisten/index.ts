@@ -5,6 +5,7 @@ import { jwt } from 'hono/jwt';
 
 import { JWTPayload } from '../../types';
 import { auth } from './auth';
+import { event } from './event';
 import { jadwal } from './jadwal';
 import { kehadiran } from './kehadiran';
 
@@ -38,4 +39,5 @@ asisten.get('/echo', (c) => {
 
 asisten.route('/', auth);
 asisten.route('/', kehadiran);
-asisten.route('/', jadwal)
+asisten.route('/', jadwal);
+asisten.route('/', event);
