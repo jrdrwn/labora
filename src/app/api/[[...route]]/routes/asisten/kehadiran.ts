@@ -1,13 +1,17 @@
 import prisma from '@db';
 import { Hono } from 'hono';
 
+import { JWTPayload } from '../../types';
+
 export const kehadiran = new Hono().basePath('/kehadiran');
 
-kehadiran.get('/:kelasId', async (c) => {
-  const kelasId = +c.req.param('kelasId');
+kehadiran.get('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const jadwalpraktikum = await prisma.jadwalpraktikum.findMany({
     where: {
-      kelas_praktikum_id: kelasId,
+      kelaspraktikum: {
+        asisten_id: jwtPayload.sub,
+      },
     },
   });
   const penilaian = await prisma.penilaian.findMany({
@@ -26,6 +30,11 @@ kehadiran.get('/:kelasId', async (c) => {
         },
       },
       detailpenilaian: {
+        where: {
+          kehadiran: {
+            not: null,
+          },
+        },
         select: {
           id: true,
           kehadiran: true,
