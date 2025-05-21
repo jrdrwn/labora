@@ -5,6 +5,7 @@ import { jwt } from 'hono/jwt';
 
 import { JWTPayload } from '../../types';
 import { auth } from './auth';
+import { jadwal } from './jadwal';
 import { kehadiran } from './kehadiran';
 
 export const asisten = new Hono().basePath('/asisten');
@@ -37,3 +38,4 @@ asisten.get('/echo', (c) => {
 
 asisten.route('/', auth);
 asisten.route('/', kehadiran);
+asisten.route('/', jadwal)
