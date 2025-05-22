@@ -120,3 +120,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+.fc .fc-button-primary {
+  @apply inline-flex shrink-0 items-center justify-center gap-2 rounded-md border bg-background text-sm font-medium whitespace-nowrap text-accent-foreground shadow-xs transition-all outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+}
+
+.fc .fc-button-primary:focus {
+  @apply shadow-none! ring-0!;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  @apply bg-primary/5;
+}
+
+.fc .fc-timegrid-col.fc-day-today {
+  @apply bg-primary/5;
+}

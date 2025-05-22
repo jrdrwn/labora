@@ -1,3 +1,4 @@
+import Calendar from '@/components/layout/shared/calendar';
 import Header from '@/components/layout/shared/header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import {
 } from '@/components/ui/card';
 import { Shapes, UserPen, Users, Warehouse } from 'lucide-react';
 import Link from 'next/link';
+
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 export default function AdminPage() {
   return (
@@ -128,6 +131,12 @@ export default function AdminPage() {
                 <span className="mr-1 text-6xl font-medium">100</span>
               </CardContent>
             </Card>
+          </div>
+        </section>
+        <section className="m-8">
+          <div className="flex gap-8">
+            <Calendar />
+            <Card className="w-full max-w-2xl"></Card>
           </div>
         </section>
       </main>
