@@ -1,3 +1,4 @@
+import OverviewLaporan from '@/components/layout/admin/overview-laporan';
 import Calendar from '@/components/layout/shared/calendar';
 import Header from '@/components/layout/shared/header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -136,7 +137,7 @@ export default function AdminPage() {
         <section className="m-8">
           <div className="flex gap-8">
             <Calendar />
-            <Card className="w-full max-w-2xl"></Card>
+            <OverviewLaporan />
           </div>
         </section>
       </main>
