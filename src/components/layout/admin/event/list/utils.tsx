@@ -26,18 +26,18 @@ import { Table } from '@tanstack/react-table';
 import { ChevronDown, Columns, Download, ListFilter } from 'lucide-react';
 
 import DeleteConfirmationButton from '../delete-confirmation';
-import { Ruangan } from './columns';
+import { Event } from './columns';
 
-interface FilterRuanganInputProps<TData> {
+interface FilterEventInputProps<TData> {
   table: Table<TData>;
 }
 
-export function FilterRuanganInput<TData>({
+export function FilterEventInput<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterEventInputProps<TData>) {
   return (
     <Input
-      placeholder="Filter Ruangan..."
+      placeholder="Filter Event..."
       value={(table.getColumn('nama')?.getFilterValue() as string) ?? ''}
       onChange={(event) =>
         table.getColumn('nama')?.setFilterValue(event.target.value)
@@ -49,7 +49,7 @@ export function FilterRuanganInput<TData>({
 
 export function SelectRowsActionButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterEventInputProps<TData>) {
   return (
     <>
       {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -69,9 +69,9 @@ export function SelectRowsActionButton<TData>({
               Export
             </DropdownMenuItem>
             <DeleteConfirmationButton
-              ruangan={table
+              listEvent={table
                 .getFilteredSelectedRowModel()
-                .rows.map((row) => row.original as Ruangan)}
+                .rows.map((row) => row.original as Event)}
             />
           </DropdownMenuContent>
         </DropdownMenu>
@@ -82,7 +82,7 @@ export function SelectRowsActionButton<TData>({
 
 export function FilterByAdminButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterEventInputProps<TData>) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -151,10 +151,80 @@ export function FilterByAdminButton<TData>({
     </Popover>
   );
 }
+export function FilterByJenisEventButton<TData>({
+  table,
+}: FilterEventInputProps<TData>) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="flex items-center gap-2">
+          <ListFilter />
+          Jenis
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search jenis event..." />
+          <CommandList>
+            <CommandEmpty>No jenis event found.</CommandEmpty>
+            <CommandGroup>
+              {Array.from(
+                new Map(
+                  table
+                    .getCoreRowModel()
+                    .rows.map((row) => [row.getValue('jenis'), row]),
+                ).values(),
+              ).map((row) => {
+                return (
+                  <CommandItem key={row.id}>
+                    <Checkbox
+                      key={row.id}
+                      onSelect={(e) => e.preventDefault()}
+                      checked={
+                        Array.isArray(
+                          table.getColumn('jenis')?.getFilterValue(),
+                        )
+                          ? (
+                              table
+                                .getColumn('jenis')
+                                ?.getFilterValue() as string[]
+                            ).includes(row.getValue('jenis'))
+                          : false
+                      }
+                      onCheckedChange={(checked) => {
+                        const prev =
+                          (table
+                            .getColumn('jenis')
+                            ?.getFilterValue() as string[]) || [];
+                        table
+                          .getColumn('jenis')
+                          ?.setFilterValue(
+                            checked
+                              ? [...prev, row.getValue('jenis')]
+                              : prev.filter(
+                                  (c: string) => c !== row.getValue('jenis'),
+                                ),
+                          );
+                      }}
+                      id={`filter-admin-${row.id}`}
+                    />
+                    <label className="ml-2" htmlFor={`filter-admin-${row.id}`}>
+                      {row.getValue('jenis') as string}
+                    </label>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function FilterColumnsButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterEventInputProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

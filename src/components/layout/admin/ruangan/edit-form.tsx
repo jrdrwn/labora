@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Pencil } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -56,9 +57,7 @@ function EditFormRuangan({ defaultValues }: { defaultValues: Ruangan }) {
               <FormControl>
                 <Input placeholder="Masukkan nama ruangan" {...field} />
               </FormControl>
-              <FormDescription>
-                Nama ruangan yang akan ditambahkan.
-              </FormDescription>
+              <FormDescription>Nama ruangan yang akan diedit.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -100,6 +99,7 @@ export default function EditFormRuanganButton({
     <ResponsiveModal>
       <ResponsiveModalTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <Pencil />
           Edit
         </DropdownMenuItem>
       </ResponsiveModalTrigger>

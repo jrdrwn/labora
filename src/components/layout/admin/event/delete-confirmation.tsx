@@ -20,12 +20,12 @@ import {
 } from '@/components/ui/table';
 import { Trash2 } from 'lucide-react';
 
-import { Ruangan } from './list/columns';
+import { Event } from './list/columns';
 
 export default function DeleteConfirmationButton({
-  ruangan,
+  listEvent,
 }: {
-  ruangan: Ruangan[];
+  listEvent: Event[];
 }) {
   return (
     <>
@@ -39,11 +39,11 @@ export default function DeleteConfirmationButton({
         <ResponsiveModalContent>
           <ResponsiveModalHeader className="mb-4">
             <ResponsiveModalTitle>
-              Are you sure you want to delete this Ruangan?
+              Are you sure you want to delete this Event?
             </ResponsiveModalTitle>
             <ResponsiveModalDescription>
-              This action cannot be undone. All data associated with this
-              Ruangan will be permanently deleted.
+              This action cannot be undone. All data associated with this Event
+              will be permanently deleted.
             </ResponsiveModalDescription>
             <Table>
               <TableHeader>
@@ -53,14 +53,12 @@ export default function DeleteConfirmationButton({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ruangan.map((ruangan) => (
-                  <TableRow key={ruangan.id}>
+                {listEvent.map((event) => (
+                  <TableRow key={event.id}>
                     <TableCell className="text-center font-medium">
-                      {ruangan.id}
+                      {event.id}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {ruangan.nama}
-                    </TableCell>
+                    <TableCell className="text-center">{event.nama}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

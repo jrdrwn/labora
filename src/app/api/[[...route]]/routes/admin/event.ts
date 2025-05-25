@@ -52,6 +52,20 @@ event.get('/', async (c) => {
     where: {
       admin_id: jwtPayload.sub,
     },
+    select: {
+      id: true,
+      nama: true,
+      jenis: true,
+      mulai: true,
+      selesai: true,
+      admin: {
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+        },
+      },
+    },
   });
 
   return c.json({
