@@ -10,12 +10,13 @@ datasource db {
 }
 
 model admin {
-  id       Int     @id @default(autoincrement())
-  nama     String? @db.VarChar(100)
-  password String? @db.VarChar(100)
-  email    String? @unique(map: "email") @db.VarChar(120)
-  event    event[]
-  ruang    ruang[]
+  id                  Int                   @id @default(autoincrement())
+  nama                String?               @db.VarChar(100)
+  password            String?               @db.VarChar(100)
+  email               String?               @unique(map: "email") @db.VarChar(120)
+  event               event[]
+  matakuliahpraktikum matakuliahpraktikum[]
+  ruang               ruang[]
 }
 
 model asisten {
@@ -107,7 +108,11 @@ model matakuliahpraktikum {
   id             Int              @id @default(autoincrement())
   kode           String?          @unique(map: "kode") @db.VarChar(120)
   nama           String?          @db.VarChar(120)
+  admin_id       Int?
   kelaspraktikum kelaspraktikum[]
+  admin          admin?           @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "matakuliahpraktikum_ibfk_1")
+
+  @@index([admin_id], map: "admin_id")
 }
 
 model penilaian {

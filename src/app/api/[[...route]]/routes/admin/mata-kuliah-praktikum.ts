@@ -1,6 +1,8 @@
 import prisma from '@db';
 import { Hono } from 'hono';
 
+import { JWTPayload } from '../../types';
+
 export const mataKuliahPraktikum = new Hono().basePath(
   '/mata-kuliah-praktikum',
 );
@@ -18,6 +20,13 @@ mataKuliahPraktikum.get('/', async (c) => {
       id: true,
       kode: true,
       nama: true,
+      admin: {
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+        },
+      },
     },
   });
 
@@ -28,6 +37,7 @@ mataKuliahPraktikum.get('/', async (c) => {
 });
 
 mataKuliahPraktikum.post('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     kode: string;
     nama: string;
@@ -37,6 +47,7 @@ mataKuliahPraktikum.post('/', async (c) => {
     data: {
       kode: json.kode,
       nama: json.nama,
+      admin_id: jwtPayload.sub,
     },
   });
   return c.json(
@@ -48,6 +59,7 @@ mataKuliahPraktikum.post('/', async (c) => {
 });
 
 mataKuliahPraktikum.put('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     matakuliahpraktikum_id: number;
     kode: string;
@@ -56,6 +68,7 @@ mataKuliahPraktikum.put('/', async (c) => {
   const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
     where: {
       id: json.matakuliahpraktikum_id,
+      admin_id: jwtPayload.sub,
     },
   });
   if (!matakuliahpraktikum) {
@@ -64,6 +77,7 @@ mataKuliahPraktikum.put('/', async (c) => {
   await prisma.matakuliahpraktikum.update({
     where: {
       id: json.matakuliahpraktikum_id,
+      admin_id: jwtPayload.sub,
     },
     data: {
       kode: json.kode,
@@ -77,12 +91,14 @@ mataKuliahPraktikum.put('/', async (c) => {
 });
 
 mataKuliahPraktikum.delete('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     matakuliahpraktikum_id: number;
   }>();
   const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
     where: {
       id: json.matakuliahpraktikum_id,
+      admin_id: jwtPayload.sub,
     },
   });
   if (!matakuliahpraktikum) {
@@ -91,6 +107,7 @@ mataKuliahPraktikum.delete('/', async (c) => {
   await prisma.matakuliahpraktikum.delete({
     where: {
       id: json.matakuliahpraktikum_id,
+      admin_id: jwtPayload.sub,
     },
   });
 
