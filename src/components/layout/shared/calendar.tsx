@@ -13,7 +13,7 @@ export default function Calendar() {
     <Card className="w-full max-w-6xl">
       <CardContent>
         <FullCalendar
-          height={'calc(100svh - 25rem)'}
+          height={'auto'}
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',

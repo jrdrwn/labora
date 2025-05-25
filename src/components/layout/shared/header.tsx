@@ -33,8 +33,8 @@ export default function Header({ suffix, menus, prefix }: Props) {
   const pathname = usePathname();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-99999 h-16 border-b-2">
-      <div className="flex h-full w-full items-center justify-between px-4">
+    <header className="fixed inset-x-0 top-0 z-9 h-16 border-b-2 bg-background">
+      <div className="flex h-full w-full items-center justify-between bg-background px-4">
         <div className="flex items-center gap-4">
           <Link
             href="/"
