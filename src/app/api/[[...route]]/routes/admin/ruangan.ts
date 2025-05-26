@@ -6,6 +6,7 @@ import { JWTPayload } from '../../types';
 export const ruangan = new Hono().basePath('/ruangan');
 
 ruangan.get('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const ruang = await prisma.ruang.findMany({
     skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
     take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
@@ -13,6 +14,7 @@ ruangan.get('/', async (c) => {
       nama: {
         search: c.req.query('q') ? String(c.req.query('q')) : undefined,
       },
+      admin_id: jwtPayload.sub,
     },
     select: {
       id: true,

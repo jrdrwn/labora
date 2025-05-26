@@ -15,6 +15,7 @@ model admin {
   password            String?               @db.VarChar(100)
   email               String?               @unique(map: "email") @db.VarChar(120)
   event               event[]
+  kelaspraktikum      kelaspraktikum[]
   matakuliahpraktikum matakuliahpraktikum[]
   ruang               ruang[]
 }
@@ -83,13 +84,16 @@ model kelaspraktikum {
   kuota_praktikan          Int?
   mata_kuliah_praktikum_id Int?
   asisten_id               Int?
+  admin_id                 Int?
   jadwalpraktikum          jadwalpraktikum[]
   matakuliahpraktikum      matakuliahpraktikum?      @relation(fields: [mata_kuliah_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_1")
   asisten                  asisten?                  @relation(fields: [asisten_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_2")
+  admin                    admin?                    @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_3")
   kelaspraktikumpraktikan  kelaspraktikumpraktikan[]
 
   @@index([asisten_id], map: "asisten_id")
   @@index([mata_kuliah_praktikum_id], map: "mata_kuliah_praktikum_id")
+  @@index([admin_id], map: "admin_id")
 }
 
 model kelaspraktikumpraktikan {

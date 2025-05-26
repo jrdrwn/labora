@@ -8,6 +8,7 @@ export const mataKuliahPraktikum = new Hono().basePath(
 );
 
 mataKuliahPraktikum.get('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const mata_kuliah_praktikum = await prisma.matakuliahpraktikum.findMany({
     skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
     take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
@@ -15,6 +16,7 @@ mataKuliahPraktikum.get('/', async (c) => {
       nama: {
         search: c.req.query('q') ? String(c.req.query('q')) : undefined,
       },
+      admin_id: jwtPayload.sub,
     },
     select: {
       id: true,
@@ -117,10 +119,12 @@ mataKuliahPraktikum.delete('/', async (c) => {
 });
 
 mataKuliahPraktikum.get('/:id', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const matakuliahpraktikum_id = c.req.param('id');
   const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
     where: {
       id: Number(matakuliahpraktikum_id),
+      admin_id: jwtPayload.sub,
     },
     select: {
       id: true,

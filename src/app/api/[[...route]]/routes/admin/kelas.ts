@@ -1,9 +1,12 @@
 import prisma from '@db';
 import { Hono } from 'hono';
 
+import { JWTPayload } from '../../types';
+
 export const kelas = new Hono().basePath('/kelas');
 
 kelas.get('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const kelas = await prisma.kelaspraktikum.findMany({
     skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
     take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
@@ -11,6 +14,7 @@ kelas.get('/', async (c) => {
       nama: {
         search: c.req.query('q') ? String(c.req.query('q')) : undefined,
       },
+      admin_id: jwtPayload.sub,
     },
     select: {
       id: true,
@@ -40,6 +44,7 @@ kelas.get('/', async (c) => {
 });
 
 kelas.post('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     nama: string;
     kuota_praktikan: number;
@@ -51,6 +56,7 @@ kelas.post('/', async (c) => {
       nama: json.nama,
       kuota_praktikan: json.kuota_praktikan,
       mata_kuliah_praktikum_id: json.mata_kuliah_praktikum,
+      admin_id: jwtPayload.sub,
     },
   });
 
@@ -63,6 +69,7 @@ kelas.post('/', async (c) => {
 });
 
 kelas.put('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     kelas_id: number;
     nama: string;
@@ -72,6 +79,7 @@ kelas.put('/', async (c) => {
   const kelas = await prisma.kelaspraktikum.findFirst({
     where: {
       id: json.kelas_id,
+      admin_id: jwtPayload.sub,
     },
   });
   if (!kelas) {
@@ -80,6 +88,7 @@ kelas.put('/', async (c) => {
   await prisma.kelaspraktikum.update({
     where: {
       id: json.kelas_id,
+      admin_id: jwtPayload.sub,
     },
     data: {
       nama: json.nama,
@@ -97,12 +106,14 @@ kelas.put('/', async (c) => {
 });
 
 kelas.delete('/', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const json = await c.req.json<{
     kelas_id: number;
   }>();
   const kelas = await prisma.kelaspraktikum.findFirst({
     where: {
       id: json.kelas_id,
+      admin_id: jwtPayload.sub,
     },
   });
   if (!kelas) {
@@ -111,6 +122,7 @@ kelas.delete('/', async (c) => {
   await prisma.kelaspraktikum.delete({
     where: {
       id: json.kelas_id,
+      admin_id: jwtPayload.sub,
     },
   });
 
@@ -123,10 +135,12 @@ kelas.delete('/', async (c) => {
 });
 
 kelas.get('/:id', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const kelasId = +c.req.param('id');
   const kelas = await prisma.kelaspraktikum.findFirst({
     where: {
       id: kelasId,
+      admin_id: jwtPayload.sub,
     },
     select: {
       id: true,
