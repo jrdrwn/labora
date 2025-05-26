@@ -9,7 +9,9 @@ import { auth } from './auth';
 import { event } from './event';
 import { jadwal } from './jadwal';
 import { kelas } from './kelas';
+import { laporan } from './laporan';
 import { mataKuliahPraktikum } from './mata-kuliah-praktikum';
+import { overview } from './overview';
 import { praktikan } from './praktikan';
 import { ruangan } from './ruangan';
 
@@ -49,3 +51,5 @@ admin.route('/', kelas);
 admin.route('/', jadwal);
 admin.route('/', asisten);
 admin.route('/', praktikan);
+admin.route('/', overview);
+admin.route('/', laporan);
