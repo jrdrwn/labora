@@ -1,6 +1,6 @@
 import ListJadwal from '@/components/layout/admin/jadwal/list';
 
-export default function MataKuliahPage() {
+export default function JadwalPage() {
   return (
     <>
       <section className="m-8 pb-8">
