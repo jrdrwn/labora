@@ -25,21 +25,18 @@ import {
 import { Table } from '@tanstack/react-table';
 import { ChevronDown, Columns, Download, ListFilter } from 'lucide-react';
 
-
-interface FilterRuanganInputProps<TData> {
+interface FilterAsistenInputProps<TData> {
   table: Table<TData>;
 }
 
-export function FilterRuanganInput<TData>({
+export function FilterAsistenInput<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterAsistenInputProps<TData>) {
   return (
     <Input
-      placeholder="Filter Ruangan..."
-      value={(table.getColumn('nama')?.getFilterValue() as string) ?? ''}
-      onChange={(event) =>
-        table.getColumn('nama')?.setFilterValue(event.target.value)
-      }
+      placeholder="Cari..."
+      value={table.getState().globalFilter ?? ''}
+      onChange={(event) => table.setGlobalFilter(event.target.value)}
       className="max-w-sm"
     />
   );
@@ -47,7 +44,7 @@ export function FilterRuanganInput<TData>({
 
 export function SelectRowsActionButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterAsistenInputProps<TData>) {
   return (
     <>
       {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -73,28 +70,28 @@ export function SelectRowsActionButton<TData>({
   );
 }
 
-export function FilterByAdminButton<TData>({
+export function FilterByStatusButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterAsistenInputProps<TData>) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <ListFilter />
-          Admin
+          Status
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search Admin..." />
+          <CommandInput placeholder="Status" />
           <CommandList>
-            <CommandEmpty>No admin found.</CommandEmpty>
+            <CommandEmpty>No status found.</CommandEmpty>
             <CommandGroup>
               {Array.from(
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [row.getValue('admin_nama'), row]),
+                    .rows.map((row) => [row.getValue('status'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -104,35 +101,34 @@ export function FilterByAdminButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table.getColumn('admin_nama')?.getFilterValue(),
+                          table.getColumn('status')?.getFilterValue(),
                         )
                           ? (
                               table
-                                .getColumn('admin_nama')
+                                .getColumn('status')
                                 ?.getFilterValue() as string[]
-                            ).includes(row.getValue('admin_nama'))
+                            ).includes(row.getValue('status'))
                           : false
                       }
                       onCheckedChange={(checked) => {
                         const prev =
                           (table
-                            .getColumn('admin_nama')
+                            .getColumn('status')
                             ?.getFilterValue() as string[]) || [];
                         table
-                          .getColumn('admin_nama')
+                          .getColumn('status')
                           ?.setFilterValue(
                             checked
-                              ? [...prev, row.getValue('admin_nama')]
+                              ? [...prev, row.getValue('status')]
                               : prev.filter(
-                                  (c: string) =>
-                                    c !== row.getValue('admin_nama'),
+                                  (c: string) => c !== row.getValue('status'),
                                 ),
                           );
                       }}
-                      id={`filter-admin-${row.id}`}
+                      id={`filter-status-${row.id}`}
                     />
-                    <label className="ml-2" htmlFor={`filter-admin-${row.id}`}>
-                      {row.getValue('admin_nama') as string}
+                    <label className="ml-2" htmlFor={`filter-status-${row.id}`}>
+                      {row.getValue('status') as string}
                     </label>
                   </CommandItem>
                 );
@@ -147,7 +143,7 @@ export function FilterByAdminButton<TData>({
 
 export function FilterColumnsButton<TData>({
   table,
-}: FilterRuanganInputProps<TData>) {
+}: FilterAsistenInputProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

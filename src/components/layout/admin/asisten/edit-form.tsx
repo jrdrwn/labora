@@ -1,6 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
   ResponsiveModal,
@@ -19,25 +27,91 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil } from 'lucide-react';
+import { Check, ChevronsUpDown, Pencil } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { Ruangan } from './list/columns';
+import { Asisten } from './list/columns';
 
+const KELAS_FAKE = [
+  {
+    id: 1,
+    nama: 'BASDAT 1-A',
+    kuota_praktikan: 10,
+    asisten: {
+      id: 5,
+      nama: 'JORDI IRAWAN',
+      nim: '223010503002',
+    },
+    matakuliahpraktikum: {
+      id: 1,
+      nama: 'Pemrograman Dasar',
+      kode: 'PM001',
+    },
+  },
+  {
+    id: 2,
+    nama: 'BASDAT 1-B',
+    kuota_praktikan: 10,
+    asisten: {
+      id: 5,
+      nama: 'JORDI IRAWAN',
+      nim: '223010503002',
+    },
+    matakuliahpraktikum: {
+      id: 1,
+      nama: 'Pemrograman Dasar',
+      kode: 'PM001',
+    },
+  },
+  {
+    id: 3,
+    nama: 'BASDAT 1-B',
+    kuota_praktikan: 10,
+    asisten: {
+      id: 5,
+      nama: 'JORDI IRAWAN',
+      nim: '223010503002',
+    },
+    matakuliahpraktikum: {
+      id: 1,
+      nama: 'Pemrograman Dasar',
+      kode: 'PM001',
+    },
+  },
+];
 const formSchema = z.object({
-  nama: z.string().min(1, 'Nama ruangan harus diisi'),
-  kuota: z.object({
-    komputer: z.coerce.number().min(1, 'Kuota komputer harus lebih dari 0'),
+  status: z.string(),
+  kelas_id: z.coerce.number().min(1, {
+    message: 'Kelas harus dipilih',
+  }),
+  asisten_id: z.coerce.number().min(1, {
+    message: 'Asisten harus dipilih',
   }),
 });
 
-function EditFormRuangan({ defaultValues }: { defaultValues: Ruangan }) {
+function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      status: defaultValues.status,
+      kelas_id: defaultValues.kelaspraktikum[0]?.id || 0,
+      asisten_id: defaultValues.id,
+    },
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
@@ -48,40 +122,98 @@ function EditFormRuangan({ defaultValues }: { defaultValues: Ruangan }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="nama"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nama Ruangan</FormLabel>
-              <FormControl>
-                <Input placeholder="Masukkan nama ruangan" {...field} />
-              </FormControl>
-              <FormDescription>Nama ruangan yang akan diedit.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="kuota.komputer"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Kuota Komputer</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="Masukkan kuota komputer"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Kuota komputer yang tersedia di ruangan ini.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex items-center gap-2">
+          <FormField
+            control={form.control}
+            name="kelas_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kelas Praktikum</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        role="combobox"
+                        className={cn(
+                          'w-full justify-between',
+                          !field.value && 'text-muted-foreground',
+                        )}
+                      >
+                        {field.value
+                          ? KELAS_FAKE.find((kelas) => kelas.id === field.value)
+                              ?.nama
+                          : 'Select Kelas Praktikum'}
+                        <ChevronsUpDown className="opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0">
+                    <Command>
+                      <CommandInput placeholder="Search Kelas Praktikum" />
+                      <CommandList>
+                        <CommandEmpty>No Kelas Praktikum found.</CommandEmpty>
+                        <CommandGroup>
+                          {KELAS_FAKE.map((kelas) => (
+                            <CommandItem
+                              value={kelas.id.toString()}
+                              key={kelas.id}
+                              onSelect={(value) => {
+                                form.setValue('kelas_id', Number(value));
+                              }}
+                            >
+                              {kelas.nama} ({kelas.id})
+                              <Check
+                                className={cn(
+                                  'ml-auto',
+                                  kelas.id === field.value
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Kelas praktikum yang akan jadi tanggung jawab asisten.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl className="w-full">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="diterima">Diterima</SelectItem>
+                    <SelectItem value="ditolak">Ditolak</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Status asisten untuk kelas ini.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <Button type="submit" className="w-full">
           Submit
         </Button>
@@ -90,10 +222,10 @@ function EditFormRuangan({ defaultValues }: { defaultValues: Ruangan }) {
   );
 }
 
-export default function EditFormRuanganButton({
-  ruangan,
+export default function EditFormAsistenButton({
+  asisten,
 }: {
-  ruangan: Ruangan;
+  asisten: Asisten;
 }) {
   return (
     <ResponsiveModal>
@@ -105,12 +237,12 @@ export default function EditFormRuanganButton({
       </ResponsiveModalTrigger>
       <ResponsiveModalContent>
         <ResponsiveModalHeader className="mb-4">
-          <ResponsiveModalTitle>Edit Ruangan</ResponsiveModalTitle>
+          <ResponsiveModalTitle>Edit Asisten</ResponsiveModalTitle>
           <ResponsiveModalDescription>
-            Edit details for #{ruangan.id} - {ruangan.nama}.
+            Edit details for #{asisten.id} - {asisten.nama}.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormRuangan defaultValues={ruangan} />
+        <EditFormAsisten defaultValues={asisten} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

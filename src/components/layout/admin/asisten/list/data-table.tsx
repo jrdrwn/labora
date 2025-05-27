@@ -39,9 +39,9 @@ import {
 import { useState } from 'react';
 
 import {
-  FilterByAdminButton,
+  FilterAsistenInput,
+  FilterByStatusButton,
   FilterColumnsButton,
-  FilterRuanganInput,
   SelectRowsActionButton,
 } from './utils';
 
@@ -96,8 +96,8 @@ export function DataTable<TData, TValue>({
       <div>
         <div className="flex items-center justify-between pb-4">
           <div className="flex items-center gap-2">
-            <FilterRuanganInput table={table} />
-            <FilterByAdminButton table={table} />
+            <FilterAsistenInput table={table} />
+            <FilterByStatusButton table={table} />
             <SelectRowsActionButton table={table} />
           </div>
           <div className="flex items-center gap-2">

@@ -20,14 +20,15 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import EditFormRuanganButton from '../edit-form';
+import DetailAsistenButton from '../detail';
+import EditFormAsistenButton from '../edit-form';
 
 export type Kelas = {
   id: number;
   nama: string;
 };
 
-export type Ruangan = {
+export type Asisten = {
   id: number;
   nama: string;
   nim: string;
@@ -38,7 +39,7 @@ export type Ruangan = {
   kelaspraktikum: Kelas[];
 };
 
-export const columns: ColumnDef<Ruangan>[] = [
+export const columns: ColumnDef<Asisten>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -93,6 +94,19 @@ export const columns: ColumnDef<Ruangan>[] = [
     header: 'Email',
   },
   {
+    header: 'Kelas Praktikum',
+    cell: ({ row }) => {
+      const kelas = row.original.kelaspraktikum;
+      return (
+        <div className="flex flex-col">
+          {kelas.map((k) => (
+            <span key={k.id}>{k.nama}</span>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: 'status',
     header: 'Status',
     filterFn: (row, id, value) => {
@@ -103,7 +117,7 @@ export const columns: ColumnDef<Ruangan>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      const ruangan = row.original;
+      const asisten = row.original;
 
       return (
         <DropdownMenu>
@@ -116,12 +130,13 @@ export const columns: ColumnDef<Ruangan>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <EditFormRuanganButton ruangan={ruangan} />
+            <DetailAsistenButton asisten={asisten} />
+            <EditFormAsistenButton asisten={asisten} />
             <DropdownMenuItem
               onClick={(_e) => {
-                navigator.clipboard.writeText(ruangan.id.toString());
+                navigator.clipboard.writeText(asisten.id.toString());
                 toast('ID copied to clipboard', {
-                  description: `Ruangan ID ${ruangan.id} has been copied.`,
+                  description: `Asisten ID ${asisten.id} has been copied.`,
                 });
               }}
             >
