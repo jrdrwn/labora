@@ -21,17 +21,17 @@ import {
 import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
-import EditFormKelasButton from '../edit-form';
+import EditFormJadwalButton from '../edit-form';
 
 export type RuangKelas = {
   id: number;
   nama: string;
-}
+};
 
 export type Kelas = {
   id: number;
   nama: string;
-}
+};
 
 export type Jadwal = {
   id: number;
@@ -108,7 +108,7 @@ export const columns: ColumnDef<Jadwal>[] = [
       return value.includes(row.getValue(id));
     },
   },
-    {
+  {
     accessorKey: 'mulai',
     header: ({ column }) => {
       return (
@@ -180,7 +180,7 @@ export const columns: ColumnDef<Jadwal>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <EditFormKelasButton kelas={jadwal} />
+            <EditFormJadwalButton jadwal={jadwal} />
             <DropdownMenuItem
               onClick={(_e) => {
                 navigator.clipboard.writeText(jadwal.id.toString());

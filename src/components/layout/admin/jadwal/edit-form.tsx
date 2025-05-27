@@ -1,4 +1,3 @@
-// TODO: belum disesuaikan untuk jadwal
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -36,35 +35,100 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronsUpDown, Pencil } from 'lucide-react';
+import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Jadwal } from './list/columns';
 
-const MATA_KULIAH_FAKE = [
-  { id: 1, nama: 'Matematika Dasar', kode: 'MK001' },
-  { id: 2, nama: 'Fisika Dasar', kode: 'MK002' },
-  { id: 3, nama: 'Kimia Dasar', kode: 'MK003' },
+const RUANG_ID_FAKE = [
+  {
+    id: 1,
+    nama: 'Data Science 1',
+    kuota: {
+      komputer: 20,
+    },
+    admin: {
+      id: 1,
+      nama: 'admin',
+      email: 'admin@example.com',
+    },
+  },
+  {
+    id: 2,
+    nama: 'Data Science 2',
+    kuota: {
+      komputer: 20,
+    },
+    admin: {
+      id: 1,
+      nama: 'admin',
+      email: 'admin@example.com',
+    },
+  },
+  {
+    id: 3,
+    nama: 'Data Science 3',
+    kuota: {
+      komputer: 20,
+    },
+    admin: {
+      id: 1,
+      nama: 'admin',
+      email: 'admin@example.com',
+    },
+  },
 ];
 
 const formSchema = z.object({
-  nama: z.string().min(1, 'Nama kelas harus diisi'),
-  kuota_praktikan: z.coerce
-    .number()
-    .min(1, 'Kuota praktikan harus lebih dari 0'),
-  mata_kuliah_praktikum: z.coerce
-    .number()
-    .min(1, 'Mata kuliah praktikum harus dipilih'),
+  ruang_id: z.coerce.number().min(1, 'Ruang ID harus diisi').optional(),
+  jam_mulai: z
+    .string()
+    .regex(
+      /^([01]\d|2[0-3]):([0-5]\d)$/,
+      'Jam harus dalam format HH:mm (contoh: 20:18)',
+    ),
+  jam_selesai: z
+    .string()
+    .regex(
+      /^([01]\d|2[0-3]):([0-5]\d)$/,
+      'Jam harus dalam format HH:mm (contoh: 20:18)',
+    ),
+  tanggal_mulai: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      'Tanggal harus dalam format YYYY-MM-DD (contoh: 2023-10-01)',
+    ),
 });
 
-function EditFormKelas({ defaultValues }: { defaultValues: Jadwal }) {
+export interface EditJadwal {
+  ruang_id?: number;
+  jam_mulai: string;
+  jam_selesai: string;
+  tanggal_mulai: string;
+}
+function getTimeFromDate(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, '0'); // Pastikan 2 digit
+  const minutes = date.getMinutes().toString().padStart(2, '0'); // Pastikan 2 digit
+  return `${hours}:${minutes}`;
+}
+
+function getDateFromDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Bulan dimulai dari 0
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: defaultValues.nama,
-      kuota_praktikan: defaultValues.kuota_praktikan,
-      mata_kuliah_praktikum: defaultValues.matakuliahpraktikum.id,
+      ruang_id: defaultValues.ruang.id || 0,
+      jam_mulai: getTimeFromDate(defaultValues.mulai),
+      jam_selesai: getTimeFromDate(defaultValues.selesai),
+      tanggal_mulai: getDateFromDateTime(defaultValues.mulai),
     },
   });
 
@@ -78,43 +142,10 @@ function EditFormKelas({ defaultValues }: { defaultValues: Jadwal }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="nama"
+          name="ruang_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Kelas</FormLabel>
-              <FormControl>
-                <Input placeholder="Masukkan nama" {...field} />
-              </FormControl>
-              <FormDescription>
-                Nama kelas yang akan ditambahkan.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="kuota_praktikan"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Kuota Praktikan</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="Masukkan kuota" {...field} />
-              </FormControl>
-              <FormDescription>
-                Berapa kuota yang akan ditambahkan.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="mata_kuliah_praktikum"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mata Kuliah Praktikum</FormLabel>
+              <FormLabel>Ruangan</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -127,36 +158,33 @@ function EditFormKelas({ defaultValues }: { defaultValues: Jadwal }) {
                       )}
                     >
                       {field.value
-                        ? MATA_KULIAH_FAKE.find(
-                            (mata_kuliah) => mata_kuliah.id === field.value,
+                        ? RUANG_ID_FAKE.find(
+                            (ruang) => ruang.id === field.value,
                           )?.nama
-                        : 'Select Mata Kuliah'}
+                        : 'Select Ruangan'}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="p-0">
                   <Command>
-                    <CommandInput placeholder="Search Mata Kuliah" />
+                    <CommandInput placeholder="Search Ruangan" />
                     <CommandList>
-                      <CommandEmpty>No Mata Kuliah found.</CommandEmpty>
+                      <CommandEmpty>No Ruangan found.</CommandEmpty>
                       <CommandGroup>
-                        {MATA_KULIAH_FAKE.map((mata_kuliah) => (
+                        {RUANG_ID_FAKE.map((ruang) => (
                           <CommandItem
-                            value={mata_kuliah.id.toString()}
-                            key={mata_kuliah.id}
+                            value={ruang.id.toString()}
+                            key={ruang.id}
                             onSelect={(value) => {
-                              form.setValue(
-                                'mata_kuliah_praktikum',
-                                Number(value),
-                              );
+                              form.setValue('ruang_id', Number(value));
                             }}
                           >
-                            {mata_kuliah.nama} ({mata_kuliah.kode})
+                            {ruang.nama} ({ruang.id})
                             <Check
                               className={cn(
                                 'ml-auto',
-                                mata_kuliah.id === field.value
+                                ruang.id === field.value
                                   ? 'opacity-100'
                                   : 'opacity-0',
                               )}
@@ -168,13 +196,62 @@ function EditFormKelas({ defaultValues }: { defaultValues: Jadwal }) {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <FormDescription>
-                ID mata kuliah praktikum yang akan ditambahkan.
-              </FormDescription>
+              <FormDescription>Ruangan yang akan diedit.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <div className="flex w-full items-start gap-4">
+          <FormField
+            control={form.control}
+            name="tanggal_mulai"
+            render={({ field }) => (
+              <FormItem className="w-1/2">
+                <FormLabel>Tanggal mulai pertemuan</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Tanggal mulai pertemuan kelas praktikum.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="jam_mulai"
+            render={({ field }) => (
+              <FormItem className="w-1/4">
+                <FormLabel>Mulai</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormDescription>Jam mulai event.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="jam_selesai"
+            render={({ field }) => (
+              <FormItem className="w-1/4">
+                <FormLabel>Selesai</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormDescription>Tanggal selesai event.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button type="submit" className="w-full">
           Submit
@@ -184,23 +261,23 @@ function EditFormKelas({ defaultValues }: { defaultValues: Jadwal }) {
   );
 }
 
-export default function EditFormKelasButton({ kelas }: { kelas: Jadwal }) {
+export default function EditFormJadwalButton({ jadwal }: { jadwal: Jadwal }) {
   return (
     <ResponsiveModal>
       <ResponsiveModalTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <Pencil />
-          Edit
+        <DropdownMenuItem>
+          <PlusCircle />
+          Edit Jadwal
         </DropdownMenuItem>
       </ResponsiveModalTrigger>
       <ResponsiveModalContent>
         <ResponsiveModalHeader className="mb-4">
-          <ResponsiveModalTitle>Edit kelas</ResponsiveModalTitle>
+          <ResponsiveModalTitle>Edit Jadwal</ResponsiveModalTitle>
           <ResponsiveModalDescription>
-            Fill in the details to edit a kelas.
+            Fill in the details to edit jadwal.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormKelas defaultValues={kelas} />
+        <EditFormJadwal defaultValues={jadwal} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

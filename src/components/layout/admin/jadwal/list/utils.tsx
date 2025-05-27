@@ -249,10 +249,7 @@ export function FilterByStatusButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [
-                      row.getValue('status'),
-                      row,
-                    ]),
+                    .rows.map((row) => [row.getValue('status'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -262,9 +259,7 @@ export function FilterByStatusButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table
-                            .getColumn('status')
-                            ?.getFilterValue(),
+                          table.getColumn('status')?.getFilterValue(),
                         )
                           ? (
                               table
@@ -284,8 +279,7 @@ export function FilterByStatusButton<TData>({
                             checked
                               ? [...prev, row.getValue('status')]
                               : prev.filter(
-                                  (c: string) =>
-                                    c !== row.getValue('status'),
+                                  (c: string) => c !== row.getValue('status'),
                                 ),
                           );
                       }}

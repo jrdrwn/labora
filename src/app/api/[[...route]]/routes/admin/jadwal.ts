@@ -130,7 +130,6 @@ jadwal.post('/batch', async (c) => {
     tanggal_mulai: Date;
     jam_mulai: string;
     jam_selesai: string;
-    hari: number;
     jumlah_pertemuan: number;
   }>();
 

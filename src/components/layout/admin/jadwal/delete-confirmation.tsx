@@ -58,7 +58,9 @@ export default function DeleteConfirmationButton({
                     <TableCell className="text-center font-medium">
                       {jadwal.id}
                     </TableCell>
-                    <TableCell className="text-center">{jadwal.kelaspraktikum.nama}</TableCell>
+                    <TableCell className="text-center">
+                      {jadwal.kelaspraktikum.nama}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -10,7 +10,7 @@ export default function ListJadwal() {
         selesai: new Date(),
         status: null,
         kelaspraktikum: { id: 0, nama: '' },
-        ruang: { id: 0, nama: ''},
+        ruang: { id: 0, nama: '' },
       })
       .map((_, i) => ({
         id: i + 1,
