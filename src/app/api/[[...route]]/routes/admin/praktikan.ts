@@ -20,10 +20,18 @@ praktikan.get('/', async (c) => {
       kelaspraktikumpraktikan: {
         select: {
           id: true,
+          perangkat: true,
           kelaspraktikum: {
             select: {
               nama: true,
               id: true,
+              asisten: {
+                select: {
+                  id: true,
+                  nama: true,
+                  email: true,
+                },
+              }
             },
           },
         },
