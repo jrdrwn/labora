@@ -31,7 +31,7 @@ praktikan.get('/', async (c) => {
                   nama: true,
                   email: true,
                 },
-              }
+              },
             },
           },
         },

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function AdminLayout({
+export default function AsistenLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,13 +15,13 @@ export default function AdminLayout({
         suffix={'Labora'}
         prefix={
           <>
-            <Link href={'/admin/event'}>
+            <Link href={'/asisten/event'}>
               <Button variant={'secondary'} className="rounded-full">
                 Event
               </Button>
             </Link>
             <Button variant={'outline'} className="rounded-full px-2">
-              Admin
+              Asisten
               <Avatar className="size-6">
                 <AvatarImage
                   src={
@@ -36,35 +36,19 @@ export default function AdminLayout({
         menus={[
           {
             title: 'Overview',
-            href: '/admin',
+            href: '/asisten',
           },
           {
-            title: 'Ruangan',
-            href: '/admin/ruangan',
+            title: 'Kehadiran',
+            href: '/asisten/kehadiran',
           },
           {
-            title: 'Mata Kuliah',
-            href: '/admin/mata-kuliah',
-          },
-          {
-            title: 'Kelas',
-            href: '/admin/kelas',
+            title: 'Penilaian',
+            href: '/asisten/penilaian',
           },
           {
             title: 'Jadwal',
-            href: '/admin/jadwal',
-          },
-          {
-            title: 'Asisten',
-            href: '/admin/asisten',
-          },
-          {
-            title: 'Praktikan',
-            href: '/admin/praktikan',
-          },
-          {
-            title: 'Laporan',
-            href: '/admin/laporan',
+            href: '/asisten/jadwal',
           },
         ]}
       />

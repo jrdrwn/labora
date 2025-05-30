@@ -77,6 +77,12 @@ auth.post('/register', async (c) => {
   const event = await prisma.event.findFirst({
     where: {
       jenis: 'pendaftaran_asisten',
+      mulai: {
+        lte: new Date(),
+      },
+      selesai: {
+        gte: new Date(),
+      },
     },
     orderBy: {
       mulai: 'desc',

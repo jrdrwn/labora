@@ -5,6 +5,129 @@ import { JWTPayload } from '../../types';
 
 export const kehadiran = new Hono().basePath('/kehadiran');
 
+kehadiran.get('v2', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
+  const asisten = await prisma.asisten.findFirst({
+    where: {
+      id: jwtPayload.sub,
+    },
+  });
+
+  if (!asisten) {
+    return c.json(
+      {
+        status: false,
+        message: 'Asisten not found',
+      },
+      404,
+    );
+  }
+
+  const kelasPraktikum = await prisma.kelaspraktikum.findFirst({
+    where: {
+      asisten_id: asisten.id,
+    },
+
+    include: {
+      jadwalpraktikum: {
+        select: {
+          id: true,
+          mulai: true,
+          selesai: true,
+        },
+      },
+    },
+  });
+  if (!kelasPraktikum) {
+    return c.json(
+      {
+        status: false,
+        message: 'Kelas praktikum not found',
+      },
+      404,
+    );
+  }
+
+  const penilaian = await prisma.penilaian.findMany({
+    where: {
+      jadwalpraktikum: {
+        kelas_praktikum_id: kelasPraktikum.id,
+      },
+    },
+    include: {
+      jadwalpraktikum: {
+        select: {
+          id: true,
+          mulai: true,
+          selesai: true,
+        },
+      },
+    },
+  });
+
+  if (penilaian.length === 0) {
+    return c.json(
+      {
+        status: false,
+        message: 'No penilaian found for this kelas praktikum',
+      },
+      404,
+    );
+  }
+
+  const praktikan = await prisma.praktikan.findMany({
+    where: {
+      kelaspraktikumpraktikan: {
+        some: {
+          kelas_praktikum_id: kelasPraktikum.id,
+        },
+      },
+    },
+    select: {
+      id: true,
+      nama: true,
+      nim: true,
+      detailpenilaian: {
+        where: {
+          kehadiran: {
+            not: null,
+          },
+        },
+        select: {
+          penilaian: {
+            select: {
+              id: true,
+              jadwal_praktikum_id: true,
+            },
+          },
+          kehadiran: true,
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (praktikan.length === 0) {
+    return c.json(
+      {
+        status: false,
+        message: 'No praktikan found for this kelas praktikum',
+      },
+      404,
+    );
+  }
+
+  return c.json({
+    status: true,
+    data: {
+      asisten,
+      kelasPraktikum,
+      praktikan,
+      penilaian,
+    },
+  });
+});
+
 kehadiran.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const jadwalpraktikum = await prisma.jadwalpraktikum.findMany({

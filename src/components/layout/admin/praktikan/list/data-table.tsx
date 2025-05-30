@@ -42,7 +42,7 @@ import { Praktikan } from './columns';
 import {
   FilterColumnsButton,
   FilterPraktikanInput,
-  SelectRowsActionButton
+  SelectRowsActionButton,
 } from './utils';
 
 interface DataTableProps<TData, TValue> {
@@ -137,9 +137,7 @@ export function DataTable<TData, TValue>({
                     data-state={row.getIsSelected() && 'selected'}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                      >
+                      <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
@@ -151,7 +149,7 @@ export function DataTable<TData, TValue>({
                     <TableRow>
                       <TableCell colSpan={row.getVisibleCells().length}>
                         <Table>
-                          <TableHeader className='border-b'>
+                          <TableHeader className="border-b">
                             <TableRow>
                               <TableHead>Kelas Praktikum</TableHead>
                               <TableHead>Asisten</TableHead>

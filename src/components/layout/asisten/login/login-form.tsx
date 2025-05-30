@@ -1,6 +1,6 @@
 'use client';
 
-import { PasswordInput } from '@/components/custom/ui/password-input';
+import { PasswordInput } from '@/components/layout/admin/login/password-input';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
-  identifier: z.string().email(),
+  nim: z.string(),
   password: z.string().min(8),
 });
 
@@ -38,14 +38,14 @@ export default function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      identifier: '',
+      nim: '',
       password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const res = await fetch('/api/admin/login', {
+    const res = await fetch('/api/asisten/login', {
       method: 'POST',
       body: JSON.stringify(values),
       headers: {
@@ -62,7 +62,7 @@ export default function LoginForm() {
       toast('Login Berhasil', {
         icon: <BadgeCheck />,
       });
-      router.push('/admin');
+      router.push('/asisten');
     } else {
       toast('Login Gagal', {
         icon: <BadgeAlert />,
@@ -81,12 +81,12 @@ export default function LoginForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
-              name="identifier"
+              name="nim"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>NIM</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ketik email Anda" {...field} />
+                    <Input placeholder="Ketik NIM Anda" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

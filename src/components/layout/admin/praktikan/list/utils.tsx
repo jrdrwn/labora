@@ -56,7 +56,6 @@ export function SelectRowsActionButton<TData>({
   );
 }
 
-
 export function FilterColumnsButton<TData>({
   table,
 }: FilterPraktikanInputProps<TData>) {

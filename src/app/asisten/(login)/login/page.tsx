@@ -1,4 +1,4 @@
-import LoginForm from '@/components/layout/admin/login/login-form';
+import LoginForm from '@/components/layout/asisten/login/login-form';
 
 export default function LoginPage() {
   return (
