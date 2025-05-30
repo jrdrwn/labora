@@ -1,5 +1,6 @@
 'use client';
 
+import CreateFormKehadiran from '@/components/layout/asisten/kehadiran/create-form-kehadiran';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -48,49 +49,33 @@ export default function KehadiranPage() {
           )}
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        <Card className="col-span-1">
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center">No</TableHead>
-                  <TableHead className="text-center">NIM</TableHead>
-                  <TableHead className="text-center">Nama</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {PRAKTIKAN_FAKE.map((praktikan, idx) => (
-                  <TableRow key={praktikan.id}>
-                    <TableCell className="text-center font-medium">
-                      {idx + 1}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {praktikan.nim}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {praktikan.nama}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
+      <div className="">
+        <Card className="w-full">
           <CardContent>
             {mode === 'edit' && (
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="text-center">No</TableHead>
+                    <TableHead className="text-center">NIM</TableHead>
+                    <TableHead className="text-center">Nama</TableHead>
                     {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => (
                       <EditHead jadwal={jadwal} key={jadwal.id} />
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan) => (
+                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
+                      <TableCell className="text-center font-medium">
+                        {idx + 1}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {praktikan.nim}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {praktikan.nama}
+                      </TableCell>
                       {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => {
                         return (
                           <EditCell
@@ -109,6 +94,9 @@ export default function KehadiranPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="text-center">No</TableHead>
+                    <TableHead className="text-center">NIM</TableHead>
+                    <TableHead className="text-center">Nama</TableHead>
                     {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => (
                       <TableHead key={jadwal.id} className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
@@ -137,8 +125,17 @@ export default function KehadiranPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan) => (
+                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
+                      <TableCell className="text-center font-medium">
+                        {idx + 1}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {praktikan.nim}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {praktikan.nama}
+                      </TableCell>
                       {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => {
                         const detailPenilaian = praktikan.detailpenilaian.find(
                           (dp) =>
@@ -237,13 +234,18 @@ function EditHead({ jadwal }: { jadwal: JadwalPraktikum }) {
           </Button>
         </ResponsiveModalTrigger>
         <ResponsiveModalContent>
-          <ResponsiveModalHeader>
+          <ResponsiveModalHeader className="mb-4">
             <ResponsiveModalTitle>Edit Kehadiran</ResponsiveModalTitle>
             <ResponsiveModalDescription>
               Untuk mengatur informasi kehadiran praktikan pada jadwal praktikum
               ini.
             </ResponsiveModalDescription>
           </ResponsiveModalHeader>
+          <CreateFormKehadiran
+            data={{
+              jadwal_praktikum_id: jadwal.id,
+            }}
+          />
         </ResponsiveModalContent>
       </ResponsiveModal>
     </TableHead>

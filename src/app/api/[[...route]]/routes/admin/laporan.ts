@@ -96,7 +96,8 @@ laporan.get('/', async (c) => {
                   nim: praktikan.nim,
                   email: praktikan.email,
                   nama: praktikan.nama,
-                  perangkat: praktikan.kelaspraktikumpraktikan[0]?.perangkat ?? null,
+                  perangkat:
+                    praktikan.kelaspraktikumpraktikan[0]?.perangkat ?? null,
                 },
                 kehadiran: dp.kehadiran,
                 penilaian: [],

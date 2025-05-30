@@ -1,5 +1,6 @@
 import prisma from '@db';
 import { Hono } from 'hono';
+
 import { JWTPayload } from '../../types';
 
 export const overview = new Hono().basePath('/overview');
@@ -198,7 +199,10 @@ overview.get('/', async (c) => {
       id: p.id,
       nim: p.nim,
       nama: p.nama,
-      total_nilai: p.detailpenilaian.reduce((sum, d) => sum + (d.nilai || 0), 0),
+      total_nilai: p.detailpenilaian.reduce(
+        (sum, d) => sum + (d.nilai || 0),
+        0,
+      ),
     }))
     .sort((a, b) => b.total_nilai - a.total_nilai)
     .slice(0, 5);
