@@ -7,6 +7,7 @@ import { JWTPayload } from '../../types';
 import { auth } from './auth';
 import { event } from './event';
 import { kelas } from './kelas';
+import { overview } from './overview';
 
 export const praktikan = new Hono().basePath('/praktikan');
 praktikan.use(
@@ -37,3 +38,4 @@ praktikan.get('/echo', (c) => {
 praktikan.route('/', auth);
 praktikan.route('/', event);
 praktikan.route('/', kelas);
+praktikan.route('/', overview);
