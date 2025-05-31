@@ -129,7 +129,6 @@ penilaian.get('v2', async (c) => {
   });
 });
 
-
 penilaian.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const jadwalpraktikum = await prisma.jadwalpraktikum.findMany({

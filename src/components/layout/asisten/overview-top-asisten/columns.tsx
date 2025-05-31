@@ -11,24 +11,25 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 
-export type Laporan = {
-  asisten: string;
-  kelas: string;
-  mata_kuliah_praktikum: string;
+export type Praktikan = {
+  id: number;
+  nim: string;
+  nama: string;
+  total_nilai: number;
 };
 
-export const columns: ColumnDef<Laporan>[] = [
+export const columns: ColumnDef<Praktikan>[] = [
   {
-    accessorKey: 'asisten',
-    header: 'Asisten',
+    accessorKey: 'nim',
+    header: 'NIM',
   },
   {
-    accessorKey: 'kelas',
-    header: 'Kelas',
+    accessorKey: 'nama',
+    header: 'Nama',
   },
   {
-    accessorKey: 'mata_kuliah_praktikum',
-    header: 'Mata Kuliah Praktikum',
+    accessorKey: 'total_nilai',
+    header: 'Total Nilai',
   },
   {
     id: 'actions',
@@ -46,17 +47,17 @@ export const columns: ColumnDef<Laporan>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Export ke</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.asisten)}
+              onClick={() => navigator.clipboard.writeText(payment.nim)}
             >
               PDF
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.asisten)}
+              onClick={() => navigator.clipboard.writeText(payment.nim)}
             >
               DOCX
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.asisten)}
+              onClick={() => navigator.clipboard.writeText(payment.nim)}
             >
               EXCEL
             </DropdownMenuItem>

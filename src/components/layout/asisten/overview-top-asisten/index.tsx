@@ -9,29 +9,34 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import { columns, Laporan } from './columns';
+import { columns, Praktikan } from './columns';
 import { DataTable } from './data-table';
 
 export default function OverviewLaporan() {
-  const data: Laporan[] = [
-    ...Array<Laporan>(21)
+  const data: Praktikan[] = [
+    ...Array<Praktikan>(21)
       .fill({
-        asisten: '',
-        kelas: '',
-        mata_kuliah_praktikum: '',
+        id: 0,
+        nim: 'NIM',
+        nama: 'Nama',
+        total_nilai: 0,
       })
-      .map((_, i) => ({
-        asisten: `Asisten ${i}`,
-        kelas: `Kelas ${i}`,
-        mata_kuliah_praktikum: `Mata Kuliah Praktikum ${i}`,
-      })),
+      .map(
+        (_, i) =>
+          ({
+            id: i + 1,
+            nim: `NIM ${i + 1}`,
+            nama: `Nama ${i + 1}`,
+            total_nilai: Math.floor(Math.random() * 100), // Random total nilai for demonstration
+          }) as Praktikan,
+      ),
   ];
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Top 10 Laporan</CardTitle>
+        <CardTitle>Top 10 Praktikan</CardTitle>
         <CardDescription>
-          Asisten yang sudah menyelesaikan semua jadwal praktikum
+          Daftar praktikan dengan total nilai tertinggi pada praktikum ini.
         </CardDescription>
       </CardHeader>
       <CardContent>

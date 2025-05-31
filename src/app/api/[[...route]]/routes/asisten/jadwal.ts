@@ -192,6 +192,13 @@ jadwal.get('/batch', async (c) => {
         select: {
           id: true,
           nama: true,
+          asisten: {
+            select: {
+              id: true,
+              nama: true,
+              nim: true,
+            },
+          },
           matakuliahpraktikum: {
             select: {
               id: true,

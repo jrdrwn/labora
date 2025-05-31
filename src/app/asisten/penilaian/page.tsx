@@ -68,7 +68,7 @@ export default function PenilaianPage() {
                       idx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? (
                         <TableHead
                           key={jadwal.id + '-responsi'}
-                          className="text-center px-4"
+                          className="px-4 text-center"
                         >
                           Responsi
                         </TableHead>
@@ -76,7 +76,7 @@ export default function PenilaianPage() {
                         ['pretest', 'laporan', 'praktikum'].map((tipe) => (
                           <TableHead
                             key={jadwal.id + '-' + tipe}
-                            className="text-center capitalize px-4"
+                            className="px-4 text-center capitalize"
                           >
                             {tipe}
                           </TableHead>
@@ -103,7 +103,7 @@ export default function PenilaianPage() {
                             key={jadwal.id + '-responsi'}
                             jadwalId={jadwal.id}
                             praktikan={praktikan}
-                            tipe='responsi'
+                            tipe="responsi"
                           />
                         ) : (
                           ['pretest', 'laporan', 'praktikum'].map((tipe) => (
@@ -261,11 +261,11 @@ export default function PenilaianPage() {
 function EditCell({
   jadwalId,
   praktikan,
-  tipe
+  tipe,
 }: {
   jadwalId: number;
   praktikan: Praktikan;
-  tipe: string
+  tipe: string;
 }) {
   const [penilaian, setPenilaian] = useState<number>(0);
 
@@ -288,7 +288,7 @@ function EditCell({
           setPenilaian(+event.target.value);
         }}
         value={penilaian.toString()}
-        className="mx-auto !h-auto max-w-full text-center w-full border-none py-0 shadow-none p-0 rounded-none outline-none  focus-visible:outline-none focus-visible:ring-0"
+        className="mx-auto !h-auto w-full max-w-full rounded-none border-none p-0 py-0 text-center shadow-none outline-none focus-visible:ring-0 focus-visible:outline-none"
         max={100}
         min={0}
       />
