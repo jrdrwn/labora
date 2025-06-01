@@ -258,31 +258,38 @@ jadwal.put(
   },
 );
 
-jadwal.delete('/', zValidator("json", z.object({
-  jadwal_id: z.coerce.number().int().positive().min(1),
-})), async (c) => {
-  const json = c.req.valid('json');
-  const jadwal = await prisma.jadwal.findFirst({
-    where: {
-      id: json.jadwal_id,
-    },
-  });
-  if (!jadwal) {
-    return c.json({ status: false, message: 'Jadwal not found' }, 404);
-  }
-  await prisma.jadwal.delete({
-    where: {
-      id: json.jadwal_id,
-    },
-  });
+jadwal.delete(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      jadwal_id: z.coerce.number().int().positive().min(1),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+    const jadwal = await prisma.jadwal.findFirst({
+      where: {
+        id: json.jadwal_id,
+      },
+    });
+    if (!jadwal) {
+      return c.json({ status: false, message: 'Jadwal not found' }, 404);
+    }
+    await prisma.jadwal.delete({
+      where: {
+        id: json.jadwal_id,
+      },
+    });
 
-  return c.json(
-    {
-      status: true,
-    },
-    202,
-  );
-});
+    return c.json(
+      {
+        status: true,
+      },
+      202,
+    );
+  },
+);
 
 jadwal.get('/single/:id', async (c) => {
   // TODO: cek

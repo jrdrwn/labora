@@ -66,10 +66,7 @@ kelas.post(
       },
     });
     if (!mataKuliah) {
-      return c.json(
-        { status: false, message: 'Mata Kuliah not found' },
-        404,
-      );
+      return c.json({ status: false, message: 'Mata Kuliah not found' }, 404);
     }
 
     await prisma.kelas.create({
