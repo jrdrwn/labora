@@ -7,27 +7,27 @@ overview.get('/', async (c) => {
   // Jumlah total
   const total_praktikan = await prisma.praktikan.count();
   const total_asisten = await prisma.asisten.count();
-  const total_kelas = await prisma.kelaspraktikum.count();
-  const total_ruangan = await prisma.ruang.count();
+  const total_kelas = await prisma.kelas.count();
+  const total_ruangan = await prisma.ruangan.count();
 
   // Ambil dan ubah struktur jadwal
-  const jadwalRaw = await prisma.jadwalpraktikum.findMany({
+  const jadwalRaw = await prisma.jadwal.findMany({
     select: {
       id: true,
       mulai: true,
       selesai: true,
-      status: true,
-      ruang: {
+      is_dilaksanakan: true,
+      ruangan: {
         select: {
           id: true,
           nama: true,
         },
       },
-      kelaspraktikum: {
+      kelas: {
         select: {
           id: true,
           nama: true,
-          matakuliahpraktikum: {
+          mata_kuliah: {
             select: {
               id: true,
               kode: true,
@@ -47,28 +47,28 @@ overview.get('/', async (c) => {
   });
 
   const jadwal = jadwalRaw.map((j) => ({
-    ruang: j.ruang,
+    ruang: j.ruangan,
     kelas: {
-      id: j.kelaspraktikum?.id,
-      nama: j.kelaspraktikum?.nama,
+      id: j.kelas?.id,
+      nama: j.kelas?.nama,
     },
-    mata_kuliah_praktikum: j.kelaspraktikum?.matakuliahpraktikum,
-    asisten: j.kelaspraktikum?.asisten,
+    mata_kuliah_praktikum: j.kelas?.mata_kuliah,
+    asisten: j.kelas?.asisten,
     detail: {
       id: j.id,
       mulai: j.mulai,
       selesai: j.selesai,
-      status: j.status?.replaceAll('_', ' ') ?? null, // ubah format snake_case jadi readable
+      is_dilaksanakan: j.is_dilaksanakan
     },
   }));
 
   // Ambil dan ubah struktur laporan
-  const laporanRaw = await prisma.kelaspraktikum.findMany({
+  const laporanRaw = await prisma.kelas.findMany({
     select: {
       id: true,
       nama: true,
-      kuota_praktikan: true,
-      matakuliahpraktikum: {
+      kapasitas_praktikan: true,
+      mata_kuliah: {
         select: {
           id: true,
           nama: true,
@@ -94,10 +94,10 @@ overview.get('/', async (c) => {
       nama: k.nama,
     },
     mata_kuliah_praktikum: {
-      id: k.matakuliahpraktikum?.id,
-      nama: k.matakuliahpraktikum?.nama,
-      kode: k.matakuliahpraktikum?.kode,
-      kuota_praktikan: k.kuota_praktikan,
+      id: k.mata_kuliah?.id,
+      nama: k.mata_kuliah?.nama,
+      kode: k.mata_kuliah?.kode,
+      kapasitas_praktikan: k.kapasitas_praktikan,
     },
   }));
 
