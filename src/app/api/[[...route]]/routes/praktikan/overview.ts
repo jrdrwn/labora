@@ -44,6 +44,13 @@ overview.get('/:kelasId', async (c) => {
           penilaian: {
             select: {
               id: true,
+              jadwalpraktikum: {
+                select: {
+                  id: true,
+                  mulai: true,
+                  selesai: true,
+                },
+              },
               detailpenilaian: {
                 where: {
                   praktikan_id: jwtPayload.sub,
@@ -117,6 +124,11 @@ overview.get('/:kelasId', async (c) => {
       if (detail.length > 0) {
         penilaian.push({
           id: pen.id,
+          jadwal: {
+            id: pen.jadwalpraktikum!.id,
+            mulai: pen.jadwalpraktikum!.mulai,
+            selesai: pen.jadwalpraktikum!.selesai,
+          },
           detail,
         });
       }
