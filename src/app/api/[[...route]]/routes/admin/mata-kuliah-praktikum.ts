@@ -1,15 +1,15 @@
 import prisma from '@db';
+import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
+import { z } from 'zod';
 
 import { JWTPayload } from '../../types';
 
-export const mataKuliahPraktikum = new Hono().basePath(
-  '/mata-kuliah-praktikum',
-);
+export const mataKuliah = new Hono().basePath('/mata-kuliah');
 
-mataKuliahPraktikum.get('/', async (c) => {
+mataKuliah.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  const mata_kuliah_praktikum = await prisma.matakuliahpraktikum.findMany({
+  const mata_kuliah = await prisma.mata_kuliah.findMany({
     skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
     take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
     where: {
@@ -34,94 +34,130 @@ mataKuliahPraktikum.get('/', async (c) => {
 
   return c.json({
     status: true,
-    data: mata_kuliah_praktikum,
+    data: mata_kuliah,
   });
 });
 
-mataKuliahPraktikum.post('/', async (c) => {
-  const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  const json = await c.req.json<{
-    kode: string;
-    nama: string;
-  }>();
+mataKuliah.post(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      kode: z.string().nonempty(),
+      nama: z.string().nonempty(),
+    }),
+  ),
+  async (c) => {
+    const jwtPayload = c.get('jwtPayload') as JWTPayload;
+    const json = c.req.valid('json');
 
-  await prisma.matakuliahpraktikum.create({
-    data: {
-      kode: json.kode,
-      nama: json.nama,
-      admin_id: jwtPayload.sub,
-    },
-  });
-  return c.json(
-    {
+    const existingMataKuliah = await prisma.mata_kuliah.findFirst({
+      where: {
+        kode: json.kode,
+      },
+    });
+
+    if (existingMataKuliah) {
+      return c.json(
+        { status: false, message: 'Mata kuliah with this kode already exists' },
+        409,
+      );
+    }
+
+    await prisma.mata_kuliah.create({
+      data: {
+        kode: json.kode,
+        nama: json.nama,
+        admin_id: jwtPayload.sub,
+      },
+    });
+    return c.json(
+      {
+        status: true,
+      },
+      201,
+    );
+  },
+);
+
+mataKuliah.put(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      where: z.object({
+        mata_kuliah_id: z.coerce.number().int().positive(),
+      }),
+      update: z.object({
+        kode: z.string().nonempty().optional(),
+        nama: z.string().nonempty().optional(),
+      }),
+    }),
+  ),
+  async (c) => {
+    const jwtPayload = c.get('jwtPayload') as JWTPayload;
+    const json = c.req.valid('json');
+    const matakuliahpraktikum = await prisma.mata_kuliah.findFirst({
+      where: {
+        id: json.where.mata_kuliah_id,
+        admin_id: jwtPayload.sub,
+      },
+    });
+    if (!matakuliahpraktikum) {
+      return c.json({ status: false, message: 'Mata kuliah not found' }, 404);
+    }
+    await prisma.mata_kuliah.update({
+      where: {
+        id: json.where.mata_kuliah_id,
+        admin_id: jwtPayload.sub,
+      },
+      data: json.update,
+    });
+
+    return c.json({
       status: true,
-    },
-    201,
-  );
-});
+    });
+  },
+);
 
-mataKuliahPraktikum.put('/', async (c) => {
-  const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  const json = await c.req.json<{
-    matakuliahpraktikum_id: number;
-    kode: string;
-    nama: string;
-  }>();
-  const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
-    where: {
-      id: json.matakuliahpraktikum_id,
-      admin_id: jwtPayload.sub,
-    },
-  });
-  if (!matakuliahpraktikum) {
-    return c.json({ status: false, message: 'Ruang not found' }, 404);
-  }
-  await prisma.matakuliahpraktikum.update({
-    where: {
-      id: json.matakuliahpraktikum_id,
-      admin_id: jwtPayload.sub,
-    },
-    data: {
-      kode: json.kode,
-      nama: json.nama,
-    },
-  });
+mataKuliah.delete(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      mata_kuliah_id: z.coerce.number().int().positive(),
+    }),
+  ),
+  async (c) => {
+    const jwtPayload = c.get('jwtPayload') as JWTPayload;
+    const json = c.req.valid('json');
+    const matakuliahpraktikum = await prisma.mata_kuliah.findFirst({
+      where: {
+        id: json.mata_kuliah_id,
+        admin_id: jwtPayload.sub,
+      },
+    });
+    if (!matakuliahpraktikum) {
+      return c.json({ status: false, message: 'Mata kuliah not found' }, 404);
+    }
+    await prisma.mata_kuliah.delete({
+      where: {
+        id: json.mata_kuliah_id,
+        admin_id: jwtPayload.sub,
+      },
+    });
 
-  return c.json({
-    status: true,
-  });
-});
+    return c.json({
+      status: true,
+    });
+  },
+);
 
-mataKuliahPraktikum.delete('/', async (c) => {
-  const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  const json = await c.req.json<{
-    matakuliahpraktikum_id: number;
-  }>();
-  const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
-    where: {
-      id: json.matakuliahpraktikum_id,
-      admin_id: jwtPayload.sub,
-    },
-  });
-  if (!matakuliahpraktikum) {
-    return c.json({ status: false, message: 'Ruang not found' }, 404);
-  }
-  await prisma.matakuliahpraktikum.delete({
-    where: {
-      id: json.matakuliahpraktikum_id,
-      admin_id: jwtPayload.sub,
-    },
-  });
-
-  return c.json({
-    status: true,
-  });
-});
-
-mataKuliahPraktikum.get('/:id', async (c) => {
+mataKuliah.get('/:id', async (c) => {
+  // TODO: perlu di cek
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const matakuliahpraktikum_id = c.req.param('id');
-  const matakuliahpraktikum = await prisma.matakuliahpraktikum.findFirst({
+  const matakuliahpraktikum = await prisma.mata_kuliah.findFirst({
     where: {
       id: Number(matakuliahpraktikum_id),
       admin_id: jwtPayload.sub,

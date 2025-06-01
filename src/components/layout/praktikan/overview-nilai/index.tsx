@@ -37,7 +37,7 @@ export default function OverviewNilai() {
             id: 0,
             tipe: 'laporan',
             nilai: 0,
-          }
+          },
         ],
       })
       .map(
@@ -47,7 +47,9 @@ export default function OverviewNilai() {
             jadwal: {
               id: i + 1,
               mulai: new Date(Date.now() - i * 24 * 60 * 60 * 1000), // Simulate different dates
-              selesai: new Date(Date.now() - i * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2 hours later
+              selesai: new Date(
+                Date.now() - i * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+              ), // 2 hours later
             },
             detail: [
               {
@@ -68,21 +70,23 @@ export default function OverviewNilai() {
             ],
           }) as Penilaian,
       ),
-      {
-    id: 22,
-    jadwal: {
+    {
       id: 22,
-      mulai: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // Simulate a date 21 days ago
-      selesai: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2 hours later
-    },
-    detail: [
-      {
-        id: 1,
-        tipe: 'responsi',
-        nilai: 85, // Example pretest score
+      jadwal: {
+        id: 22,
+        mulai: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // Simulate a date 21 days ago
+        selesai: new Date(
+          Date.now() - 21 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+        ), // 2 hours later
       },
-    ],
-  } as Penilaian,
+      detail: [
+        {
+          id: 1,
+          tipe: 'responsi',
+          nilai: 85, // Example pretest score
+        },
+      ],
+    } as Penilaian,
   ];
   return (
     <Card className="w-full max-w-2xl">

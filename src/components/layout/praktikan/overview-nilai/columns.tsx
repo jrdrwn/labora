@@ -8,11 +8,11 @@ export type Penilaian = {
     id: number;
     mulai: Date;
     selesai: Date;
-  },
+  };
   detail: {
     id: number;
     tipe: string;
-    nilai: number
+    nilai: number;
   }[];
 };
 
@@ -31,7 +31,9 @@ export const columns: ColumnDef<Penilaian>[] = [
     header: 'Pretest',
     cell: ({ row }) => {
       const details = row.original.detail;
-      return details.filter(detail => detail.tipe === 'pretest')[0].nilai || 0;
+      return (
+        details.filter((detail) => detail.tipe === 'pretest')[0].nilai || 0
+      );
     },
   },
   {
@@ -40,7 +42,9 @@ export const columns: ColumnDef<Penilaian>[] = [
     header: 'Praktikum',
     cell: ({ row }) => {
       const details = row.original.detail;
-      return details.filter(detail => detail.tipe === 'praktikum')[0].nilai || 0;
+      return (
+        details.filter((detail) => detail.tipe === 'praktikum')[0].nilai || 0
+      );
     },
   },
   {
@@ -49,7 +53,9 @@ export const columns: ColumnDef<Penilaian>[] = [
     header: 'Laporan',
     cell: ({ row }) => {
       const details = row.original.detail;
-      return details.filter(detail => detail.tipe === 'laporan')[0].nilai || 0;
+      return (
+        details.filter((detail) => detail.tipe === 'laporan')[0].nilai || 0
+      );
     },
   },
 ];
