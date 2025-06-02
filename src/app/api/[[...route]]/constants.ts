@@ -28,3 +28,8 @@ export enum PenilaianType {
   laporan = 'laporan',
   responsi = 'responsi',
 }
+
+export enum Perangkat {
+  laptop = 'laptop',
+  komputer_lab = 'komputer_lab',
+}
