@@ -5,62 +5,33 @@ export const laporan = new Hono().basePath('/laporan');
 
 laporan.get('/', async (c) => {
   const asistenList = await prisma.asisten.findMany({
-    select: {
-      id: true,
-      nim: true,
-      email: true,
-      nama: true,
-      status: true,
-      kelaspraktikum: {
-        select: {
-          id: true,
-          nama: true,
-          kuota_praktikan: true,
-          matakuliahpraktikum: {
-            select: {
-              id: true,
-              nama: true,
-              kode: true,
-            },
-          },
-          jadwalpraktikum: {
-            select: {
-              id: true,
-              mulai: true,
-              selesai: true,
-              ruang: {
-                select: {
-                  id: true,
-                  nama: true,
-                },
-              },
-              penilaian: {
-                select: {
-                  id: true,
-                  judul: true,
-                  bukti_pertemuan: true,
-                  detailpenilaian: {
-                    select: {
-                      kehadiran: true,
-                      tipe: true,
-                      nilai: true,
-                      penilaian_id: true,
+    include: {
+      kelas: {
+        include: {
+          mata_kuliah: true,
+          jadwal: {
+            include: {
+              ruangan: true,
+              laporan: {
+                include: {
+                  kehadiran: {
+                    include: {
                       praktikan: {
-                        select: {
-                          id: true,
-                          nim: true,
-                          email: true,
-                          nama: true,
-                          kelaspraktikumpraktikan: {
-                            select: {
-                              perangkat: true,
-                            },
-                            where: {
-                              kelas_praktikum_id: {
-                                not: null,
-                              },
+                        include: {
+                          praktikan_kelas: {
+                            include: {
+                              kelas: true,
                             },
                           },
+                        },
+                      },
+                    },
+                  },
+                  penilaian: {
+                    include: {
+                      praktikan: {
+                        include: {
+                          praktikan_kelas: true,
                         },
                       },
                     },
@@ -77,53 +48,77 @@ laporan.get('/', async (c) => {
   const result = [];
 
   for (const asisten of asistenList) {
-    for (const kelas of asisten.kelaspraktikum) {
+    for (const kelas of asisten.kelas) {
       const laporanItems = [];
 
-      for (const jadwal of kelas.jadwalpraktikum) {
-        for (const penilaian of jadwal.penilaian) {
-          const detailPenilaianMap = new Map();
+      for (const jadwal of kelas.jadwal) {
+        for (const laporan of jadwal.laporan) {
+          const detailMap = new Map();
 
-          for (const dp of penilaian.detailpenilaian) {
-            const praktikan = dp.praktikan;
+          for (const hadir of laporan.kehadiran) {
+            const praktikan = hadir.praktikan;
             if (!praktikan) continue;
-            const praktikanId = praktikan.id;
 
-            if (!detailPenilaianMap.has(praktikanId)) {
-              detailPenilaianMap.set(praktikanId, {
+            const perangkat =
+              praktikan.praktikan_kelas.find((pk) => pk.kelas_id === kelas.id)
+                ?.perangkat ?? null;
+
+            detailMap.set(praktikan.id, {
+              praktikan: {
+                id: praktikan.id,
+                nim: praktikan.nim,
+                email: praktikan.email,
+                nama: praktikan.nama,
+                perangkat,
+              },
+              kehadiran: hadir.tipe,
+              penilaian: [],
+            });
+          }
+
+          for (const nilai of laporan.penilaian) {
+            const praktikan = nilai.praktikan;
+            if (!praktikan) continue;
+
+            if (!detailMap.has(praktikan.id)) {
+              const perangkat =
+                praktikan.praktikan_kelas.find((pk) => pk.kelas_id === kelas.id)
+                  ?.perangkat ?? null;
+
+              detailMap.set(praktikan.id, {
                 praktikan: {
                   id: praktikan.id,
                   nim: praktikan.nim,
                   email: praktikan.email,
                   nama: praktikan.nama,
-                  perangkat:
-                    praktikan.kelaspraktikumpraktikan[0]?.perangkat ?? null,
+                  perangkat,
                 },
-                kehadiran: dp.kehadiran,
+                kehadiran: null,
                 penilaian: [],
               });
             }
 
-            if (dp.tipe && dp.nilai !== null) {
-              detailPenilaianMap.get(praktikanId).penilaian.push({
-                id: dp.penilaian_id,
-                tipe: dp.tipe,
-                nilai: dp.nilai,
-              });
-            }
+            detailMap.get(praktikan.id).penilaian.push({
+              id: nilai.id,
+              tipe: nilai.tipe,
+              nilai: nilai.nilai,
+            });
           }
 
           laporanItems.push({
-            id: penilaian.id,
-            judul: penilaian.judul,
-            bukti_pertemuan: penilaian.bukti_pertemuan,
+            id: laporan.id,
+            judul: laporan.judul,
+            bukti_pertemuan: laporan.bukti_pertemuan_url,
             jadwal_praktikum: {
               id: jadwal.id,
-              ruang: jadwal.ruang,
+              ruang: {
+                id: jadwal.ruangan?.id,
+                nama: jadwal.ruangan?.nama,
+              },
               mulai: jadwal.mulai,
               end: jadwal.selesai,
             },
-            detail_penilaian_per_praktikan: [...detailPenilaianMap.values()],
+            detail_penilaian_per_praktikan: Array.from(detailMap.values()),
           });
         }
       }
@@ -141,10 +136,10 @@ laporan.get('/', async (c) => {
           nama: kelas.nama,
         },
         mata_kuliah_praktikum: {
-          id: kelas.matakuliahpraktikum?.id ?? null,
-          nama: kelas.matakuliahpraktikum?.nama ?? null,
-          kode: kelas.matakuliahpraktikum?.kode ?? null,
-          kuota_praktikan: kelas.kuota_praktikan,
+          id: kelas.mata_kuliah?.id ?? null,
+          nama: kelas.mata_kuliah?.nama ?? null,
+          kode: kelas.mata_kuliah?.kode ?? null,
+          kuota_praktikan: kelas.kapasitas_praktikan ?? 0,
         },
         laporan: laporanItems,
       });

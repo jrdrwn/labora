@@ -9,12 +9,12 @@ overview.get('/:kelasId', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const kelasId = +c.req.param('kelasId');
 
-  const kelas = await prisma.kelaspraktikum.findFirst({
+  const kelas = await prisma.kelas.findFirst({
     where: { id: kelasId },
     select: {
       id: true,
       nama: true,
-      matakuliahpraktikum: {
+      mata_kuliah: {
         select: {
           id: true,
           kode: true,
@@ -28,34 +28,26 @@ overview.get('/:kelasId', async (c) => {
           nama: true,
         },
       },
-      jadwalpraktikum: {
+      jadwal: {
         orderBy: { mulai: 'asc' },
         select: {
           id: true,
           mulai: true,
           selesai: true,
-          status: true,
-          ruang: {
+          is_dilaksanakan: true,
+          ruangan: {
             select: {
               id: true,
               nama: true,
             },
           },
-          penilaian: {
+          laporan: {
             select: {
               id: true,
-              jadwalpraktikum: {
-                select: {
-                  id: true,
-                  mulai: true,
-                  selesai: true,
-                },
-              },
-              detailpenilaian: {
+              penilaian: {
                 where: {
                   praktikan_id: jwtPayload.sub,
                   nilai: { not: null },
-                  tipe: { not: null },
                 },
                 select: {
                   id: true,
@@ -76,67 +68,70 @@ overview.get('/:kelasId', async (c) => {
 
   let total_nilai = 0;
   let sisa_pertemuan_praktikum = 0;
+  let ruangUtama = null;
+  let jadwal_selanjutnya = null;
   const penilaian = [];
   const jadwal_sendiri = [];
-  let jadwal_selanjutnya = null;
 
-  for (const jadwal of kelas.jadwalpraktikum) {
-    const ruang = jadwal.ruang;
+  for (const jadwal of kelas.jadwal) {
+    const ruang = jadwal.ruangan;
 
-    // Data untuk jadwal_sendiri
+    // Set ruang pertama (default)
+    if (!ruangUtama && ruang) {
+      ruangUtama = ruang;
+    }
+
+    // Tambahkan ke jadwal_sendiri
     jadwal_sendiri.push({
       ruang,
       kelas: {
         id: kelas.id,
         nama: kelas.nama,
       },
-      mata_kuliah_praktikum: kelas.matakuliahpraktikum,
+      mata_kuliah_praktikum: kelas.mata_kuliah,
       asisten: kelas.asisten,
       jadwal: {
         id: jadwal.id,
         mulai: jadwal.mulai,
         selesai: jadwal.selesai,
-        status: jadwal.status?.replaceAll('_', ' ') ?? null,
+        status: jadwal.is_dilaksanakan
+          ? 'sudah dilaksanakan'
+          : 'belum dilaksanakan',
       },
     });
 
-    // Cek jadwal_selanjutnya (pertama yg belum dilaksanakan)
-    if (jadwal.status === 'belum_dilaksanakan' && !jadwal_selanjutnya) {
+    // Cek jadwal selanjutnya (belum dilaksanakan dan pertama ditemukan)
+    if (!jadwal.is_dilaksanakan && !jadwal_selanjutnya) {
       jadwal_selanjutnya = {
         id: jadwal.id,
         mulai: jadwal.mulai,
         selesai: jadwal.selesai,
-        status: jadwal.status.replaceAll('_', ' '),
+        status: 'belum dilaksanakan',
       };
     }
 
-    // Cek penilaian
-    for (const pen of jadwal.penilaian) {
-      const detail = pen.detailpenilaian.map((d) => {
-        total_nilai += d.nilai || 0;
+    // Hitung sisa pertemuan
+    if (!jadwal.is_dilaksanakan) {
+      sisa_pertemuan_praktikum++;
+    }
+
+    // Ambil penilaian dari laporan di jadwal ini
+    for (const laporan of jadwal.laporan) {
+      const detail = laporan.penilaian.map((p) => {
+        total_nilai += p.nilai || 0;
         return {
-          id: d.id,
-          tipe: d.tipe,
-          nilai: d.nilai,
+          id: p.id,
+          tipe: p.tipe,
+          nilai: p.nilai,
         };
       });
 
       if (detail.length > 0) {
         penilaian.push({
-          id: pen.id,
-          jadwal: {
-            id: pen.jadwalpraktikum!.id,
-            mulai: pen.jadwalpraktikum!.mulai,
-            selesai: pen.jadwalpraktikum!.selesai,
-          },
+          id: laporan.id,
           detail,
         });
       }
-    }
-
-    // Hitung sisa pertemuan
-    if (jadwal.status === 'belum_dilaksanakan') {
-      sisa_pertemuan_praktikum++;
     }
   }
 
@@ -149,8 +144,8 @@ overview.get('/:kelasId', async (c) => {
         id: kelas.id,
         nama: kelas.nama,
       },
-      ruang: kelas.jadwalpraktikum[0]?.ruang ?? null,
-      mata_kuliah_praktikum: kelas.matakuliahpraktikum,
+      ruang: ruangUtama,
+      mata_kuliah_praktikum: kelas.mata_kuliah,
       jadwal_selanjutnya,
       jadwal_sendiri,
       penilaian,
