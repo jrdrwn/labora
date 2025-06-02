@@ -58,7 +58,7 @@ overview.get('/', async (c) => {
       id: j.id,
       mulai: j.mulai,
       selesai: j.selesai,
-      is_dilaksanakan: j.is_dilaksanakan
+      is_dilaksanakan: j.is_dilaksanakan,
     },
   }));
 
