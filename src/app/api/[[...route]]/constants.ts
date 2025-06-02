@@ -15,3 +15,16 @@ export enum AsistenStatus {
   diproses = 'diproses',
   ditolak = 'ditolak',
 }
+
+export enum KehadiranType {
+  hadir = 'hadir',
+  izin = 'izin',
+  alpha = 'alpha',
+}
+
+export enum PenilaianType {
+  pretest = 'pretest',
+  praktikum = 'praktikum',
+  laporan = 'laporan',
+  responsi = 'responsi',
+}

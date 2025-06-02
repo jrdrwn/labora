@@ -120,6 +120,25 @@ jadwal.post(
       })),
     });
 
+    const jadwal = await prisma.jadwal.findMany({
+      where: {
+        kelas_id: json.kelas_id,
+        ruang_id: json.ruang_id,
+        mulai: {
+          in: meetingsDates.map((date) => date.mulai),
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    await prisma.laporan.createMany({
+      data: jadwal.map((j) => ({
+        jadwal_id: j.id,
+      })),
+    });
+
     return c.json(
       {
         status: true,
