@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
+import { EventType } from '../../constants';
 import { JWTPayload } from '../../types';
 import generateSingleDate from '../../utils/generateSingleDate';
 
@@ -97,7 +98,7 @@ jadwal.put(
     // cek jika event sudah ada
     const event = await prisma.event.findFirst({
       where: {
-        jenis: 'praktikum',
+        jenis: EventType.praktikum,
         mulai: {
           lte: date.mulai,
         },
