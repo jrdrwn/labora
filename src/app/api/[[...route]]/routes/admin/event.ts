@@ -80,19 +80,12 @@ event.put(
           admin_id: jwtPayload.sub,
           OR: [
             {
-              mulai: {
-                gt: new Date(json.update.mulai),
-              },
+              mulai: { lt: json.update.mulai },
+              selesai: { gt: json.update.mulai },
             },
             {
-              selesai: {
-                gt: new Date(json.update.mulai),
-              },
-            },
-            {
-              selesai: {
-                gt: new Date(json.update.selesai),
-              },
+              mulai: { lt: json.update.selesai },
+              selesai: { gt: json.update.selesai },
             },
           ],
         },

@@ -284,6 +284,7 @@ export const StatusSwitch = ({ event }: { event: Event }) => {
       router.refresh();
     } else {
       toast.error(`Error: ${json.message || 'Event memperbarui ruangan'}`);
+      setChecked(!newStatus); // Revert the switch state if the update fails
     }
   };
 

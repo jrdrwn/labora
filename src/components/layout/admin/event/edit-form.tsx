@@ -93,12 +93,12 @@ function EditFormEvent({
 
     const json = await res.json();
     if (res.ok) {
-      toast.success('Ruangan berhasil diperbarui');
+      toast.success('Event berhasil diperbarui');
       form.reset();
       router.refresh();
       onOpenChange(false);
     } else {
-      toast.error(`Error: ${json.message || 'Gagal memperbarui ruangan'}`);
+      toast.error(`Error: ${json.message || 'Gagal memperbarui event'}`);
     }
   }
 
