@@ -32,7 +32,7 @@ export type AdminRuangan = {
 export type Ruangan = {
   id: number;
   nama: string;
-  kuota: Record<string, number>;
+  kapasitas: Record<string, number>;
   admin: AdminRuangan;
 };
 
@@ -105,7 +105,7 @@ export const columns: ColumnDef<Ruangan>[] = [
       );
     },
     cell: ({ row }) => {
-      const value = row.original.kuota.komputer;
+      const value = row.original.kapasitas.komputer;
       return <span className="pl-2">{value}</span>;
     },
   },
