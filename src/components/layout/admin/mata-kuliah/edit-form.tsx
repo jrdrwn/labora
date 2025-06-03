@@ -21,26 +21,78 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { MataKuliah } from './list/columns';
 
 const formSchema = z.object({
-  nama: z.string().min(1, 'Nama mata kuliah harus diisi'),
-  kode: z.string().min(1, 'Kode mata kuliah harus diisi'),
+  where: z.object({
+    mata_kuliah_id: z.coerce
+      .number()
+      .int()
+      .positive('ID mata kuliah harus diisi'),
+  }),
+  update: z.object({
+    nama: z.string().min(1, 'Nama mata kuliah harus diisi'),
+    kode: z.string().min(1, 'Kode mata kuliah harus diisi'),
+  }),
 });
 
-function EditFormMataKuliah({ defaultValues }: { defaultValues: MataKuliah }) {
+function EditFormMataKuliah({
+  defaultValues,
+  onOpenChange,
+}: {
+  defaultValues: MataKuliah;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      where: {
+        mata_kuliah_id: defaultValues.id,
+      },
+      update: {
+        nama: defaultValues.nama,
+        kode: defaultValues.kode,
+      },
+    },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/mata-kuliah', {
+      method: 'PUT',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        where: {
+          mata_kuliah_id: data.where.mata_kuliah_id,
+        },
+        update: {
+          nama: data.update.nama,
+          kode: data.update.kode,
+        },
+      }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Mata kuliah berhasil diperbarui');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal memperbarui mata kuliah'}`);
+    }
   }
 
   return (
@@ -48,7 +100,7 @@ function EditFormMataKuliah({ defaultValues }: { defaultValues: MataKuliah }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="nama"
+          name="update.nama"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nama Mata Kuliah</FormLabel>
@@ -64,7 +116,7 @@ function EditFormMataKuliah({ defaultValues }: { defaultValues: MataKuliah }) {
         />
         <FormField
           control={form.control}
-          name="kode"
+          name="update.kode"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Kode</FormLabel>
@@ -90,8 +142,12 @@ export default function EditFormMataKuliahButton({
 }: {
   matakuliah: MataKuliah;
 }) {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <Pencil />
@@ -105,7 +161,10 @@ export default function EditFormMataKuliahButton({
             Fill in the details to edit a mata kuliah.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormMataKuliah defaultValues={matakuliah} />
+        <EditFormMataKuliah
+          defaultValues={matakuliah}
+          onOpenChange={handleOpenChange}
+        />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

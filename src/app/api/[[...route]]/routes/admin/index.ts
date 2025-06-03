@@ -10,7 +10,7 @@ import { event } from './event';
 import { jadwal } from './jadwal';
 import { kelas } from './kelas';
 import { laporan } from './laporan';
-import { mataKuliah } from './mata-kuliah-praktikum';
+import { mataKuliah } from './mata-kuliah';
 import { overview } from './overview';
 import { praktikan } from './praktikan';
 import { ruangan } from './ruangan';
