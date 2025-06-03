@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormEventButton from '../edit-form';
+import { StatusSwitch } from './utils';
 
 export type AdminEvent = {
   id: number;
@@ -36,7 +36,7 @@ export type JenisEvent =
 
 export type Event = {
   id: number;
-  nama: string;
+  is_aktif: boolean;
   jenis: JenisEvent;
   mulai: Date;
   selesai: Date;
@@ -86,8 +86,11 @@ export const columns: ColumnDef<Event>[] = [
     },
   },
   {
-    accessorKey: 'nama',
-    header: 'Nama Event',
+    accessorKey: 'is_aktif',
+    header: 'Status',
+    cell: ({ row }) => {
+      return <StatusSwitch event={row.original} />;
+    },
   },
   {
     accessorKey: 'admin.nama',
@@ -189,7 +192,6 @@ export const columns: ColumnDef<Event>[] = [
               <Copy />
               Copy ID
             </DropdownMenuItem>
-            <DeleteConfirmationButton listEvent={[event]} />
           </DropdownMenuContent>
         </DropdownMenu>
       );

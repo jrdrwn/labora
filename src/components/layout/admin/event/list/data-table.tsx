@@ -38,7 +38,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import CreateFormEventButton from '../create-form';
 import {
   FilterByAdminButton,
   FilterByJenisEventButton,
@@ -105,7 +104,6 @@ export function DataTable<TData, TValue>({
           </div>
           <div className="flex items-center gap-2">
             <FilterColumnsButton table={table} />
-            <CreateFormEventButton />
           </div>
         </div>
       </div>

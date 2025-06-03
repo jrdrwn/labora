@@ -3,61 +3,9 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import { EventType } from '../../constants';
 import { JWTPayload } from '../../types';
 
 export const event = new Hono().basePath('/event');
-
-event.post(
-  '/',
-  zValidator(
-    'json',
-    z.object({
-      mulai: z.coerce.date(),
-      selesai: z.coerce.date(),
-      jenis: z.enum([
-        EventType.pendaftaran_asisten,
-        EventType.pendaftaran_praktikan,
-        EventType.praktikum,
-      ]),
-      nama: z.string().optional().default(''),
-    }),
-  ),
-  async (c) => {
-    const jwtPayload = c.get('jwtPayload') as JWTPayload;
-    const validated = c.req.valid('json');
-
-    const event = await prisma.event.findFirst({
-      where: {
-        admin_id: jwtPayload.sub,
-        mulai: {
-          gte: new Date(validated.mulai),
-        },
-        selesai: {
-          lte: new Date(validated.selesai),
-        },
-      },
-    });
-
-    if (event) {
-      return c.json({ status: false, message: 'Event already exists' }, 400);
-    }
-
-    await prisma.event.create({
-      data: {
-        admin_id: jwtPayload.sub,
-        jenis: validated.jenis,
-        mulai: new Date(validated.mulai),
-        selesai: new Date(validated.selesai),
-        nama: validated.nama,
-      },
-    });
-
-    return c.json({
-      status: true,
-    });
-  },
-);
 
 event.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
@@ -68,7 +16,7 @@ event.get('/', async (c) => {
     },
     select: {
       id: true,
-      nama: true,
+      is_aktif: true,
       jenis: true,
       mulai: true,
       selesai: true,
@@ -88,39 +36,6 @@ event.get('/', async (c) => {
   });
 });
 
-event.delete(
-  '/',
-  zValidator(
-    'json',
-    z.object({
-      event_id: z.coerce.number().int().positive(),
-    }),
-  ),
-  async (c) => {
-    const jwtPayload = c.get('jwtPayload') as JWTPayload;
-    const json = c.req.valid('json');
-    const event = await prisma.event.findFirst({
-      where: {
-        id: Number(json.event_id),
-        admin_id: jwtPayload.sub,
-      },
-    });
-    if (!event) {
-      return c.json({ status: false, message: 'Event not found' }, 404);
-    }
-
-    await prisma.event.delete({
-      where: {
-        id: Number(json.event_id),
-      },
-    });
-
-    return c.json({
-      status: true,
-    });
-  },
-);
-
 event.put(
   '/',
   zValidator(
@@ -132,14 +47,7 @@ event.put(
       update: z.object({
         mulai: z.coerce.date().optional(),
         selesai: z.coerce.date().optional(),
-        jenis: z
-          .enum([
-            EventType.pendaftaran_asisten,
-            EventType.pendaftaran_praktikan,
-            EventType.praktikum,
-          ])
-          .optional(),
-        nama: z.string().optional(),
+        is_aktif: z.boolean().optional(),
       }),
     }),
   ),
@@ -239,6 +147,14 @@ event.put(
 
     if (event) {
       return c.json({ status: false, message: 'Event already exists' }, 400);
+    }
+
+    if (json.update?.is_aktif) {
+      await prisma.event.updateMany({
+        data: {
+          is_aktif: false,
+        },
+      });
     }
 
     await prisma.event.update({

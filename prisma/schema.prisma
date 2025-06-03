@@ -39,10 +39,10 @@ model asisten {
 model event {
   id        Int          @id @default(autoincrement())
   admin_id  Int?
-  nama      String?      @db.VarChar(120)
   jenis     event_jenis?
   mulai     DateTime?    @db.Timestamp(0)
   selesai   DateTime?    @db.Timestamp(0)
+  is_aktif  Boolean      @default(false)
   asisten   asisten[]
   admin     admin?       @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "event_ibfk_1")
   praktikan praktikan[]

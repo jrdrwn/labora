@@ -20,7 +20,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -29,28 +28,78 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Event } from './list/columns';
 
 const formSchema = z.object({
-  nama: z.string().min(1, 'Nama event harus diisi'),
-  jenis: z.enum(['pendaftaran_asisten', 'pendaftaran_praktikan', 'praktikum']),
-  mulai: z.coerce.date(),
-  selesai: z.coerce.date(),
+  where: z.object({
+    event_id: z.coerce.number().int().positive(),
+  }),
+  update: z.object({
+    is_aktif: z.boolean(),
+    mulai: z.coerce.date(),
+    selesai: z.coerce.date(),
+  }),
 });
 
-function EditFormEvent({ defaultValues }: { defaultValues: Event }) {
+function EditFormEvent({
+  defaultValues,
+  onOpenChange,
+}: {
+  defaultValues: Event;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      where: {
+        event_id: defaultValues.id,
+      },
+      update: {
+        is_aktif: defaultValues.is_aktif,
+        mulai: defaultValues.mulai,
+        selesai: defaultValues.selesai,
+      },
+    },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/event', {
+      method: 'PUT',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        where: {
+          event_id: data.where.event_id,
+        },
+        update: {
+          is_aktif: data.update.is_aktif,
+          mulai: data.update.mulai,
+          selesai: data.update.selesai,
+        },
+      }),
+    });
+
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Ruangan berhasil diperbarui');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal memperbarui ruangan'}`);
+    }
   }
 
   return (
@@ -58,39 +107,24 @@ function EditFormEvent({ defaultValues }: { defaultValues: Event }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="nama"
+          name="update.is_aktif"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Event</FormLabel>
-              <FormControl>
-                <Input placeholder="Masukkan nama event" {...field} />
-              </FormControl>
-              <FormDescription>Nama event yang akan diedit.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="jenis"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Jenis Event</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel>Status</FormLabel>
+              <Select
+                onValueChange={(value: string) =>
+                  field.onChange(value === 'true')
+                }
+                defaultValue={String(field.value)}
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih jenis event" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="pendaftaran_asisten">
-                    Pendaftaran Asisten
-                  </SelectItem>
-                  <SelectItem value="pendaftaran_praktikan">
-                    Pendaftaran Praktikan
-                  </SelectItem>
-                  <SelectItem value="praktikum">Praktikum</SelectItem>
+                  <SelectItem value="true">Aktif</SelectItem>
+                  <SelectItem value="false">Tidak Aktif</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>Jenis event yang akan diedit.</FormDescription>
@@ -101,13 +135,13 @@ function EditFormEvent({ defaultValues }: { defaultValues: Event }) {
 
         <FormField
           control={form.control}
-          name="mulai"
+          name="update.mulai"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Mulai</FormLabel>
               <FormControl>
                 <DateTimePicker
-                  value={field.value}
+                  value={new Date(field.value)}
                   onChange={field.onChange}
                   granularity="minute"
                 />
@@ -120,13 +154,13 @@ function EditFormEvent({ defaultValues }: { defaultValues: Event }) {
 
         <FormField
           control={form.control}
-          name="selesai"
+          name="update.selesai"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Selesai</FormLabel>
               <FormControl>
                 <DateTimePicker
-                  value={field.value}
+                  value={new Date(field.value)}
                   onChange={field.onChange}
                   granularity="minute"
                 />
@@ -146,8 +180,12 @@ function EditFormEvent({ defaultValues }: { defaultValues: Event }) {
 }
 
 export default function EditFormEventButton({ event }: { event: Event }) {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <Pencil />
@@ -158,10 +196,10 @@ export default function EditFormEventButton({ event }: { event: Event }) {
         <ResponsiveModalHeader className="mb-4">
           <ResponsiveModalTitle>Edit Event</ResponsiveModalTitle>
           <ResponsiveModalDescription>
-            Edit details for #{event.id} - {event.nama}.
+            Edit details for #{event.id} - {event.jenis}.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormEvent defaultValues={event} />
+        <EditFormEvent defaultValues={event} onOpenChange={handleOpenChange} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );
