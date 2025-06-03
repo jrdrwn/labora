@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormJadwalButton from '../edit-form';
 
-export type RuangKelas = {
+export type Ruangan = {
   id: number;
   nama: string;
 };
@@ -37,9 +37,9 @@ export type Jadwal = {
   id: number;
   mulai: Date;
   selesai: Date;
-  status: string | null;
-  ruang: RuangKelas;
-  kelaspraktikum: Kelas;
+  is_dilaksanakan: boolean;
+  ruangan: Ruangan;
+  kelas: Kelas;
 };
 
 export const columns: ColumnDef<Jadwal>[] = [
@@ -85,7 +85,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'ruang.nama',
+    accessorKey: 'ruangan.nama',
     header: 'Ruangan',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -93,7 +93,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'kelaspraktikum.nama',
+    accessorKey: 'kelas.nama',
     header: 'Kelas',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -101,11 +101,19 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'status',
+    accessorKey: 'is_dilaksanakan',
     header: 'Status',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
+    },
+    cell: ({ row }) => {
+      const isDilaksanakan = row.original.is_dilaksanakan;
+      return (
+        <span className="capitalize">
+          {isDilaksanakan ?  'Sudah': 'Belum'}
+        </span>
+      );
     },
   },
   {

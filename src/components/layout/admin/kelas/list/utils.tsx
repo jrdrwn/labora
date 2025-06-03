@@ -102,7 +102,7 @@ export function FilterByMataKuliahButton<TData>({
                   table
                     .getCoreRowModel()
                     .rows.map((row) => [
-                      row.getValue('matakuliahpraktikum_nama'),
+                      row.getValue('mata_kuliah_nama'),
                       row,
                     ]),
                 ).values(),
@@ -115,33 +115,33 @@ export function FilterByMataKuliahButton<TData>({
                       checked={
                         Array.isArray(
                           table
-                            .getColumn('matakuliahpraktikum_nama')
+                            .getColumn('mata_kuliah_nama')
                             ?.getFilterValue(),
                         )
                           ? (
                               table
-                                .getColumn('matakuliahpraktikum_nama')
+                                .getColumn('mata_kuliah_nama')
                                 ?.getFilterValue() as string[]
-                            ).includes(row.getValue('matakuliahpraktikum_nama'))
+                            ).includes(row.getValue('mata_kuliah_nama'))
                           : false
                       }
                       onCheckedChange={(checked) => {
                         const prev =
                           (table
-                            .getColumn('matakuliahpraktikum_nama')
+                            .getColumn('mata_kuliah_nama')
                             ?.getFilterValue() as string[]) || [];
                         table
-                          .getColumn('matakuliahpraktikum_nama')
+                          .getColumn('mata_kuliah_nama')
                           ?.setFilterValue(
                             checked
                               ? [
                                   ...prev,
-                                  row.getValue('matakuliahpraktikum_nama'),
+                                  row.getValue('mata_kuliah_nama'),
                                 ]
                               : prev.filter(
                                   (c: string) =>
                                     c !==
-                                    row.getValue('matakuliahpraktikum_nama'),
+                                    row.getValue('mata_kuliah_nama'),
                                 ),
                           );
                       }}
@@ -151,7 +151,7 @@ export function FilterByMataKuliahButton<TData>({
                       className="ml-2"
                       htmlFor={`filter-mata-kuliah-${row.id}`}
                     >
-                      {row.getValue('matakuliahpraktikum_nama') as string}
+                      {row.getValue('mata_kuliah_nama') as string}
                     </label>
                   </CommandItem>
                 );
