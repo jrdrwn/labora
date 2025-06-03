@@ -39,6 +39,16 @@ auth.post(
       return c.json({ status: false, message: 'User not found' }, 404);
     }
 
+    if (!cloudUser[0].email) {
+      return c.json(
+        {
+          status: false,
+          message: 'Email tidak ada, tolong isi email pada siuber',
+        },
+        404,
+      );
+    }
+
     const asisten = await prisma.asisten.upsert({
       where: {
         nim: cloudUser[0].nim,
@@ -131,3 +141,66 @@ auth.post(
     );
   },
 );
+
+auth.get('/me', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
+
+  const asisten = await prisma.asisten.findFirst({
+    where: {
+      id: jwtPayload.sub,
+    },
+  });
+
+  if (!asisten) {
+    return c.json(
+      {
+        status: false,
+        message: 'Asisten not found',
+      },
+      404,
+    );
+  }
+
+  let event = null;
+  if (asisten.event_id) {
+    event = await prisma.event.findFirst({
+      where: {
+        id: asisten.event_id,
+      },
+    });
+  }
+
+  // Data respons yang akan dikembalikan
+  const responseData: any = {
+    event_id: event?.id ?? null,
+    status: asisten.status,
+    komitmen_url: asisten.komitmen_url,
+  };
+
+  if (asisten.status === 'diproses') {
+    responseData.mata_kuliah_pilihan = asisten.mata_kuliah_pilihan;
+  }
+
+  if (asisten.status === 'diterima') {
+    const kelas = await prisma.kelas.findMany({
+      where: {
+        asisten_id: asisten.id,
+      },
+      include: {
+        mata_kuliah: true,
+      },
+    });
+
+    responseData.kelas = kelas.map((k) => ({
+      id: k.id,
+      nama: k.nama,
+      mata_kuliah: {
+        id: k.mata_kuliah?.id,
+        nama: k.mata_kuliah?.nama,
+        kode: k.mata_kuliah?.kode,
+      },
+    }));
+  }
+
+  return c.json({ status: true, data: responseData }, 200);
+});

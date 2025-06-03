@@ -39,6 +39,16 @@ auth.post(
       return c.json({ status: false, message: 'User not found' }, 404);
     }
 
+    if (!cloudUser[0].email) {
+      return c.json(
+        {
+          status: false,
+          message: 'Email tidak ada, tolong isi email pada siuber',
+        },
+        404,
+      );
+    }
+
     const praktikan = await prisma.praktikan.upsert({
       where: {
         nim: cloudUser[0].nim,
@@ -153,3 +163,63 @@ auth.post(
     );
   },
 );
+
+auth.get('/me', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
+
+  const praktikan = await prisma.praktikan.findFirst({
+    where: {
+      id: jwtPayload.sub,
+    },
+  });
+
+  if (!praktikan) {
+    return c.json(
+      {
+        status: false,
+        message: 'Praktikan not found',
+      },
+      404,
+    );
+  }
+
+  const event = praktikan.event_id
+    ? await prisma.event.findFirst({ where: { id: praktikan.event_id } })
+    : null;
+
+  // Ambil relasi kelas yang diikuti praktikan
+  const kelasPraktikan = await prisma.praktikan_kelas.findMany({
+    where: {
+      praktikan_id: praktikan.id,
+    },
+    include: {
+      kelas: {
+        include: {
+          mata_kuliah: true,
+        },
+      },
+    },
+  });
+
+  const kelas = kelasPraktikan.map((kp) => ({
+    id: kp.kelas?.id,
+    nama: kp.kelas?.nama,
+    mata_kuliah: {
+      id: kp.kelas?.mata_kuliah?.id,
+      nama: kp.kelas?.mata_kuliah?.nama,
+      kode: kp.kelas?.mata_kuliah?.kode,
+      perangkat: kp.perangkat,
+    },
+  }));
+
+  return c.json(
+    {
+      status: true,
+      data: {
+        event_id: event?.id ?? null,
+        kelas,
+      },
+    },
+    200,
+  );
+});
