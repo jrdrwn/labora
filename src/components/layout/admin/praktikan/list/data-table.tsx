@@ -159,13 +159,13 @@ export function DataTable<TData, TValue>({
                           <TableBody>
                             {(
                               row.original as Praktikan
-                            ).kelaspraktikumpraktikan.map((kelas) => (
+                            ).praktikan_kelas.map((kelas) => (
                               <TableRow key={kelas.id}>
                                 <TableCell>
-                                  {kelas.kelaspraktikum.nama}
+                                  {kelas.kelas.nama}
                                 </TableCell>
                                 <TableCell>
-                                  {kelas.kelaspraktikum.asisten.nama}
+                                  {kelas.kelas.asisten.nama}
                                 </TableCell>
                                 <TableCell>{kelas.perangkat}</TableCell>
                               </TableRow>
