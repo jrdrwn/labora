@@ -11,6 +11,14 @@ import {
   ResponsiveModalTrigger,
 } from '@/components/ui/expansions/responsive-modal';
 import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { AlertCircle, Eye, LinkIcon, User2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -50,9 +58,11 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
               </Badge>
             </div>
           </div>
+        </div>
+        <div>
           <div className="mb-2">
             <span className="font-medium text-muted-foreground">
-              Komitmen URL
+              Komitmen
             </span>
             <div className="flex items-center gap-1">
               <LinkIcon className="h-4 w-4 text-muted-foreground" />
@@ -60,44 +70,78 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
                 href={asisten.komitmen_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-primary underline"
+                className="break-all text-primary underline line-clamp-1"
               >
                 {asisten.komitmen_url}
               </Link>
             </div>
           </div>
-        </div>
-        <div>
           <div className="mb-2">
             <span className="font-medium text-muted-foreground">
-              Mata Kuliah Pilihan
+              Dokumen pendukung
             </span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {asisten.mata_kuliah_pilihan.map((mk) => (
-                <Badge key={mk.id} variant="outline" className="text-xs">
-                  {mk.kode} - {mk.nama}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div className="mb-2">
-            <span className="font-medium text-muted-foreground">
-              Kelas Praktikum
-            </span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {asisten.kelas.length === 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  Belum ada Kelas
-                </Badge>
-              )}
-              {asisten.kelas.map((k) => (
-                <Badge key={k.nama} variant="secondary" className="text-xs">
-                  {k.nama}
-                </Badge>
-              ))}
+            <div className="flex items-center gap-1">
+              <LinkIcon className="h-4 w-4 text-muted-foreground" />
+              <Link
+                href={asisten.dokumen_pendukung_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all text-primary underline line-clamp-1 "
+              >
+                {asisten.dokumen_pendukung_url}
+              </Link>
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <span className="font-medium text-muted-foreground">Mata Kuliah Pilihan</span>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Kode</TableHead>
+              <TableHead>Nama</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {asisten.mata_kuliah_pilihan.map((mk) => {
+              return (
+                <TableRow key={mk.id}>
+                  <TableCell>{mk.kode}</TableCell>
+                  <TableCell>{mk.nama}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+      <div>
+        <span className="font-medium text-muted-foreground">Kelas</span>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nama</TableHead>
+              <TableHead>Mata Kuliah</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {asisten.kelas.map((kelas) => {
+              return (
+                <TableRow key={kelas.id}>
+                  <TableCell>{kelas.nama}</TableCell>
+                  <TableCell>{kelas.mata_kuliah.nama}</TableCell>
+                </TableRow>
+              );
+            })}
+            {asisten.kelas.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center text-muted-foreground">
+                  Tidak ada kelas yang terdaftar
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -10,8 +10,8 @@ export const kelas = new Hono().basePath('/kelas');
 kelas.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const kelas = await prisma.kelas.findMany({
-    skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
-    take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
+    // skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
+    // take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
     where: {
       nama: {
         search: c.req.query('q') ? String(c.req.query('q')) : undefined,

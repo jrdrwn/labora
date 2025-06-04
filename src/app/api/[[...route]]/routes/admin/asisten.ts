@@ -29,6 +29,13 @@ asisten.get('/', async (c) => {
         select: {
           id: true,
           nama: true,
+          mata_kuliah: {
+            select: {
+              id: true,
+              nama: true,
+              kode: true,
+            },
+          },
         },
       },
     },
@@ -45,16 +52,15 @@ asisten.get('/', async (c) => {
         id: true,
         kode: true,
         nama: true,
-      }
-    })
+      },
+    });
     return {
       ...a,
-      mata_kuliah_pilihan
-    }
-  })
+      mata_kuliah_pilihan,
+    };
+  });
 
   const asistenWithMataKuliah = await Promise.all(post_asisten);
-
 
   return c.json({
     status: true,
@@ -105,15 +111,54 @@ asisten.put(
       if (!kelas) {
         return c.json({ status: false, message: 'Kelas not found' }, 404);
       }
-    }
 
-    if (json.update.kelas_id) {
+      if (kelas.asisten_id && kelas.asisten_id !== json.where.asisten_id) {
+        return c.json(
+          { status: false, message: 'Kelas already has an assistant' },
+          400,
+        );
+      }
+
+      const kelasByAsisten = await prisma.kelas.findFirst({
+        where: {
+          asisten_id: json.where.asisten_id,
+        },
+      });
+
+      if (kelasByAsisten) {
+        await prisma.kelas.update({
+          where: {
+            id: kelasByAsisten.id,
+          },
+          data: {
+            asisten_id: null,
+          },
+        });
+      }
+
       await prisma.kelas.update({
         where: {
           id: json.update.kelas_id,
         },
         data: {
           asisten_id: json.where.asisten_id,
+        },
+      });
+    } else if (json.update.kelas_id === null) {
+      const kelas = await prisma.kelas.findFirst({
+        where: {
+          asisten_id: json.where.asisten_id,
+        },
+      });
+      if (!kelas) {
+        return c.json({ status: false, message: 'Kelas not found' }, 404);
+      }
+      await prisma.kelas.update({
+        where: {
+          id: kelas.id,
+        },
+        data: {
+          asisten_id: null,
         },
       });
     }
@@ -178,6 +223,58 @@ asisten.delete('/', async (c) => {
     202,
   );
 });
+
+asisten.get(
+  '/kelas',
+  zValidator(
+    'query',
+    z.object({
+      asisten_id: z.coerce.number().optional(),
+    }),
+  ),
+  async (c) => {
+    const query = c.req.valid('query');
+
+    const asisten = await prisma.asisten.findFirst({
+      where: {
+        id: query.asisten_id,
+      },
+    });
+
+    const kelas = await prisma.kelas.findMany({
+      where: {
+        mata_kuliah: {
+          kode: {
+            in: asisten?.mata_kuliah_pilihan as string[],
+          },
+        },
+      },
+      select: {
+        id: true,
+        nama: true,
+        asisten: {
+          select: {
+            id: true,
+            nama: true,
+            nim: true,
+          },
+        },
+        mata_kuliah: {
+          select: {
+            id: true,
+            nama: true,
+            kode: true,
+          },
+        },
+      },
+    });
+
+    return c.json({
+      status: true,
+      data: kelas,
+    });
+  },
+);
 
 asisten.get('/:id', async (c) => {
   const asistenId = +c.req.param('id');

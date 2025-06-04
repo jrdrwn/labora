@@ -26,6 +26,7 @@ import EditFormAsistenButton from '../edit-form';
 export type Kelas = {
   id: number;
   nama: string;
+  mata_kuliah: MataKuliah;
 };
 
 export type MataKuliah = {
@@ -101,11 +102,13 @@ export const columns: ColumnDef<Asisten>[] = [
     header: 'Email',
   },
   {
+    accessorKey: 'kelas',
     header: 'Kelas',
     cell: ({ row }) => {
       const kelas = row.original.kelas;
       return (
         <div className="flex flex-col">
+          {!kelas.length && "-" }
           {kelas.map((k) => (
             <span key={k.id}>{k.nama}</span>
           ))}
