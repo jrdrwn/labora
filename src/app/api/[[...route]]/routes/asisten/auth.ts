@@ -90,6 +90,9 @@ auth.post(
         .array(z.string())
         .min(1, 'Mata kuliah praktikum is required'),
       komitmen_url: z.string().url('Komitmen URL must be a valid URL'),
+      dokumen_pendukung_url: z
+        .string()
+        .optional(),
     }),
   ),
   async (c) => {
@@ -107,12 +110,7 @@ auth.post(
     const event = await prisma.event.findFirst({
       where: {
         jenis: EventType.pendaftaran_asisten,
-        mulai: {
-          lte: new Date(),
-        },
-        selesai: {
-          gte: new Date(),
-        },
+        is_aktif: true,
       },
       orderBy: {
         mulai: 'desc',
@@ -131,6 +129,7 @@ auth.post(
         status: AsistenStatus.diproses,
         mata_kuliah_pilihan: json.mata_kuliah_praktikum,
         komitmen_url: json.komitmen_url,
+        dokumen_pendukung_url: json.dokumen_pendukung_url,
       },
     });
     return c.json(
@@ -149,6 +148,16 @@ auth.get('/me', async (c) => {
     where: {
       id: jwtPayload.sub,
     },
+    select: {
+      id: true,
+      nim: true,
+      nama: true,
+      email: true,
+      status: true,
+      mata_kuliah_pilihan: true,
+      komitmen_url: true,
+      event: true,
+    },
   });
 
   if (!asisten) {
@@ -161,25 +170,25 @@ auth.get('/me', async (c) => {
     );
   }
 
-  let event = null;
-  if (asisten.event_id) {
-    event = await prisma.event.findFirst({
-      where: {
-        id: asisten.event_id,
-      },
-    });
-  }
-
   // Data respons yang akan dikembalikan
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const responseData: any = {
-    event_id: event?.id ?? null,
-    status: asisten.status,
-    komitmen_url: asisten.komitmen_url,
+    ...asisten,
   };
 
-  if (asisten.status === 'diproses') {
-    responseData.mata_kuliah_pilihan = asisten.mata_kuliah_pilihan;
-  }
+  const mata_kuliah = await prisma.mata_kuliah.findMany({
+    where: {
+      kode: {
+        in: asisten.mata_kuliah_pilihan as string[],
+      },
+    },
+    select: {
+      id: true,
+      nama: true,
+      kode: true,
+    },
+  });
+  responseData.mata_kuliah_pilihan = mata_kuliah;
 
   if (asisten.status === 'diterima') {
     const kelas = await prisma.kelas.findMany({
@@ -204,3 +213,17 @@ auth.get('/me', async (c) => {
 
   return c.json({ status: true, data: responseData }, 200);
 });
+
+auth.get('/mata-kuliah', async (c) => {
+  const mataKuliah = await prisma.mata_kuliah.findMany({
+    select: {
+      id: true,
+      nama: true,
+      kode: true,
+    },
+  });
+
+  // TODO: filter mata kuliah berdasarkan data asisten
+
+  return c.json({ status: true, data: mataKuliah }, 200);
+})
