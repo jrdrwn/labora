@@ -70,12 +70,12 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
         <div>
           <div className="mb-2">
             <span className="font-medium text-muted-foreground">
-              Mata Kuliah Praktikum
+              Mata Kuliah Pilihan
             </span>
             <div className="mt-1 flex flex-wrap gap-1">
-              {asisten.pre_mata_kuliah_praktikum.map((mk) => (
-                <Badge key={mk} variant="outline" className="text-xs">
-                  {mk}
+              {asisten.mata_kuliah_pilihan.map((mk) => (
+                <Badge key={mk.id} variant="outline" className="text-xs">
+                  {mk.kode} - {mk.nama}
                 </Badge>
               ))}
             </div>
@@ -85,12 +85,12 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
               Kelas Praktikum
             </span>
             <div className="mt-1 flex flex-wrap gap-1">
-              {asisten.kelaspraktikum.length === 0 && (
+              {asisten.kelas.length === 0 && (
                 <Badge variant="secondary" className="text-xs">
                   Belum ada Kelas
                 </Badge>
               )}
-              {asisten.kelaspraktikum.map((k) => (
+              {asisten.kelas.map((k) => (
                 <Badge key={k.nama} variant="secondary" className="text-xs">
                   {k.nama}
                 </Badge>

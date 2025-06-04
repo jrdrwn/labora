@@ -28,15 +28,22 @@ export type Kelas = {
   nama: string;
 };
 
+export type MataKuliah = {
+  id: number;
+  nama: string;
+  kode: string;
+}
+
 export type Asisten = {
   id: number;
   nama: string;
   nim: string;
   email: string;
   status: string;
-  pre_mata_kuliah_praktikum: string[];
+  mata_kuliah_pilihan: MataKuliah[];
   komitmen_url: string;
-  kelaspraktikum: Kelas[];
+  dokumen_pendukung_url: string;
+  kelas: Kelas[];
 };
 
 export const columns: ColumnDef<Asisten>[] = [
@@ -94,9 +101,9 @@ export const columns: ColumnDef<Asisten>[] = [
     header: 'Email',
   },
   {
-    header: 'Kelas Praktikum',
+    header: 'Kelas',
     cell: ({ row }) => {
-      const kelas = row.original.kelaspraktikum;
+      const kelas = row.original.kelas;
       return (
         <div className="flex flex-col">
           {kelas.map((k) => (

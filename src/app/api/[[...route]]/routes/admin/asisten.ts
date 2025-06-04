@@ -23,6 +23,7 @@ asisten.get('/', async (c) => {
       email: true,
       status: true,
       mata_kuliah_pilihan: true,
+      dokumen_pendukung_url: true,
       komitmen_url: true,
       kelas: {
         select: {
@@ -33,9 +34,31 @@ asisten.get('/', async (c) => {
     },
   });
 
+  const post_asisten = asisten.map(async (a) => {
+    const mata_kuliah_pilihan = await prisma.mata_kuliah.findMany({
+      where: {
+        kode: {
+          in: a.mata_kuliah_pilihan as string[],
+        },
+      },
+      select: {
+        id: true,
+        kode: true,
+        nama: true,
+      }
+    })
+    return {
+      ...a,
+      mata_kuliah_pilihan
+    }
+  })
+
+  const asistenWithMataKuliah = await Promise.all(post_asisten);
+
+
   return c.json({
     status: true,
-    data: asisten,
+    data: asistenWithMataKuliah,
   });
 });
 
