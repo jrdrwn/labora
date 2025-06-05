@@ -250,6 +250,8 @@ function EditCell({
             kehadiran_id: praktikan.kehadiran.find(
               (dp) => dp.laporan.id === laporan.id,
             )?.id,
+            laporan_id: laporan.id,
+            praktikan_id: praktikan.id,
           },
           update: {
             tipe: value,

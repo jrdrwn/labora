@@ -208,7 +208,9 @@ kehadiran.put(
     'json',
     z.object({
       where: z.object({
-        kehadiran_id: z.number().int().min(1, 'Kehadiran ID is required'),
+        kehadiran_id: z.number().int().min(1, 'Kehadiran ID is required').optional(),
+        laporan_id: z.number().int().min(1, 'Laporan ID is required').optional(),
+        praktikan_id: z.number().int().min(1, 'Praktikan ID is required').optional(),
       }),
       update: z.object({
         tipe: z.nativeEnum(KehadiranType, {
@@ -224,7 +226,15 @@ kehadiran.put(
 
     const kehadiran = await prisma.kehadiran.findFirst({
       where: {
-        id: json.where.kehadiran_id,
+        OR: [
+          {
+            id: json.where.kehadiran_id,
+          },
+          {
+            laporan_id: json.where.laporan_id,
+            praktikan_id: json.where.praktikan_id,
+          },
+        ],
       },
     });
 
@@ -240,7 +250,7 @@ kehadiran.put(
 
     await prisma.kehadiran.update({
       where: {
-        id: json.where.kehadiran_id,
+        id: kehadiran.id,
       },
       data: json.update,
     });
