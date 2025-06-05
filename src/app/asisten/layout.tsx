@@ -45,6 +45,10 @@ export default async function AsistenLayout({
             href: '/asisten',
           },
           {
+            title: 'Laporan',
+            href: '/asisten/laporan',
+          },
+          {
             title: 'Kehadiran',
             href: '/asisten/kehadiran',
           },
