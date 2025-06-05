@@ -173,10 +173,7 @@ export function FilterByKelasButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [
-                      row.getValue('kelas_nama'),
-                      row,
-                    ]),
+                    .rows.map((row) => [row.getValue('kelas_nama'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -186,9 +183,7 @@ export function FilterByKelasButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table
-                            .getColumn('kelas_nama')
-                            ?.getFilterValue(),
+                          table.getColumn('kelas_nama')?.getFilterValue(),
                         )
                           ? (
                               table
@@ -279,13 +274,17 @@ export function FilterByStatusButton<TData>({
                             checked
                               ? [...prev, row.getValue('is_dilaksanakan')]
                               : prev.filter(
-                                  (c: string) => c !== row.getValue('is_dilaksanakan'),
+                                  (c: string) =>
+                                    c !== row.getValue('is_dilaksanakan'),
                                 ),
                           );
                       }}
                       id={`filter-dilaksanakan-${row.id}`}
                     />
-                    <label className="ml-2" htmlFor={`filter-dilaksanakan-${row.id}`}>
+                    <label
+                      className="ml-2"
+                      htmlFor={`filter-dilaksanakan-${row.id}`}
+                    >
                       {row.getValue('is_dilaksanakan') ? 'Sudah' : 'Belum'}
                     </label>
                   </CommandItem>

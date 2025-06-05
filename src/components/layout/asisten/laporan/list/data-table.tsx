@@ -41,7 +41,7 @@ import { useState } from 'react';
 import {
   FilterColumnsButton,
   FilterKelasInput,
-  SelectRowsActionButton
+  SelectRowsActionButton,
 } from './utils';
 
 interface DataTableProps<TData, TValue> {

@@ -31,8 +31,6 @@ import { z } from 'zod';
 
 import { Laporan } from './list/columns';
 
-
-
 const formSchema = z.object({
   where: z.object({
     laporan_id: z.number().int().min(1, 'ID laporan harus diisi'),
@@ -42,8 +40,6 @@ const formSchema = z.object({
     bukti_pertemuan_url: z.string().url('URL harus valid'),
   }),
 });
-
-
 
 function EditFormLaporan({
   defaultValues,
@@ -67,8 +63,6 @@ function EditFormLaporan({
       },
     },
   });
-
-
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const res = await fetch('/api/asisten/laporan', {
@@ -143,7 +137,11 @@ function EditFormLaporan({
   );
 }
 
-export default function EditFormLaporanButton({ laporan }: { laporan: Laporan }) {
+export default function EditFormLaporanButton({
+  laporan,
+}: {
+  laporan: Laporan;
+}) {
   const [open, setOpen] = useState(false);
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
@@ -163,7 +161,10 @@ export default function EditFormLaporanButton({ laporan }: { laporan: Laporan })
             Fill in the details to edit a laporan.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormLaporan defaultValues={laporan} onOpenChange={handleOpenChange} />
+        <EditFormLaporan
+          defaultValues={laporan}
+          onOpenChange={handleOpenChange}
+        />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

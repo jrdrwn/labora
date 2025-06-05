@@ -90,9 +90,7 @@ auth.post(
         .array(z.string())
         .min(1, 'Mata kuliah praktikum is required'),
       komitmen_url: z.string().url('Komitmen URL must be a valid URL'),
-      dokumen_pendukung_url: z
-        .string()
-        .optional(),
+      dokumen_pendukung_url: z.string().optional(),
     }),
   ),
   async (c) => {
@@ -226,4 +224,4 @@ auth.get('/mata-kuliah', async (c) => {
   // TODO: filter mata kuliah berdasarkan data asisten
 
   return c.json({ status: true, data: mataKuliah }, 200);
-})
+});

@@ -75,9 +75,7 @@ const formSchema = z.object({
   }),
   update: z.object({
     status: z.string(),
-    kelas_id: z.coerce
-      .number()
-      .nullable(),
+    kelas_id: z.coerce.number().nullable(),
   }),
 });
 
@@ -275,7 +273,7 @@ function EditFormAsisten({
             type="button"
             size={'icon'}
             onClick={() => {
-              form.reset()
+              form.reset();
               form.setValue('update.kelas_id', null);
               form.setValue('update.status', 'diproses');
             }}

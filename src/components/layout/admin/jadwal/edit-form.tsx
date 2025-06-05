@@ -147,10 +147,10 @@ function EditFormJadwal({
           jadwal_id: data.where.jadwal_id,
         },
         update: {
-            ruang_id: data.update.ruang_id,
-            jam_mulai: data.update.jam_mulai,
-            jam_selesai: data.update.jam_selesai,
-            tanggal_mulai: data.update.tanggal_mulai,
+          ruang_id: data.update.ruang_id,
+          jam_mulai: data.update.jam_mulai,
+          jam_selesai: data.update.jam_selesai,
+          tanggal_mulai: data.update.tanggal_mulai,
         },
       }),
     });

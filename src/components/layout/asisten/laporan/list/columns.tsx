@@ -111,8 +111,12 @@ export const columns: ColumnDef<Laporan>[] = [
     cell: ({ row }) => {
       const url = row.original.bukti_pertemuan_url;
       return (
-        <Link href={url ? url : '#'} target="_blank" className='hover:underline italic'>
-            {url ? 'Lihat Bukti' : 'Tidak Ada Bukti'}
+        <Link
+          href={url ? url : '#'}
+          target="_blank"
+          className="italic hover:underline"
+        >
+          {url ? 'Lihat Bukti' : 'Tidak Ada Bukti'}
         </Link>
       );
     },

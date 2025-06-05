@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+
 import LoginPage from './(login)/login/page';
 
 export default async function AsistenLayout({
@@ -11,10 +12,10 @@ export default async function AsistenLayout({
 }: {
   children: React.ReactNode;
 }) {
-    const _cookies = await cookies();
-    if (!_cookies.get('token')?.value) {
-      return <LoginPage />;
-    }
+  const _cookies = await cookies();
+  if (!_cookies.get('token')?.value) {
+    return <LoginPage />;
+  }
   return (
     <>
       <Header

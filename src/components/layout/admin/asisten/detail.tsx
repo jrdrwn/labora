@@ -61,16 +61,14 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
         </div>
         <div>
           <div className="mb-2">
-            <span className="font-medium text-muted-foreground">
-              Komitmen
-            </span>
+            <span className="font-medium text-muted-foreground">Komitmen</span>
             <div className="flex items-center gap-1">
               <LinkIcon className="h-4 w-4 text-muted-foreground" />
               <Link
                 href={asisten.komitmen_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-primary underline line-clamp-1"
+                className="line-clamp-1 break-all text-primary underline"
               >
                 {asisten.komitmen_url}
               </Link>
@@ -86,7 +84,7 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
                 href={asisten.dokumen_pendukung_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-primary underline line-clamp-1 "
+                className="line-clamp-1 break-all text-primary underline"
               >
                 {asisten.dokumen_pendukung_url}
               </Link>
@@ -95,7 +93,9 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
         </div>
       </div>
       <div>
-        <span className="font-medium text-muted-foreground">Mata Kuliah Pilihan</span>
+        <span className="font-medium text-muted-foreground">
+          Mata Kuliah Pilihan
+        </span>
         <Table>
           <TableHeader>
             <TableRow>
@@ -135,7 +135,10 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
             })}
             {asisten.kelas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={2}
+                  className="text-center text-muted-foreground"
+                >
                   Tidak ada kelas yang terdaftar
                 </TableCell>
               </TableRow>

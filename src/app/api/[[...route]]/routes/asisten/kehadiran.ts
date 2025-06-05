@@ -208,9 +208,21 @@ kehadiran.put(
     'json',
     z.object({
       where: z.object({
-        kehadiran_id: z.number().int().min(1, 'Kehadiran ID is required').optional(),
-        laporan_id: z.number().int().min(1, 'Laporan ID is required').optional(),
-        praktikan_id: z.number().int().min(1, 'Praktikan ID is required').optional(),
+        kehadiran_id: z
+          .number()
+          .int()
+          .min(1, 'Kehadiran ID is required')
+          .optional(),
+        laporan_id: z
+          .number()
+          .int()
+          .min(1, 'Laporan ID is required')
+          .optional(),
+        praktikan_id: z
+          .number()
+          .int()
+          .min(1, 'Praktikan ID is required')
+          .optional(),
       }),
       update: z.object({
         tipe: z.nativeEnum(KehadiranType, {

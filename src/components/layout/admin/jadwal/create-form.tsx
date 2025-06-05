@@ -113,7 +113,7 @@ function CreateFormJadwal({
       jam_mulai: '00:00',
       jam_selesai: '23:23',
       jumlah_pertemuan: 1,
-      tanggal_mulai: new Date().toISOString().split('T')[0]
+      tanggal_mulai: new Date().toISOString().split('T')[0],
     },
   });
 

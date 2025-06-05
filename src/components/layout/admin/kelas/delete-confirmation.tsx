@@ -20,12 +20,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Trash2 } from 'lucide-react';
-
 import { useGetCookie } from 'cookies-next/client';
+import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
 import { Kelas } from './list/columns';
 
 export default function DeleteConfirmationButton({
@@ -33,7 +33,7 @@ export default function DeleteConfirmationButton({
 }: {
   listKelas: Kelas[];
 }) {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
   };
@@ -106,7 +106,9 @@ export default function DeleteConfirmationButton({
             <ResponsiveModalClose asChild>
               <Button variant={'outline'}>Cancel</Button>
             </ResponsiveModalClose>
-            <Button variant="destructive" onClick={() => onSubmit(listKelas)}>Delete</Button>
+            <Button variant="destructive" onClick={() => onSubmit(listKelas)}>
+              Delete
+            </Button>
           </ResponsiveModalFooter>
         </ResponsiveModalContent>
       </ResponsiveModal>

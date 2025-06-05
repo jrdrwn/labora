@@ -231,7 +231,7 @@ export const MultiSelect = React.forwardRef<
                         {IconComponent && (
                           <IconComponent className="mr-2 h-4 w-4" />
                         )}
-                        <span className="max-w-3xs overflow-hidden text-ellipsis whitespace-nowrap text-left">
+                        <span className="max-w-3xs overflow-hidden text-left text-ellipsis whitespace-nowrap">
                           {option?.label}
                         </span>
                         <XCircle

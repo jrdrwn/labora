@@ -25,7 +25,6 @@ import {
 import { Table } from '@tanstack/react-table';
 import { ChevronDown, Columns, Download, ListFilter } from 'lucide-react';
 
-
 interface FilterkelasInputProps<TData> {
   table: Table<TData>;
 }
@@ -94,10 +93,7 @@ export function FilterByMataKuliahButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [
-                      row.getValue('mata_kuliah_nama'),
-                      row,
-                    ]),
+                    .rows.map((row) => [row.getValue('mata_kuliah_nama'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -107,9 +103,7 @@ export function FilterByMataKuliahButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table
-                            .getColumn('mata_kuliah_nama')
-                            ?.getFilterValue(),
+                          table.getColumn('mata_kuliah_nama')?.getFilterValue(),
                         )
                           ? (
                               table
@@ -127,14 +121,10 @@ export function FilterByMataKuliahButton<TData>({
                           .getColumn('mata_kuliah_nama')
                           ?.setFilterValue(
                             checked
-                              ? [
-                                  ...prev,
-                                  row.getValue('mata_kuliah_nama'),
-                                ]
+                              ? [...prev, row.getValue('mata_kuliah_nama')]
                               : prev.filter(
                                   (c: string) =>
-                                    c !==
-                                    row.getValue('mata_kuliah_nama'),
+                                    c !== row.getValue('mata_kuliah_nama'),
                                 ),
                           );
                       }}

@@ -110,9 +110,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     cell: ({ row }) => {
       const isDilaksanakan = row.original.is_dilaksanakan;
       return (
-        <span className="capitalize">
-          {isDilaksanakan ?  'Sudah': 'Belum'}
-        </span>
+        <span className="capitalize">{isDilaksanakan ? 'Sudah' : 'Belum'}</span>
       );
     },
   },

@@ -33,7 +33,7 @@ export type MataKuliah = {
   id: number;
   nama: string;
   kode: string;
-}
+};
 
 export type Asisten = {
   id: number;
@@ -108,7 +108,7 @@ export const columns: ColumnDef<Asisten>[] = [
       const kelas = row.original.kelas;
       return (
         <div className="flex flex-col">
-          {!kelas.length && "-" }
+          {!kelas.length && '-'}
           {kelas.map((k) => (
             <span key={k.id}>{k.nama}</span>
           ))}
