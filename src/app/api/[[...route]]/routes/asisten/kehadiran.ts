@@ -158,6 +158,16 @@ kehadiran.post(
       );
     }
 
+    if (!laporan.judul || !laporan.bukti_pertemuan_url) {
+      return c.json(
+        {
+          status: false,
+          message: 'Laporan must have a title and meeting proof',
+        },
+        400,
+      );
+    }
+
     const kehadiran = await prisma.kehadiran.findFirst({
       where: {
         laporan_id: json.laporan_id,
