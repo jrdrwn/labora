@@ -1,52 +1,28 @@
+import Prefix from '@/components/layout/asisten/core/Prefix';
 import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { cookies } from 'next/headers';
 
-export default function PraktikanLayout({
+import LoginPage from './login/page';
+
+export default async function PraktikanLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const _cookies = await cookies();
+  if (!_cookies.get('token')?.value) {
+    return <LoginPage />;
+  }
   return (
     <>
       <Header
         suffix={'Labora'}
-        prefix={
-          <>
-            <Button variant={'secondary'} className="rounded-full">
-              Ganti Perangkat
-            </Button>
-            <Button variant={'secondary'} className="rounded-full">
-              Ganti Kelas
-            </Button>
-            <Link href={'/praktikan/event'}>
-              <Button variant={'secondary'} className="rounded-full">
-                Event
-              </Button>
-            </Link>
-            <Button variant={'outline'} className="rounded-full px-2">
-              Praktikan
-              <Avatar className="size-6">
-                <AvatarImage
-                  src={
-                    'https://images.unsplash.com/photo-1733621770053-9b1a5f433a8c'
-                  }
-                />
-                <AvatarFallback>LB</AvatarFallback>
-              </Avatar>
-            </Button>
-          </>
-        }
+        prefix={<Prefix />}
         menus={[
           {
             title: 'Overview',
             href: '/praktikan',
-          },
-          {
-            title: 'Jadwal Praktikum',
-            href: '/praktikan/jadwal',
           },
         ]}
       />

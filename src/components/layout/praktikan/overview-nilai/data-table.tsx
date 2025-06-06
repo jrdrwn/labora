@@ -104,22 +104,6 @@ export function DataTable<TData, TValue>({
                 }
               </TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell colSpan={3} className="text-right">
-                <strong>Total nilai:</strong>
-              </TableCell>
-              <TableCell colSpan={1} className="text-center">
-                {/* TODO: buat total nilai  */}
-                {
-                  (data as Penilaian[]).filter(
-                    (data) =>
-                      data.detail.filter(
-                        (detail) => detail.tipe === 'responsi',
-                      )[0]?.nilai,
-                  )[0]?.detail[0].nilai
-                }
-              </TableCell>
-            </TableRow>
           </TableBody>
         </Table>
       </div>

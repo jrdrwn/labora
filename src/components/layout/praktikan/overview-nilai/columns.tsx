@@ -32,7 +32,7 @@ export const columns: ColumnDef<Penilaian>[] = [
     cell: ({ row }) => {
       const details = row.original.detail;
       return (
-        details.filter((detail) => detail.tipe === 'pretest')[0].nilai || 0
+        details.filter((detail) => detail.tipe === 'pretest')[0]?.nilai || 0
       );
     },
   },
@@ -43,7 +43,7 @@ export const columns: ColumnDef<Penilaian>[] = [
     cell: ({ row }) => {
       const details = row.original.detail;
       return (
-        details.filter((detail) => detail.tipe === 'praktikum')[0].nilai || 0
+        details.filter((detail) => detail.tipe === 'praktikum')[0]?.nilai || 0
       );
     },
   },
@@ -54,7 +54,7 @@ export const columns: ColumnDef<Penilaian>[] = [
     cell: ({ row }) => {
       const details = row.original.detail;
       return (
-        details.filter((detail) => detail.tipe === 'laporan')[0].nilai || 0
+        details.filter((detail) => detail.tipe === 'laporan')[0]?.nilai || 0
       );
     },
   },

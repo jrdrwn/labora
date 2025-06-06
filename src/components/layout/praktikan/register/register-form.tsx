@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { setCookie } from 'cookies-next/client';
+import { useGetCookie } from 'cookies-next/client';
 import {
   BadgeAlert,
   BadgeCheck,
@@ -57,205 +57,74 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const DATA_FAKE = [
-  {
-    id: 1,
-    nama: 'Matematika Dasar',
-    kode: 'MK001',
-    kelas_praktikum: [
-      {
-        id: 1,
-        nama: 'MD - Kelas A',
-        jadwal: {
-          hari: 'Senin',
-          jam: '08:00 - 10:00',
-          ruang: 'Ruang Praktikum 1',
-        },
-        asisten: {
-          id: 1,
-          nama: 'Budi Santoso',
-          nim: '223010501001',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 2,
-        nama: 'MD - Kelas B',
-        jadwal: {
-          hari: 'Selasa',
-          jam: '10:00 - 12:00',
-          ruang: 'Ruang Praktikum 2',
-        },
-        asisten: {
-          id: 2,
-          nama: 'Siti Aminah',
-          nim: '223010501002',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 3,
-        nama: 'MD - Kelas C',
-        jadwal: {
-          hari: 'Rabu',
-          jam: '13:00 - 15:00',
-          ruang: 'Ruang Praktikum 3',
-        },
-        asisten: {
-          id: 3,
-          nama: 'Andi Wijaya',
-          nim: '223010501003',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-    ],
-  },
-  {
-    id: 2,
-    nama: 'Fisika Dasar',
-    kode: 'MK002',
-    kelas_praktikum: [
-      {
-        id: 1,
-        nama: 'Kelas A',
-        jadwal: {
-          hari: 'Senin',
-          jam: '08:00 - 10:00',
-          ruang: 'Ruang Praktikum 1',
-        },
-        asisten: {
-          id: 1,
-          nama: 'Budi Santoso',
-          nim: '223010501001',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 2,
-        nama: 'Kelas B',
-        jadwal: {
-          hari: 'Selasa',
-          jam: '10:00 - 12:00',
-          ruang: 'Ruang Praktikum 2',
-        },
-        asisten: {
-          id: 2,
-          nama: 'Siti Aminah',
-          nim: '223010501002',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 3,
-        nama: 'Kelas C',
-        jadwal: {
-          hari: 'Rabu',
-          jam: '13:00 - 15:00',
-          ruang: 'Ruang Praktikum 3',
-        },
-        asisten: {
-          id: 3,
-          nama: 'Andi Wijaya',
-          nim: '223010501003',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-    ],
-  },
-  {
-    id: 3,
-    nama: 'Kimia Dasar',
-    kode: 'MK003',
-    kelas_praktikum: [
-      {
-        id: 1,
-        nama: 'Kelas A',
-        jadwal: {
-          hari: 'Senin',
-          jam: '08:00 - 10:00',
-          ruang: 'Ruang Praktikum 1',
-        },
-        asisten: {
-          id: 1,
-          nama: 'Budi Santoso',
-          nim: '223010501001',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 2,
-        nama: 'Kelas B',
-        jadwal: {
-          hari: 'Selasa',
-          jam: '10:00 - 12:00',
-          ruang: 'Ruang Praktikum 2',
-        },
-        asisten: {
-          id: 2,
-          nama: 'Siti Aminah',
-          nim: '223010501002',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-      {
-        id: 3,
-        nama: 'Kelas C',
-        jadwal: {
-          hari: 'Rabu',
-          jam: '13:00 - 15:00',
-          ruang: 'Ruang Praktikum 3',
-        },
-        asisten: {
-          id: 3,
-          nama: 'Andi Wijaya',
-          nim: '223010501003',
-        },
-        kuota: {
-          tersisa: 10,
-          total: 20,
-          komputer: 5,
-        },
-      },
-    ],
-  },
-];
+export interface PreKelas {
+  id: number;
+  nama: string;
+  kode: string;
+  kelas: Kelas[];
+}
+
+export interface Kelas {
+  praktikan_kelas: PraktikanKelas[];
+  id: number;
+  nama: string;
+  kapasitas_praktikan: number;
+  jadwal: Jadwal[];
+  asisten: Asisten;
+}
+
+export interface Asisten {
+  id: number;
+  nama: string;
+  nim: string;
+}
+
+export interface Jadwal {
+  id: number;
+  mulai: Date;
+  selesai: Date;
+  is_dilaksanakan: boolean;
+  ruangan: Ruangan;
+}
+
+export interface Ruangan {
+  id: number;
+  nama: string;
+  kapasitas: Kapasitas;
+}
+
+export interface Kapasitas {
+  komputer: number;
+}
+
+export interface PraktikanKelas {
+  id: number;
+  perangkat: string;
+  praktikan_id: number;
+}
+
+export interface Me {
+  event_id: number;
+  kelas: Kela[];
+}
+
+export interface Kela {
+  id: number;
+  nama: string;
+  mata_kuliah: MataKuliah;
+}
+
+export interface MataKuliah {
+  id: number;
+  nama: string;
+  kode: string;
+  perangkat: string;
+}
 
 const formSchema = z.object({
   mata_kuliah_praktikum_id: z.coerce.number().min(1, {
@@ -277,8 +146,11 @@ export default function RegisterForm() {
       kelasPraktikumId: number;
     };
   }>({});
+  const _cookies = useGetCookie();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [_praktikan, setPraktikan] = useState<Me | null>(null);
+  const [preKelas, setPreKelas] = useState<PreKelas[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -288,39 +160,80 @@ export default function RegisterForm() {
     },
   });
 
+  useEffect(() => {
+    if (_cookies('token')) {
+      async function getPraktikan() {
+        const res = await fetch(`/api/praktikan/me`, {
+          headers: {
+            authorization: `Bearer ${_cookies('token')}`,
+          },
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
+          setPraktikan(null);
+        }
+        json.data.kelas.forEach((kelas: Kela) => {
+          setPrevData((prev) => ({
+            ...prev,
+            [kelas.mata_kuliah.id]: {
+              mataKuliahPraktikumId: kelas.mata_kuliah.id,
+              perangkat: kelas.mata_kuliah.perangkat,
+              kelasPraktikumId: kelas.id,
+            },
+          }));
+        });
+        setPraktikan(json.data);
+      }
+
+      async function getPreKelas() {
+        const res = await fetch('/api/praktikan/kelas/pre', {
+          headers: {
+            authorization: `Bearer ${_cookies('token')}`,
+          },
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(
+            `Error: ${json.message || 'Gagal mengambil mata kuliah'}`,
+          );
+          setPreKelas([]);
+        }
+        setPreKelas(json.data);
+      }
+
+      getPraktikan();
+      getPreKelas();
+    }
+  }, [_cookies, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    form.trigger();
-    setPrevData((prev) => ({
-      ...prev,
-      [values.mata_kuliah_praktikum_id]: {
-        mataKuliahPraktikumId: values.mata_kuliah_praktikum_id,
-        perangkat: values.perangkat,
-        kelasPraktikumId: values.kelas_praktikum_id,
-      },
-    }));
-    form.reset();
-    return;
     setLoading(true);
-    const res = await fetch('/api/asisten/register', {
+    const res = await fetch('/api/praktikan/register', {
       method: 'POST',
       body: JSON.stringify(values),
       headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
         'Content-Type': 'application/json',
       },
     });
-    const json = (await res.json()) as {
-      status: boolean;
-      data: { token: string };
-      message: string;
-    };
-    if (res.status === 200) {
-      setCookie('token', json.data.token);
-      toast('Login Berhasil', {
+    if (res.ok) {
+      toast('Pendaftaran Berhasil', {
         icon: <BadgeCheck />,
       });
-      router.push('/asisten');
+      form.trigger();
+      setPrevData((prev) => ({
+        ...prev,
+        [values.mata_kuliah_praktikum_id]: {
+          mataKuliahPraktikumId: values.mata_kuliah_praktikum_id,
+          perangkat: values.perangkat,
+          kelasPraktikumId: values.kelas_praktikum_id,
+        },
+      }));
+      form.reset();
+      router.refresh();
     } else {
-      toast('Login Gagal', {
+      toast.error(`Pendaftaran gagal`, {
         icon: <BadgeAlert />,
       });
     }
@@ -374,17 +287,16 @@ export default function RegisterForm() {
                     }}
                   >
                     <TableCell>
-                      {DATA_FAKE.find(
-                        (d) => d.id === data.mataKuliahPraktikumId,
-                      )?.nama || 'Unknown Matkul'}
+                      {preKelas.find((d) => d.id === data.mataKuliahPraktikumId)
+                        ?.nama || 'Unknown Matkul'}
                     </TableCell>
                     <TableCell>{data.perangkat}</TableCell>
                     <TableCell>
-                      {DATA_FAKE.find(
-                        (d) => d.id === data.mataKuliahPraktikumId,
-                      )?.kelas_praktikum.find(
-                        (kelas) => kelas.id === data.kelasPraktikumId,
-                      )?.nama || 'Unknown Kelas'}
+                      {preKelas
+                        .find((d) => d.id === data.mataKuliahPraktikumId)
+                        ?.kelas.find(
+                          (kelas) => kelas.id === data.kelasPraktikumId,
+                        )?.nama || 'Unknown Kelas'}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -415,7 +327,7 @@ export default function RegisterForm() {
                           )}
                         >
                           {field.value
-                            ? DATA_FAKE.find((data) => data.id === field.value)
+                            ? preKelas.find((data) => data.id === field.value)
                                 ?.nama
                             : 'Select Mata Kuliah Praktikum'}
                           <ChevronsUpDown className="opacity-50" />
@@ -428,7 +340,7 @@ export default function RegisterForm() {
                         <CommandList>
                           <CommandEmpty>No Mata Kuliah found.</CommandEmpty>
                           <CommandGroup>
-                            {DATA_FAKE.map((data) => (
+                            {preKelas.map((data) => (
                               <CommandItem
                                 value={data.id.toString()}
                                 key={data.id}
@@ -514,13 +426,15 @@ export default function RegisterForm() {
                           )}
                         >
                           {field.value
-                            ? DATA_FAKE.find(
-                                (data) =>
-                                  data.id ===
-                                  form.watch('mata_kuliah_praktikum_id'),
-                              )?.kelas_praktikum.find(
-                                (kelas) => kelas.id === field.value,
-                              )?.nama
+                            ? preKelas
+                                .find(
+                                  (data) =>
+                                    data.id ===
+                                    form.watch('mata_kuliah_praktikum_id'),
+                                )
+                                ?.kelas.find(
+                                  (kelas) => kelas.id === field.value,
+                                )?.nama
                             : 'Select Kelas Praktikum'}
                           <ChevronsUpDown className="opacity-50" />
                         </Button>
@@ -532,43 +446,45 @@ export default function RegisterForm() {
                         <CommandList>
                           <CommandEmpty>No Kelas Praktikum found.</CommandEmpty>
                           <CommandGroup>
-                            {DATA_FAKE.find(
-                              (data) =>
-                                data.id ===
-                                form.watch('mata_kuliah_praktikum_id'),
-                            )?.kelas_praktikum.map((kelas) => (
-                              <CommandItem
-                                value={kelas.id.toString()}
-                                key={kelas.id}
-                                onSelect={(value) => {
-                                  form.setValue(
-                                    'kelas_praktikum_id',
-                                    Number(value),
-                                  );
-                                }}
-                              >
-                                Nama: {kelas.nama}
-                                <br />
-                                Kuota: {kelas.kuota.tersisa}/{kelas.kuota.total}
+                            {preKelas
+                              .find(
+                                (data) =>
+                                  data.id ===
+                                  form.watch('mata_kuliah_praktikum_id'),
+                              )
+                              ?.kelas.map((kelas) => (
+                                <CommandItem
+                                  value={kelas.id.toString()}
+                                  key={kelas.id}
+                                  onSelect={(value) => {
+                                    form.setValue(
+                                      'kelas_praktikum_id',
+                                      Number(value),
+                                    );
+                                  }}
+                                >
+                                  Nama: {kelas.nama}
+                                  <br />
+                                  {/* Kuota: {kelas.kuota.tersisa}/{kelas.kuota.total}
                                 <br />
                                 Kuota Komputer: {kelas.kuota.komputer}
                                 <br />
                                 Jadwal: {kelas.jadwal.hari} - {kelas.jadwal.jam}
                                 <br />
                                 Ruang: {kelas.jadwal.ruang}
-                                <br />
-                                Asisten: {kelas.asisten.nama} (
-                                {kelas.asisten.nim})
-                                <Check
-                                  className={cn(
-                                    'ml-auto',
-                                    kelas.id === field.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
+                                <br /> */}
+                                  Asisten: {kelas?.asisten?.nama} (
+                                  {kelas?.asisten?.nim})
+                                  <Check
+                                    className={cn(
+                                      'ml-auto',
+                                      kelas.id === field.value
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
                           </CommandGroup>
                         </CommandList>
                       </Command>

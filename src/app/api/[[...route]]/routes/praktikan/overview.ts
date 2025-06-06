@@ -126,12 +126,15 @@ overview.get('/:kelasId', async (c) => {
         };
       });
 
-      if (detail.length > 0) {
-        penilaian.push({
-          id: laporan.id,
-          detail,
-        });
-      }
+      penilaian.push({
+        id: laporan.id,
+        jadwal: {
+          id: jadwal.id,
+          mulai: jadwal.mulai,
+          selesai: jadwal.selesai,
+        },
+        detail,
+      });
     }
   }
 
