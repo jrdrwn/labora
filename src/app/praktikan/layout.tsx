@@ -1,4 +1,4 @@
-import Prefix from '@/components/layout/asisten/core/Prefix';
+import Prefix from '@/components/layout/praktikan/core/Prefix';
 import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
 import { cookies } from 'next/headers';
