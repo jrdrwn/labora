@@ -123,6 +123,23 @@ laporan.get('/', async (c) => {
         }
       }
 
+      const praktikan = await prisma.praktikan_kelas.findMany({
+        where: {
+          kelas_id: kelas.id,
+        },
+        select: {
+          praktikan: {
+            select: {
+              id: true,
+              nim: true,
+              email: true,
+              nama: true,
+            }
+          },
+          perangkat: true,
+        }
+      });
+
       result.push({
         asisten: {
           id: asisten.id,
@@ -141,6 +158,7 @@ laporan.get('/', async (c) => {
           kode: kelas.mata_kuliah?.kode ?? null,
           kuota_praktikan: kelas.kapasitas_praktikan ?? 0,
         },
+        praktikan,
         laporan: laporanItems,
       });
     }

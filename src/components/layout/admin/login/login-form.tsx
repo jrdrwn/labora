@@ -63,6 +63,7 @@ export default function LoginForm() {
         icon: <BadgeCheck />,
       });
       router.refresh();
+      router.push("/admin")
     } else {
       toast('Login Gagal', {
         icon: <BadgeAlert />,
