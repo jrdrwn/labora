@@ -134,10 +134,10 @@ laporan.get('/', async (c) => {
               nim: true,
               email: true,
               nama: true,
-            }
+            },
           },
           perangkat: true,
-        }
+        },
       });
 
       result.push({

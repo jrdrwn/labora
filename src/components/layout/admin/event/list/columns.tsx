@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,10 +14,8 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import EditFormEventButton from '../edit-form';
 import { StatusSwitch } from './utils';
@@ -86,6 +83,7 @@ export const columns: ColumnDef<Event>[] = [
     },
   },
   {
+    id: 'status',
     accessorKey: 'is_aktif',
     header: 'Status',
     cell: ({ row }) => {
@@ -93,8 +91,9 @@ export const columns: ColumnDef<Event>[] = [
     },
   },
   {
+    id: 'admin',
     accessorKey: 'admin.nama',
-    header: 'Admin Event',
+    header: 'Admin',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
@@ -102,7 +101,7 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     accessorKey: 'jenis',
-    header: 'Jenis Event',
+    header: 'Jenis',
     cell: ({ row }) => {
       const jenis = row.original.jenis;
       return <span className="capitalize">{jenis}</span>;
@@ -181,17 +180,6 @@ export const columns: ColumnDef<Event>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormEventButton event={event} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(event.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Event ID ${event.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

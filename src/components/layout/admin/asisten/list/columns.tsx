@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,10 +14,8 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DetailAsistenButton from '../detail';
 import EditFormAsistenButton from '../edit-form';
@@ -142,17 +139,6 @@ export const columns: ColumnDef<Asisten>[] = [
             <DropdownMenuSeparator />
             <DetailAsistenButton asisten={asisten} />
             <EditFormAsistenButton asisten={asisten} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(asisten.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Asisten ID ${asisten.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

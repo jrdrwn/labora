@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,10 +14,8 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormJadwalButton from '../edit-form';
@@ -66,6 +63,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     enableHiding: false,
   },
   {
+    id: 'ID',
     accessorKey: 'id',
     header: ({ column }) => {
       return (
@@ -85,6 +83,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
+    id: 'ruangan',
     accessorKey: 'ruangan.nama',
     header: 'Ruangan',
     filterFn: (row, id, value) => {
@@ -93,6 +92,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
+    id: 'kelas',
     accessorKey: 'kelas.nama',
     header: 'Kelas',
     filterFn: (row, id, value) => {
@@ -101,6 +101,8 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
+    id: 'status',
+    accessorFn: (row) => (row.is_dilaksanakan ? 'Sudah' : 'Belum'),
     accessorKey: 'is_dilaksanakan',
     header: 'Status',
     filterFn: (row, id, value) => {
@@ -187,17 +189,6 @@ export const columns: ColumnDef<Jadwal>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormJadwalButton jadwal={jadwal} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(jadwal.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Jadwal ID ${jadwal.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
             <DeleteConfirmationButton listJadwal={[jadwal]} />
           </DropdownMenuContent>
         </DropdownMenu>

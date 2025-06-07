@@ -23,6 +23,11 @@ ruangan.get('/', async (c) => {
       id: true,
       nama: true,
       kapasitas: true,
+      _count: {
+        select: {
+          jadwal: true,
+        },
+      },
       admin: {
         select: {
           id: true,

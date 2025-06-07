@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-import { LaporanList, columns } from './columns';
+import { columns, LaporanList } from './columns';
 import { DataTable } from './data-table';
 
 export default async function ListLaporan() {

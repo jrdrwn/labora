@@ -151,7 +151,7 @@ export default function EditFormMataKuliahButton({
       <ResponsiveModalTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <Pencil />
-          Edit Mata Kuliah
+          Edit
         </DropdownMenuItem>
       </ResponsiveModalTrigger>
       <ResponsiveModalContent>

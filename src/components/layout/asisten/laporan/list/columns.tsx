@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,11 +14,9 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 
 import EditFormLaporanButton from '../edit-form';
 
@@ -106,6 +103,7 @@ export const columns: ColumnDef<Laporan>[] = [
     },
   },
   {
+    id: 'bukti pertemuan',
     accessorKey: 'bukti_pertemuan_url',
     header: 'Bukti Pertemuan',
     cell: ({ row }) => {
@@ -152,17 +150,6 @@ export const columns: ColumnDef<Laporan>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormLaporanButton laporan={laporan} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(laporan.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Laporan ID ${laporan.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

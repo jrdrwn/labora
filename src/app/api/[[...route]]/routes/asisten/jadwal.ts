@@ -194,13 +194,21 @@ jadwal.get('/', async (c) => {
   if (me) {
     where = {
       kelas: {
-        asisten_id: jwtPayload.sub,
+        asisten_id: {
+          equals: jwtPayload.sub,
+          not: null,
+        },
       },
     };
   } else {
     where = {
       ruang_id: ruangId,
-      kelas_id: kelasId,
+      kelas: {
+        id: kelasId,
+        asisten_id: {
+          not: null,
+        },
+      },
     };
   }
 

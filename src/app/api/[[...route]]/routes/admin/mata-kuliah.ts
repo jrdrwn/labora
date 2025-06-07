@@ -19,6 +19,11 @@ mataKuliah.get('/', async (c) => {
       admin_id: jwtPayload.sub,
     },
     select: {
+      _count: {
+        select: {
+          kelas: true,
+        },
+      },
       id: true,
       kode: true,
       nama: true,

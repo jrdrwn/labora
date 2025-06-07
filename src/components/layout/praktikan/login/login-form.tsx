@@ -62,6 +62,7 @@ export default function LoginForm() {
       toast('Login Berhasil', {
         icon: <BadgeCheck />,
       });
+      router.refresh();
       router.push('/praktikan');
     } else {
       toast('Login Gagal', {

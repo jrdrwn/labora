@@ -19,6 +19,12 @@ kelas.get('/', async (c) => {
       admin_id: jwtPayload.sub,
     },
     select: {
+      _count: {
+        select: {
+          jadwal: true,
+          praktikan_kelas: true,
+        },
+      },
       id: true,
       nama: true,
       kapasitas_praktikan: true,

@@ -1,8 +1,8 @@
+import Prefix from '@/components/layout/admin/core/Prefix';
 import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
 import { cookies } from 'next/headers';
 
-import Prefix from '@/components/layout/admin/core/Prefix';
 import LoginPage from './(login)/login/page';
 
 export default async function AdminLayout({
@@ -19,9 +19,7 @@ export default async function AdminLayout({
     <>
       <Header
         suffix={'Labora'}
-        prefix={
-          <Prefix />
-        }
+        prefix={<Prefix />}
         menus={[
           {
             title: 'Overview',
