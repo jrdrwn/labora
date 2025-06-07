@@ -22,10 +22,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { Table } from '@tanstack/react-table';
+import { useGetCookie } from 'cookies-next/client';
 import { ChevronDown, Columns, Download, ListFilter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-import DeleteConfirmationButton from '../delete-confirmation';
 import { Event } from './columns';
 
 interface FilterEventInputProps<TData> {
@@ -37,11 +41,9 @@ export function FilterEventInput<TData>({
 }: FilterEventInputProps<TData>) {
   return (
     <Input
-      placeholder="Filter Event..."
-      value={(table.getColumn('nama')?.getFilterValue() as string) ?? ''}
-      onChange={(event) =>
-        table.getColumn('nama')?.setFilterValue(event.target.value)
-      }
+      placeholder="Cari..."
+      value={table.getState().globalFilter ?? ''}
+      onChange={(event) => table.setGlobalFilter(event.target.value)}
       className="max-w-sm"
     />
   );
@@ -68,11 +70,6 @@ export function SelectRowsActionButton<TData>({
               <Download />
               Export
             </DropdownMenuItem>
-            <DeleteConfirmationButton
-              listEvent={table
-                .getFilteredSelectedRowModel()
-                .rows.map((row) => row.original as Event)}
-            />
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -253,3 +250,53 @@ export function FilterColumnsButton<TData>({
     </DropdownMenu>
   );
 }
+
+export const StatusSwitch = ({ event }: { event: Event }) => {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setChecked(event.is_aktif);
+  }, [event.is_aktif]);
+
+  const toggleStatus = async (newStatus: boolean) => {
+    const res = await fetch('/api/admin/event', {
+      method: 'PUT',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        where: {
+          event_id: event.id,
+        },
+        update: {
+          is_aktif: newStatus,
+          mulai: event.mulai,
+          selesai: event.selesai,
+        },
+      }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Event berhasil diperbarui');
+      router.refresh();
+    } else {
+      toast.error(`Error: ${json.message || 'Event memperbarui ruangan'}`);
+      setChecked(!newStatus); // Revert the switch state if the update fails
+    }
+  };
+
+  return (
+    <Switch
+      checked={checked}
+      onCheckedChange={(value) => {
+        // Handle switch change logic here
+        setChecked(value);
+        toggleStatus(value);
+      }}
+      aria-label="Toggle event status"
+    />
+  );
+};

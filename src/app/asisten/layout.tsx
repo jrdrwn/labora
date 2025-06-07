@@ -2,13 +2,20 @@ import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 
-export default function AsistenLayout({
+import LoginPage from './(login)/login/page';
+
+export default async function AsistenLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const _cookies = await cookies();
+  if (!_cookies.get('token')?.value) {
+    return <LoginPage />;
+  }
   return (
     <>
       <Header
@@ -37,6 +44,10 @@ export default function AsistenLayout({
           {
             title: 'Overview',
             href: '/asisten',
+          },
+          {
+            title: 'Laporan',
+            href: '/asisten/laporan',
           },
           {
             title: 'Kehadiran',

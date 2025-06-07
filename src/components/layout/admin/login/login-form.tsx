@@ -62,7 +62,7 @@ export default function LoginForm() {
       toast('Login Berhasil', {
         icon: <BadgeCheck />,
       });
-      router.push('/admin');
+      router.refresh();
     } else {
       toast('Login Gagal', {
         icon: <BadgeAlert />,

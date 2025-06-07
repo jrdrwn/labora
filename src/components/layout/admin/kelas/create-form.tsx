@@ -34,39 +34,84 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
-const MATA_KULIAH_FAKE = [
-  { id: 1, nama: 'Matematika Dasar', kode: 'MK001' },
-  { id: 2, nama: 'Fisika Dasar', kode: 'MK002' },
-  { id: 3, nama: 'Kimia Dasar', kode: 'MK003' },
-];
+interface MataKuliah {
+  id: number;
+  nama: string;
+  kode: string;
+}
 
 const formSchema = z.object({
-  nama: z.string().min(1, 'Nama kelas harus diisi'),
-  kuota_praktikan: z.coerce
+  nama: z.string().min(0, 'Nama kelas harus diisi'),
+  kapasitas_praktikan: z.coerce
     .number()
     .min(1, 'Kuota praktikan harus lebih dari 0'),
-  mata_kuliah_praktikum: z.coerce
+  mata_kuliah_id: z.coerce
     .number()
     .min(1, 'Mata kuliah praktikum harus dipilih'),
 });
 
-function CreateFormKelas() {
+function CreateFormKelas({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+  const [mataKuliah, setMataKuliah] = useState<MataKuliah[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nama: '',
-      kuota_praktikan: 20,
-      mata_kuliah_praktikum: 1,
+      kapasitas_praktikan: 20,
+      mata_kuliah_id: 0,
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  useEffect(() => {
+    async function getMataKuliah() {
+      const res = await fetch('/api/admin/mata-kuliah', {
+        headers: {
+          authorization: `Bearer ${_cookies('token')}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(`Error: ${json.message || 'Gagal mengambil mata kuliah'}`);
+        setMataKuliah([]);
+      }
+      setMataKuliah(json.data);
+    }
+
+    getMataKuliah();
+  }, [_cookies]);
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/kelas', {
+      method: 'POST',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('kelas berhasil dibuat');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal membuat kelas'}`);
+    }
   }
 
   return (
@@ -90,15 +135,19 @@ function CreateFormKelas() {
         />
         <FormField
           control={form.control}
-          name="kuota_praktikan"
+          name="kapasitas_praktikan"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Kuota Praktikan</FormLabel>
+              <FormLabel>Kapasitas Praktikan</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="Masukkan kuota" {...field} />
+                <Input
+                  type="number"
+                  placeholder="Masukkan kapasitas"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
-                Berapa kuota yang akan ditambahkan.
+                Berapa kapasitas yang akan ditambahkan.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -107,7 +156,7 @@ function CreateFormKelas() {
 
         <FormField
           control={form.control}
-          name="mata_kuliah_praktikum"
+          name="mata_kuliah_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Mata Kuliah Praktikum</FormLabel>
@@ -123,7 +172,7 @@ function CreateFormKelas() {
                       )}
                     >
                       {field.value
-                        ? MATA_KULIAH_FAKE.find(
+                        ? mataKuliah.find(
                             (mata_kuliah) => mata_kuliah.id === field.value,
                           )?.nama
                         : 'Select Mata Kuliah'}
@@ -137,15 +186,12 @@ function CreateFormKelas() {
                     <CommandList>
                       <CommandEmpty>No Mata Kuliah found.</CommandEmpty>
                       <CommandGroup>
-                        {MATA_KULIAH_FAKE.map((mata_kuliah) => (
+                        {mataKuliah.map((mata_kuliah) => (
                           <CommandItem
                             value={mata_kuliah.id.toString()}
                             key={mata_kuliah.id}
                             onSelect={(value) => {
-                              form.setValue(
-                                'mata_kuliah_praktikum',
-                                Number(value),
-                              );
+                              form.setValue('mata_kuliah_id', Number(value));
                             }}
                           >
                             {mata_kuliah.nama} ({mata_kuliah.kode})
@@ -181,8 +227,12 @@ function CreateFormKelas() {
 }
 
 export default function CreateFormKelasButton() {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <Button>
           <PlusCircle />
@@ -196,7 +246,7 @@ export default function CreateFormKelasButton() {
             Fill in the details to create a new kelas.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <CreateFormKelas />
+        <CreateFormKelas onOpenChange={handleOpenChange} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

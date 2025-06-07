@@ -10,9 +10,9 @@ export const kelas = new Hono().basePath('/kelas');
 kelas.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
 
-  const kelas = await prisma.kelaspraktikum.findMany({
+  const kelas = await prisma.kelas.findMany({
     where: {
-      kelaspraktikumpraktikan: {
+      praktikan_kelas: {
         some: {
           praktikan_id: jwtPayload.sub,
         },
@@ -21,6 +21,13 @@ kelas.get('/', async (c) => {
     select: {
       id: true,
       nama: true,
+      mata_kuliah: {
+        select: {
+          id: true,
+          nama: true,
+          kode: true,
+        },
+      },
     },
   });
 
@@ -50,19 +57,24 @@ kelas.get('/pre', async (c) => {
     return c.json({ status: false, message: 'KRS not found' }, 404);
   }
 
-  const mata_kuliah_praktikum = await prisma.matakuliahpraktikum.findMany({
+  const mata_kuliah_praktikum = await prisma.mata_kuliah.findMany({
     where: {
       kode: {
-        in: krs.map((k) => k.mkkurKode),
+        in: [...krs.map((k) => k.mkkurKode), '1DCP314032'],
       },
     },
     select: {
       id: true,
       nama: true,
       kode: true,
-      kelaspraktikum: {
+      kelas: {
+        where: {
+          NOT: {
+            asisten: null,
+          },
+        },
         select: {
-          kelaspraktikumpraktikan: {
+          praktikan_kelas: {
             select: {
               id: true,
               perangkat: true,
@@ -71,18 +83,18 @@ kelas.get('/pre', async (c) => {
           },
           id: true,
           nama: true,
-          kuota_praktikan: true,
-          jadwalpraktikum: {
+          kapasitas_praktikan: true,
+          jadwal: {
             select: {
               id: true,
               mulai: true,
               selesai: true,
-              status: true,
-              ruang: {
+              is_dilaksanakan: true,
+              ruangan: {
                 select: {
                   id: true,
                   nama: true,
-                  kuota: true,
+                  kapasitas: true,
                 },
               },
             },

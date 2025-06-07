@@ -1,189 +1,241 @@
 'use client';
 
 import Calendar from '@/components/layout/shared/calendar';
-import { EventSourceInput } from '@fullcalendar/core/index.js';
+import { Badge } from '@/components/ui/badge';
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from '@/components/ui/expansions/responsive-modal';
+import { EventChangeArg, EventSourceInput } from '@fullcalendar/core/index.js';
+import { useGetCookie } from 'cookies-next/client';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function JadwalPage() {
-  const events = JADWAL_PRAKTIKUM_FAKE.map((jadwal) => ({
-    title: jadwal.kelaspraktikum.nama,
-    start: jadwal.mulai,
-    end: jadwal.selesai,
-    color: jadwal.kelaspraktikum.asisten.id === 1 ? '#3b82f6' : '#10b981',
-    editable: jadwal.kelaspraktikum.asisten.id === 1, // Hanya asisten 1 yang bisa mengedit
-    className: 'cursor-pointer',
-    extendedProps: {
-      ...jadwal,
-    },
-    overlap: false,
-  })) as EventSourceInput;
+  const _cookies = useGetCookie();
+  const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
+  const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
+  const [openDetail, setOpenDetail] = useState(false);
+
+  const getJadwalList = useCallback(async () => {
+    const res = await fetch(`/api/asisten/jadwal`, {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengambil jadwal'}`);
+      setJadwalList([]);
+    }
+    setJadwalList(json.data);
+  }, [_cookies]);
+
+  useEffect(() => {
+    getJadwalList();
+  }, [getJadwalList]);
+
+  const handleJadwalChange = async ({
+    jadwal_id,
+    tanggal_mulai,
+    jam_mulai,
+    jam_selesai,
+    info,
+  }: {
+    jadwal_id: number;
+    tanggal_mulai: string;
+    jam_mulai: string;
+    jam_selesai: string;
+    info: EventChangeArg;
+  }) => {
+    const res = await fetch(`/api/asisten/jadwal`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${_cookies('token')}`,
+      },
+      body: JSON.stringify({
+        where: {
+          jadwal_id,
+        },
+        update: {
+          tanggal_mulai,
+          jam_mulai,
+          jam_selesai,
+        },
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengubah jadwal'}`);
+      info.revert(); // Revert the change if error occurs
+      return;
+    }
+    toast.success('jadwal berhasil diubah');
+  };
+
   return (
     <section className="m-8 flex flex-col gap-4 pb-8">
       <Calendar
         className="h-full max-w-full!"
-        events={events}
+        events={
+          jadwalList?.map((jadwal) => ({
+            title: `${jadwal.kelas.nama}`,
+            start: jadwal.mulai,
+            end: jadwal.selesai,
+            color: jadwal.kelas.asisten.id === 1 ? '#3b82f6' : '#10b981',
+            editable: jadwal.kelas.asisten.id === 1, // Hanya asisten 1 yang bisa mengedit
+            className: 'cursor-pointer',
+            extendedProps: {
+              ...jadwal,
+            },
+            overlap: false,
+          })) as EventSourceInput
+        }
         eventClick={(info) => {
-          const jadwal = info.event.extendedProps as JadwalPraktikum;
-          alert(
-            `Jadwal Praktikum:\n\nKelas: ${jadwal.kelaspraktikum.nama}\nAsisten: ${jadwal.kelaspraktikum.asisten.nama} (${jadwal.kelaspraktikum.asisten.nim})\nMata Kuliah: ${jadwal.kelaspraktikum.matakuliahpraktikum.nama}\nRuang: ${jadwal.ruang.nama}\nMulai: ${new Date(jadwal.mulai).toLocaleString()}\nSelesai: ${new Date(jadwal.selesai).toLocaleString()}`,
-          );
+          const jadwal = info.event.extendedProps as Jadwal;
+          setSelectedJadwal(jadwal);
+          setOpenDetail(true);
+          info.jsEvent.preventDefault(); // Prevent default click behavior
         }}
         eventChange={(info) => {
-          const jadwal = info.event.extendedProps as JadwalPraktikum;
-          alert(
-            `Jadwal Praktikum diubah:\n\nKelas: ${jadwal.kelaspraktikum.nama}\nAsisten: ${jadwal.kelaspraktikum.asisten.nama} (${jadwal.kelaspraktikum.asisten.nim})\nMata Kuliah: ${jadwal.kelaspraktikum.matakuliahpraktikum.nama}\nRuang: ${jadwal.ruang.nama}\nMulai: ${new Date(jadwal.mulai).toLocaleString()}\nSelesai: ${new Date(jadwal.selesai).toLocaleString()}`,
-          );
+          const jadwal = info.event.extendedProps as Jadwal;
+          const tanggalMulai = getDateFromDateTime(info.event.start!);
+          const jamMulai = getTimeFromDate(info.event.start!);
+          const jamSelesai = getTimeFromDate(info.event.end!);
+          handleJadwalChange({
+            jadwal_id: jadwal.id,
+            tanggal_mulai: tanggalMulai,
+            jam_mulai: jamMulai,
+            jam_selesai: jamSelesai,
+            info,
+          });
         }}
       />
+      {selectedJadwal && (
+        <JadwalDetail
+          jadwal={selectedJadwal}
+          openDetail={openDetail}
+          setOpenDetail={setOpenDetail}
+        />
+      )}
     </section>
   );
 }
-
-interface JadwalPraktikum {
-  id: number;
-  mulai: string;
-  selesai: string;
-  status: string | null;
-  ruang: {
-    id: number;
-    nama: string;
-  };
-  kelaspraktikum: {
-    id: number;
-    nama: string;
-    asisten: {
-      id: number;
-      nama: string;
-      nim: string;
-    };
-    matakuliahpraktikum: {
-      id: number;
-      kode: string;
-      nama: string;
-    };
-  };
+function getTimeFromDate(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, '0'); // Pastikan 2 digit
+  const minutes = date.getMinutes().toString().padStart(2, '0'); // Pastikan 2 digit
+  return `${hours}:${minutes}`;
 }
 
-const JADWAL_PRAKTIKUM_FAKE: JadwalPraktikum[] = [
-  // Asisten 1: Budi Santoso
-  {
-    id: 1,
-    mulai: '2025-05-01T08:00:00.000Z',
-    selesai: '2025-05-01T10:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 1, nama: 'Lab Komputer 1' },
-    kelaspraktikum: {
-      id: 1,
-      nama: 'Kelas A',
-      asisten: { id: 1, nama: 'Budi Santoso', nim: '223010501001' },
-      matakuliahpraktikum: { id: 1, kode: 'PM001', nama: 'Pemrograman Dasar' },
-    },
-  },
-  {
-    id: 2,
-    mulai: '2025-05-08T08:00:00.000Z',
-    selesai: '2025-05-08T10:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 1, nama: 'Lab Komputer 1' },
-    kelaspraktikum: {
-      id: 1,
-      nama: 'Kelas A',
-      asisten: { id: 1, nama: 'Budi Santoso', nim: '223010501001' },
-      matakuliahpraktikum: { id: 1, kode: 'PM001', nama: 'Pemrograman Dasar' },
-    },
-  },
-  {
-    id: 3,
-    mulai: '2025-05-15T08:00:00.000Z',
-    selesai: '2025-05-15T10:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 1, nama: 'Lab Komputer 1' },
-    kelaspraktikum: {
-      id: 1,
-      nama: 'Kelas A',
-      asisten: { id: 1, nama: 'Budi Santoso', nim: '223010501001' },
-      matakuliahpraktikum: { id: 1, kode: 'PM001', nama: 'Pemrograman Dasar' },
-    },
-  },
+function getDateFromDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Bulan dimulai dari 0
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  // Asisten 2: Siti Aminah
-  {
-    id: 4,
-    mulai: '2025-05-02T09:00:00.000Z',
-    selesai: '2025-05-02T11:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 2, nama: 'Lab Komputer 2' },
-    kelaspraktikum: {
-      id: 2,
-      nama: 'Kelas B',
-      asisten: { id: 2, nama: 'Siti Aminah', nim: '223010501002' },
-      matakuliahpraktikum: { id: 2, kode: 'BD001', nama: 'Basis Data' },
-    },
-  },
-  {
-    id: 5,
-    mulai: '2025-05-09T09:00:00.000Z',
-    selesai: '2025-05-09T11:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 2, nama: 'Lab Komputer 2' },
-    kelaspraktikum: {
-      id: 2,
-      nama: 'Kelas B',
-      asisten: { id: 2, nama: 'Siti Aminah', nim: '223010501002' },
-      matakuliahpraktikum: { id: 2, kode: 'BD001', nama: 'Basis Data' },
-    },
-  },
-  {
-    id: 6,
-    mulai: '2025-05-16T09:00:00.000Z',
-    selesai: '2025-05-16T11:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 2, nama: 'Lab Komputer 2' },
-    kelaspraktikum: {
-      id: 2,
-      nama: 'Kelas B',
-      asisten: { id: 2, nama: 'Siti Aminah', nim: '223010501002' },
-      matakuliahpraktikum: { id: 2, kode: 'BD001', nama: 'Basis Data' },
-    },
-  },
+function JadwalDetail({
+  jadwal,
+  openDetail,
+  setOpenDetail,
+}: {
+  jadwal: Jadwal;
+  openDetail?: boolean;
+  setOpenDetail?: (open: boolean) => void;
+}) {
+  return (
+    <ResponsiveModal open={openDetail || false} onOpenChange={setOpenDetail}>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Detail Jadwal Praktikum</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Berikut adalah detail jadwal praktikum yang dipilih.
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
+        <div className="pt-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Kelas</div>
+              <div className="font-medium">{jadwal.kelas.nama}</div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Asisten</div>
+              <div className="font-medium">
+                {jadwal.kelas.asisten.nama}
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({jadwal.kelas.asisten.nim})
+                </span>
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">
+                Mata Kuliah
+              </div>
+              <div className="font-medium">{jadwal.kelas.mata_kuliah.nama}</div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Ruang</div>
+              <div className="font-medium">{jadwal.ruangan.nama}</div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Mulai</div>
+              <div className="font-medium">
+                {new Date(jadwal.mulai).toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Selesai</div>
+              <div className="font-medium">
+                {new Date(jadwal.selesai).toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-sm text-muted-foreground">Status</div>
+              <Badge variant={jadwal.is_dilaksanakan ? 'default' : 'secondary'}>
+                {jadwal.is_dilaksanakan ? 'Dilaksanakan' : 'Belum Dilaksanakan'}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
+  );
+}
 
-  // Asisten 3: Rizky Pratama
-  {
-    id: 7,
-    mulai: '2025-05-03T13:00:00.000Z',
-    selesai: '2025-05-03T15:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 3, nama: 'Lab Data Science' },
-    kelaspraktikum: {
-      id: 3,
-      nama: 'Kelas C',
-      asisten: { id: 3, nama: 'Rizky Pratama', nim: '223010501003' },
-      matakuliahpraktikum: { id: 3, kode: 'DS001', nama: 'Data Science' },
-    },
-  },
-  {
-    id: 8,
-    mulai: '2025-05-10T13:00:00.000Z',
-    selesai: '2025-05-10T15:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 3, nama: 'Lab Data Science' },
-    kelaspraktikum: {
-      id: 3,
-      nama: 'Kelas C',
-      asisten: { id: 3, nama: 'Rizky Pratama', nim: '223010501003' },
-      matakuliahpraktikum: { id: 3, kode: 'DS001', nama: 'Data Science' },
-    },
-  },
-  {
-    id: 9,
-    mulai: '2025-05-17T13:00:00.000Z',
-    selesai: '2025-05-17T15:00:00.000Z',
-    status: 'aktif',
-    ruang: { id: 3, nama: 'Lab Data Science' },
-    kelaspraktikum: {
-      id: 3,
-      nama: 'Kelas C',
-      asisten: { id: 3, nama: 'Rizky Pratama', nim: '223010501003' },
-      matakuliahpraktikum: { id: 3, kode: 'DS001', nama: 'Data Science' },
-    },
-  },
-];
+export interface Jadwal {
+  id: number;
+  mulai: Date;
+  selesai: Date;
+  is_dilaksanakan: boolean;
+  ruangan: Ruangan;
+  kelas: Kelas;
+}
+
+export interface Kelas {
+  id: number;
+  nama: string;
+  asisten: Asisten;
+  mata_kuliah: MataKuliah;
+}
+
+export interface Asisten {
+  id: number;
+  nama: string;
+  nim: string;
+}
+
+export interface MataKuliah {
+  id: number;
+  kode: string;
+  nama: string;
+}
+
+export interface Ruangan {
+  id: number;
+  nama: string;
+}

@@ -20,44 +20,67 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { setCookie } from 'cookies-next/client';
-import { BadgeAlert, BadgeCheck, Loader2 } from 'lucide-react';
+import { useGetCookie } from 'cookies-next/client';
+import { BadgeAlert, BadgeCheck, Loader2, User2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-const MATA_KULIAH_FAKE = [
-  { id: 1, nama: 'Matematika Dasar', kode: 'MK001' },
-  { id: 2, nama: 'Fisika Dasar', kode: 'MK002' },
-  { id: 3, nama: 'Kimia Dasar', kode: 'MK003' },
-];
 
 const formSchema = z.object({
   mata_kuliah_praktikum: z.array(
     z.string().min(1, 'Pilih minimal 1 mata kuliah'),
   ),
   komitmen_url: z.string().url('Masukkan URL yang valid'),
+  dokumen_pendukung_url: z.string().optional(),
 });
+
+interface MataKuliah {
+  id: number;
+  nama: string;
+  kode: string;
+}
+
+interface Event {
+  id: number;
+  admin_id: number;
+  jenis: string;
+  mulai: string;
+  selesai: string;
+  is_aktif: boolean;
+}
+
+interface Kelas {
+  id: number;
+  nama: string;
+  mata_kuliah: MataKuliah;
+}
 
 interface Asisten {
   id: number;
-  nama: string;
   nim: string;
+  nama: string;
   email: string;
+  status: string;
+  mata_kuliah_pilihan: MataKuliah[];
+  komitmen_url: string;
+  event: Event;
+  kelas?: Kelas[];
 }
+
 function DetailAsisten({ asisten }: { asisten: Asisten }) {
   return (
     <>
-      <FormItem>
-        <FormLabel>Nama</FormLabel>
-        <Input disabled defaultValue={asisten.nama} />
-      </FormItem>
-      <FormItem>
-        <FormLabel>NIM</FormLabel>
-        <Input disabled defaultValue={asisten.nim} />
-      </FormItem>
+      <div className="flex items-center gap-3">
+        <div className="rounded-full bg-primary/10 p-3">
+          <User2 className="h-7 w-7 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">{asisten.nama}</h2>
+          <span className="text-sm text-muted-foreground">{asisten.nim}</span>
+        </div>
+      </div>
       <FormItem>
         <FormLabel>Email</FormLabel>
         <Input disabled defaultValue={asisten.email} />
@@ -66,40 +89,85 @@ function DetailAsisten({ asisten }: { asisten: Asisten }) {
   );
 }
 export default function RegisterForm() {
+  const _cookies = useGetCookie();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [asisten, setAsisten] = useState<Asisten | null>(null);
+  const [mataKuliah, setMataKuliah] = useState<MataKuliah[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       mata_kuliah_praktikum: [],
       komitmen_url: '',
+      dokumen_pendukung_url: '',
     },
   });
 
+  useEffect(() => {
+    if (_cookies('token')) {
+      async function getAsisten() {
+        const res = await fetch(`/api/asisten/me`, {
+          headers: {
+            authorization: `Bearer ${_cookies('token')}`,
+          },
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
+          setAsisten(null);
+        }
+        form.setValue(
+          'mata_kuliah_praktikum',
+          json.data.mata_kuliah_pilihan.map((mk: MataKuliah) => mk.kode),
+        );
+        form.setValue('komitmen_url', json.data.komitmen_url);
+        form.setValue(
+          'dokumen_pendukung_url',
+          json.data.dokumen_pendukung_url || '',
+        );
+        setAsisten(json.data);
+      }
+
+      async function getMataKuliah() {
+        const res = await fetch('/api/asisten/mata-kuliah', {
+          headers: {
+            authorization: `Bearer ${_cookies('token')}`,
+          },
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(
+            `Error: ${json.message || 'Gagal mengambil mata kuliah'}`,
+          );
+          setMataKuliah([]);
+        }
+        setMataKuliah(json.data);
+      }
+
+      getAsisten();
+      getMataKuliah();
+    }
+  }, [_cookies, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('Form submitted with values:', values);
-    return;
     setLoading(true);
     const res = await fetch('/api/asisten/register', {
       method: 'POST',
       body: JSON.stringify(values),
       headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
         'Content-Type': 'application/json',
       },
     });
-    const json = (await res.json()) as {
-      status: boolean;
-      data: { token: string };
-      message: string;
-    };
-    if (res.status === 200) {
-      setCookie('token', json.data.token);
-      toast('Login Berhasil', {
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Pendaftaran berhasil', {
         icon: <BadgeCheck />,
       });
       router.push('/asisten');
     } else {
-      toast('Login Gagal', {
+      toast.error('Pendaftaran gagal: ' + json?.status, {
         icon: <BadgeAlert />,
       });
     }
@@ -116,14 +184,7 @@ export default function RegisterForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <DetailAsisten
-              asisten={{
-                id: 1,
-                nama: 'John Doe',
-                nim: '123456789',
-                email: 'jrdsfsdfsdf@mail.com',
-              }}
-            />
+            {asisten && <DetailAsisten asisten={asisten} />}
             <FormField
               control={form.control}
               name="mata_kuliah_praktikum"
@@ -133,19 +194,38 @@ export default function RegisterForm() {
 
                   <FormControl>
                     <MultiSelect
-                      options={MATA_KULIAH_FAKE.map((mk) => ({
+                      options={mataKuliah.map((mk) => ({
                         value: mk.kode.toString(),
-                        label: `${mk.kode} - ${mk.nama}`,
+                        label: (
+                          <>
+                            {mk.kode} <br /> {mk.nama}
+                          </>
+                        ),
                       }))}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       placeholder="Pilih mata kuliah praktikum"
                     />
                   </FormControl>
-
                   <FormDescription>
                     Mata kuliah yang Anda pilih akan menjadi mata kuliah yang
                     Anda asuh sebagai asisten.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dokumen_pendukung_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dokumen pendukung</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ketik URL Anda" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Masukkan URL dokumen pendukung Anda sebagai asisten.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

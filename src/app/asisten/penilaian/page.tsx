@@ -1,16 +1,7 @@
 'use client';
 
-import CreateFormKehadiran from '@/components/layout/asisten/penilaian/create-form-kehadiran';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalDescription,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
-  ResponsiveModalTrigger,
-} from '@/components/ui/expansions/responsive-modal';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -20,11 +11,37 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit, Eye, Info, Pencil } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { useGetCookie } from 'cookies-next/client';
+import { Eye, Info, Pencil } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function PenilaianPage() {
+  const _cookies = useGetCookie();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [detailPenilaian, setdetailPenilaian] =
+    useState<DetailPenilaian | null>(null);
+
+  const getDetailPenilaian = useCallback(async () => {
+    const res = await fetch(`/api/asisten/penilaian`, {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(
+        `Error: ${json.message || 'Gagal mengambil detail penilaian'}`,
+      );
+      setdetailPenilaian(null);
+    }
+    setdetailPenilaian(json.data);
+  }, [_cookies]);
+
+  useEffect(() => {
+    getDetailPenilaian();
+  }, [getDetailPenilaian, mode]);
+
   return (
     <section className="m-8 flex flex-col gap-4 pb-8">
       <div className="flex items-center justify-between">
@@ -59,13 +76,43 @@ export default function PenilaianPage() {
                     <TableHead className="text-center" rowSpan={2}>
                       Nama
                     </TableHead>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal, idx) => (
-                      <EditHead jadwal={jadwal} key={jadwal.id} idx={idx} />
+                    {detailPenilaian?.kelas.jadwal.map((jadwal, idx) => (
+                      <TableHead
+                        key={jadwal.id}
+                        className="text-center"
+                        colSpan={
+                          idx === detailPenilaian?.kelas.jadwal.length - 1
+                            ? 1
+                            : 3
+                        }
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Info className="size-3" />
+                          {detailPenilaian.laporan
+                            .filter(
+                              (laporan) => laporan.jadwal.id === jadwal.id,
+                            )
+                            .map((penilaian) => (
+                              <Fragment key={penilaian.id}>
+                                <span className="font-medium">
+                                  {`Pertemuan ${idx + 1}`}
+                                </span>
+                              </Fragment>
+                            ))}
+                          {detailPenilaian.laporan.filter(
+                            (laporan) => laporan.jadwal.id === jadwal.id,
+                          ).length === 0 && (
+                            <span className="text-muted-foreground">
+                              Laporan belum diatur
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
                     ))}
                   </TableRow>
                   <TableRow>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal, idx) =>
-                      idx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? (
+                    {detailPenilaian?.kelas.jadwal.map((jadwal, idx) =>
+                      idx === detailPenilaian?.kelas.jadwal.length - 1 ? (
                         <TableHead
                           key={jadwal.id + '-responsi'}
                           className="px-4 text-center"
@@ -86,7 +133,7 @@ export default function PenilaianPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
+                  {detailPenilaian?.praktikan.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
                       <TableCell className="text-center font-medium">
                         {idx + 1}
@@ -97,19 +144,19 @@ export default function PenilaianPage() {
                       <TableCell className="text-center">
                         {praktikan.nama}
                       </TableCell>
-                      {JADWAL_PRAKTIKUM_FAKE.map((jadwal, jidx) =>
-                        jidx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? (
+                      {detailPenilaian?.laporan.map((laporan, jidx) =>
+                        jidx === detailPenilaian?.laporan.length - 1 ? (
                           <EditCell
-                            key={jadwal.id + '-responsi'}
-                            jadwalId={jadwal.id}
+                            key={laporan.id + '-responsi'}
+                            laporan={laporan}
                             praktikan={praktikan}
                             tipe="responsi"
                           />
                         ) : (
                           ['pretest', 'laporan', 'praktikum'].map((tipe) => (
                             <EditCell
-                              key={jadwal.id + '-' + tipe}
-                              jadwalId={jadwal.id}
+                              key={laporan.id + '-' + tipe}
+                              laporan={laporan}
                               praktikan={{
                                 ...praktikan,
                                 // Optionally, you can pass tipe to EditCell if you want to filter by tipe
@@ -137,32 +184,34 @@ export default function PenilaianPage() {
                     <TableHead className="text-center" rowSpan={2}>
                       Nama
                     </TableHead>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal, idx) => (
+                    {detailPenilaian?.kelas.jadwal.map((jadwal, idx) => (
                       <TableHead
                         key={jadwal.id}
                         className="text-center"
                         colSpan={
-                          idx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? 1 : 3
+                          idx === detailPenilaian?.kelas.jadwal.length - 1
+                            ? 1
+                            : 3
                         }
                       >
                         <div className="flex items-center justify-center gap-1.5">
                           <Info className="size-3" />
-                          {PENILAIAN_FAKE.filter(
-                            (penilaian) =>
-                              penilaian.jadwal_praktikum.id === jadwal.id,
-                          ).map((penilaian) => (
-                            <Fragment key={penilaian.id}>
-                              <span className="font-medium">
-                                {penilaian.judul}
-                              </span>
-                            </Fragment>
-                          ))}
-                          {PENILAIAN_FAKE.filter(
-                            (penilaian) =>
-                              penilaian.jadwal_praktikum.id === jadwal.id,
+                          {detailPenilaian.laporan
+                            .filter(
+                              (laporan) => laporan.jadwal.id === jadwal.id,
+                            )
+                            .map((penilaian) => (
+                              <Fragment key={penilaian.id}>
+                                <span className="font-medium">
+                                  {`Pertemuan ${idx + 1}`}
+                                </span>
+                              </Fragment>
+                            ))}
+                          {detailPenilaian.laporan.filter(
+                            (laporan) => laporan.jadwal.id === jadwal.id,
                           ).length === 0 && (
                             <span className="text-muted-foreground">
-                              Penilaian belum diatur
+                              Laporan belum diatur
                             </span>
                           )}
                         </div>
@@ -170,8 +219,8 @@ export default function PenilaianPage() {
                     ))}
                   </TableRow>
                   <TableRow>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal, idx) =>
-                      idx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? (
+                    {detailPenilaian?.kelas.jadwal.map((jadwal, idx) =>
+                      idx === detailPenilaian?.kelas.jadwal.length - 1 ? (
                         <TableHead
                           key={jadwal.id + '-responsi'}
                           className="text-center"
@@ -192,7 +241,7 @@ export default function PenilaianPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
+                  {detailPenilaian?.praktikan.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
                       <TableCell className="text-center font-medium">
                         {idx + 1}
@@ -203,17 +252,17 @@ export default function PenilaianPage() {
                       <TableCell className="text-center">
                         {praktikan.nama}
                       </TableCell>
-                      {JADWAL_PRAKTIKUM_FAKE.map((jadwal, jidx) =>
-                        jidx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? (
+                      {detailPenilaian?.kelas.jadwal.map((jadwal, jidx) =>
+                        jidx === detailPenilaian?.kelas.jadwal.length - 1 ? (
                           <TableCell
                             key={jadwal.id + '-responsi'}
                             className="text-center"
                           >
                             {(() => {
-                              const detail = praktikan.detailpenilaian.find(
+                              const detail = praktikan.penilaian.find(
                                 (dp) =>
-                                  dp.penilaian.jadwal_praktikum_id ===
-                                    jadwal.id && dp.tipe === 'responsi',
+                                  dp.laporan.jadwal_id === jadwal.id &&
+                                  dp.tipe === 'responsi',
                               );
                               return detail ? (
                                 <span className="italic">{detail.nilai}</span>
@@ -224,10 +273,10 @@ export default function PenilaianPage() {
                           </TableCell>
                         ) : (
                           ['pretest', 'laporan', 'praktikum'].map((tipe) => {
-                            const detail = praktikan.detailpenilaian.find(
+                            const detail = praktikan.penilaian.find(
                               (dp) =>
-                                dp.penilaian.jadwal_praktikum_id ===
-                                  jadwal.id && dp.tipe === tipe,
+                                dp.laporan.jadwal_id === jadwal.id &&
+                                dp.tipe === tipe,
                             );
                             return (
                               <TableCell
@@ -259,35 +308,83 @@ export default function PenilaianPage() {
 }
 
 function EditCell({
-  jadwalId,
+  laporan,
   praktikan,
   tipe,
 }: {
-  jadwalId: number;
+  laporan: LaporanElement;
   praktikan: Praktikan;
   tipe: string;
 }) {
-  const [penilaian, setPenilaian] = useState<number>(0);
+  const _cookies = useGetCookie();
+  const [nilai, setNilai] = useState<number>(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const detailPenilaian = praktikan.detailpenilaian.find(
-      (dp) => dp.penilaian.jadwal_praktikum_id === jadwalId && dp.tipe === tipe,
+    const penilaian = praktikan.penilaian.find(
+      (dp) => dp.laporan.id === laporan.id && dp.tipe === tipe,
     );
-    if (detailPenilaian) {
-      setPenilaian(detailPenilaian.nilai);
+    if (penilaian) {
+      setNilai(penilaian.nilai);
     } else {
-      setPenilaian(0);
+      setNilai(0);
     }
-  }, [jadwalId, praktikan.detailpenilaian, tipe]);
+  }, [laporan.id, praktikan.penilaian, tipe]);
+
+  const handleTipeChange = async (value: number) => {
+    if (!value && value !== 0) return;
+    const res = await fetch(`/api/asisten/penilaian`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${_cookies('token')}`,
+      },
+      body: JSON.stringify({
+        laporan_id: laporan.id,
+        praktikan_id: praktikan.id,
+        tipe,
+        nilai: value,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengubah penilaian'}`);
+      return;
+    }
+    setNilai(value);
+    toast.success('penilaian berhasil diubah');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setNilai(isNaN(value) ? 0 : value);
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      if (!isNaN(value)) {
+        handleTipeChange(value);
+      }
+    }, 600); // 600ms delay
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      const value = parseFloat((e.target as HTMLInputElement).value);
+      if (!isNaN(value)) {
+        handleTipeChange(value);
+      }
+    }
+  };
 
   return (
     <TableCell className="text-center">
       <Input
         type="number"
-        onChange={(event) => {
-          setPenilaian(+event.target.value);
-        }}
-        value={penilaian.toString()}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        value={nilai.toString()}
         className="mx-auto !h-auto w-full max-w-full rounded-none border-none p-0 py-0 text-center shadow-none outline-none focus-visible:ring-0 focus-visible:outline-none"
         max={100}
         min={0}
@@ -296,356 +393,64 @@ function EditCell({
   );
 }
 
-function EditHead({ jadwal, idx }: { jadwal: JadwalPraktikum; idx: number }) {
-  return (
-    <TableHead
-      key={jadwal.id}
-      className="text-center"
-      colSpan={idx === JADWAL_PRAKTIKUM_FAKE.length - 1 ? 1 : 3}
-    >
-      <ResponsiveModal>
-        <ResponsiveModalTrigger asChild>
-          <Button variant={'outline'} size={'sm'}>
-            <div className="flex items-center justify-center gap-1.5">
-              <Edit className="size-3" />
-              {PENILAIAN_FAKE.filter(
-                (penilaian) => penilaian.jadwal_praktikum.id === jadwal.id,
-              ).map((penilaian) => (
-                <Fragment key={penilaian.id}>
-                  <span className="font-medium">{penilaian.judul}</span>
-                </Fragment>
-              ))}
-              {PENILAIAN_FAKE.filter(
-                (penilaian) => penilaian.jadwal_praktikum.id === jadwal.id,
-              ).length === 0 && (
-                <span className="text-muted-foreground">
-                  Kehadiran belum diatur
-                </span>
-              )}
-            </div>
-          </Button>
-        </ResponsiveModalTrigger>
-        <ResponsiveModalContent>
-          <ResponsiveModalHeader className="mb-4">
-            <ResponsiveModalTitle>Edit Kehadiran</ResponsiveModalTitle>
-            <ResponsiveModalDescription>
-              Untuk mengatur informasi kehadiran praktikan pada jadwal praktikum
-              ini.
-            </ResponsiveModalDescription>
-          </ResponsiveModalHeader>
-          <CreateFormKehadiran
-            data={{
-              jadwal_praktikum_id: jadwal.id,
-            }}
-          />
-        </ResponsiveModalContent>
-      </ResponsiveModal>
-    </TableHead>
-  );
+export interface DetailPenilaian {
+  asisten: Asisten;
+  kelas: Kelas;
+  praktikan: Praktikan[];
+  laporan: LaporanElement[];
 }
 
-interface JadwalPraktikum {
+export interface Asisten {
   id: number;
-  mulai: string;
-  selesai: string;
+  nim: string;
+  email: string;
+  nama: string;
+  status: string;
+  komitmen_url: string;
+  dokumen_pendukung_url: string;
+  event_id: number;
+  mata_kuliah_pilihan: string[];
 }
 
-interface Penilaian {
+export interface Kelas {
   id: number;
-  judul: string;
-  bukti_pertemuan: string;
-  jadwal_praktikum: JadwalPraktikum;
+  nama: string;
+  kapasitas_praktikan: number;
+  mata_kuliah_id: number;
+  asisten_id: number;
+  admin_id: number;
+  jadwal: Jadwal[];
 }
 
-interface Praktikan {
+export interface Jadwal {
+  id: number;
+  mulai: Date;
+  selesai: Date;
+}
+
+export interface LaporanElement {
+  id: number;
+  jadwal_id: number;
+  judul: null | string;
+  bukti_pertemuan_url: null | string;
+  jadwal: Jadwal;
+}
+
+export interface Praktikan {
   id: number;
   nama: string;
   nim: string;
-  detailpenilaian: {
-    id: number;
-    tipe: string;
-    nilai: number;
-    penilaian: {
-      id: number;
-      jadwal_praktikum_id: number;
-    };
-  }[];
+  penilaian: Penilaian[];
 }
 
-const JADWAL_PRAKTIKUM_FAKE: JadwalPraktikum[] = [
-  { id: 301, mulai: '2025-06-01 08:00', selesai: '2025-06-01 10:00' },
-  { id: 302, mulai: '2025-06-02 09:00', selesai: '2025-06-02 11:00' },
-  { id: 303, mulai: '2025-06-03 13:00', selesai: '2025-06-03 15:00' },
-  { id: 304, mulai: '2025-06-04 10:00', selesai: '2025-06-04 12:00' },
-  { id: 305, mulai: '2025-06-05 14:00', selesai: '2025-06-05 16:00' },
-  { id: 306, mulai: '2025-06-06 18:00', selesai: '2025-06-06 20:00' },
-];
+export interface Penilaian {
+  laporan: PenilaianLaporan;
+  tipe: string;
+  nilai: number;
+  id: number;
+}
 
-const PENILAIAN_FAKE: Penilaian[] = [
-  {
-    id: 201,
-    judul: 'Pertemuan 1',
-    bukti_pertemuan: 'bukti1.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[0],
-  },
-  {
-    id: 202,
-    judul: 'Pertemuan 2',
-    bukti_pertemuan: 'bukti2.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[1],
-  },
-  {
-    id: 203,
-    judul: 'Pertemuan 3',
-    bukti_pertemuan: 'bukti3.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[2],
-  },
-  {
-    id: 204,
-    judul: 'Pertemuan 4',
-    bukti_pertemuan: 'bukti4.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[3],
-  },
-  {
-    id: 205,
-    judul: 'Pertemuan 5',
-    bukti_pertemuan: 'bukti5.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[4],
-  },
-  {
-    id: 206,
-    judul: 'Pertemuan 5',
-    bukti_pertemuan: 'bukti5.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[5],
-  },
-];
-
-const PRAKTIKAN_FAKE: Praktikan[] = [
-  {
-    id: 1,
-    nama: 'Budi Santoso',
-    nim: '220001',
-    detailpenilaian: [
-      // Jadwal 1-5: praktikum, pretest, laporan
-      ...[0, 1, 2, 3, 4].flatMap((jadwalIdx) => [
-        {
-          id: 100 + jadwalIdx * 3 + 1,
-          tipe: 'praktikum',
-          nilai: 80 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 100 + jadwalIdx * 3 + 2,
-          tipe: 'pretest',
-          nilai: 70 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 100 + jadwalIdx * 3 + 3,
-          tipe: 'laporan',
-          nilai: 75 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-      ]),
-      // Jadwal 6: responsi
-      {
-        id: 200,
-        tipe: 'responsi',
-        nilai: 85,
-        penilaian: {
-          id: PENILAIAN_FAKE[5].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[5].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 2,
-    nama: 'Siti Aminah',
-    nim: '220002',
-    detailpenilaian: [
-      ...[0, 1, 2, 3, 4].flatMap((jadwalIdx) => [
-        {
-          id: 110 + jadwalIdx * 3 + 1,
-          tipe: 'praktikum',
-          nilai: 78 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 110 + jadwalIdx * 3 + 2,
-          tipe: 'pretest',
-          nilai: 68 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 110 + jadwalIdx * 3 + 3,
-          tipe: 'laporan',
-          nilai: 72 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-      ]),
-      {
-        id: 210,
-        tipe: 'responsi',
-        nilai: 90,
-        penilaian: {
-          id: PENILAIAN_FAKE[5].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[5].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 3,
-    nama: 'Rizky Pratama',
-    nim: '220003',
-    detailpenilaian: [
-      ...[0, 1, 2, 3, 4].flatMap((jadwalIdx) => [
-        {
-          id: 120 + jadwalIdx * 3 + 1,
-          tipe: 'praktikum',
-          nilai: 65 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 120 + jadwalIdx * 3 + 2,
-          tipe: 'pretest',
-          nilai: 60 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 120 + jadwalIdx * 3 + 3,
-          tipe: 'laporan',
-          nilai: 70 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-      ]),
-      {
-        id: 220,
-        tipe: 'responsi',
-        nilai: 80,
-        penilaian: {
-          id: PENILAIAN_FAKE[5].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[5].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 4,
-    nama: 'Dewi Lestari',
-    nim: '220004',
-    detailpenilaian: [
-      ...[0, 1, 2, 3, 4].flatMap((jadwalIdx) => [
-        {
-          id: 130 + jadwalIdx * 3 + 1,
-          tipe: 'praktikum',
-          nilai: 88 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 130 + jadwalIdx * 3 + 2,
-          tipe: 'pretest',
-          nilai: 77 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 130 + jadwalIdx * 3 + 3,
-          tipe: 'laporan',
-          nilai: 80 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-      ]),
-      {
-        id: 230,
-        tipe: 'responsi',
-        nilai: 95,
-        penilaian: {
-          id: PENILAIAN_FAKE[5].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[5].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 5,
-    nama: 'Andi Wijaya',
-    nim: '220005',
-    detailpenilaian: [
-      ...[0, 1, 2, 3, 4].flatMap((jadwalIdx) => [
-        {
-          id: 140 + jadwalIdx * 3 + 1,
-          tipe: 'praktikum',
-          nilai: 70 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 140 + jadwalIdx * 3 + 2,
-          tipe: 'pretest',
-          nilai: 65 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-        {
-          id: 140 + jadwalIdx * 3 + 3,
-          tipe: 'laporan',
-          nilai: 68 + jadwalIdx,
-          penilaian: {
-            id: PENILAIAN_FAKE[jadwalIdx].id,
-            jadwal_praktikum_id: PENILAIAN_FAKE[jadwalIdx].jadwal_praktikum.id,
-          },
-        },
-      ]),
-      {
-        id: 240,
-        tipe: 'responsi',
-        nilai: 75,
-        penilaian: {
-          id: PENILAIAN_FAKE[5].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[5].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-];
+export interface PenilaianLaporan {
+  id: number;
+  jadwal_id: number;
+}

@@ -34,102 +34,17 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
-const RUANG_ID_FAKE = [
-  {
-    id: 1,
-    nama: 'Data Science 1',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-  {
-    id: 2,
-    nama: 'Data Science 2',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-  {
-    id: 3,
-    nama: 'Data Science 3',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-];
-
-const KELAS_FAKE = [
-  {
-    id: 1,
-    nama: 'BASDAT 1-A',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-  {
-    id: 2,
-    nama: 'BASDAT 1-B',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-  {
-    id: 3,
-    nama: 'BASDAT 1-B',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-];
-
 const formSchema = z.object({
-  ruang_id: z.coerce.number().min(1, 'Ruang ID harus diisi'),
-  kelas_praktikum_id: z.coerce
-    .number()
-    .min(1, 'Kelas Praktikum ID harus diisi'),
+  ruang_id: z.coerce.number().min(0, 'Ruang ID harus diisi'),
+  kelas_id: z.coerce.number().min(0, 'Kelas Praktikum ID harus diisi'),
   jam_mulai: z
     .string()
     .regex(
@@ -151,22 +66,109 @@ const formSchema = z.object({
     ),
 });
 
-function CreateFormJadwal() {
+interface Ruangan {
+  id: number;
+  nama: string;
+  kuota: {
+    komputer: number;
+  };
+  admin: {
+    id: number;
+    nama: string;
+    email: string;
+  };
+}
+
+interface Kelas {
+  id: number;
+  nama: string;
+  kapasitas_praktikan: number;
+  asisten: {
+    id: number;
+    nama: string;
+    nim: string;
+  };
+  mata_kuliah: {
+    id: number;
+    nama: string;
+    kode: string;
+  };
+}
+
+function CreateFormJadwal({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+  const [ruangan, setRuangan] = useState<Ruangan[]>([]);
+  const [kelas, setKelas] = useState<Kelas[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ruang_id: 1,
-      kelas_praktikum_id: 1,
+      ruang_id: 0,
+      kelas_id: 0,
       jam_mulai: '00:00',
       jam_selesai: '23:23',
       jumlah_pertemuan: 1,
-      tanggal_mulai: '2023-10-01',
+      tanggal_mulai: new Date().toISOString().split('T')[0],
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  useEffect(() => {
+    async function getRuangan() {
+      const res = await fetch('/api/admin/ruangan', {
+        headers: {
+          authorization: `Bearer ${_cookies('token')}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(`Error: ${json.message || 'Gagal mengambil mata kuliah'}`);
+        setRuangan([]);
+      }
+      setRuangan(json.data);
+    }
+
+    async function getKelas() {
+      const res = await fetch('/api/admin/kelas', {
+        headers: {
+          authorization: `Bearer ${_cookies('token')}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
+        setKelas([]);
+      }
+
+      setKelas(json.data);
+    }
+
+    getRuangan();
+    getKelas();
+  }, [_cookies]);
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/jadwal', {
+      method: 'POST',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('jadwal berhasil dibuat');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal membuat jadwal'}`);
+    }
   }
 
   return (
@@ -190,9 +192,8 @@ function CreateFormJadwal() {
                       )}
                     >
                       {field.value
-                        ? RUANG_ID_FAKE.find(
-                            (ruang) => ruang.id === field.value,
-                          )?.nama
+                        ? ruangan.find((ruang) => ruang.id === field.value)
+                            ?.nama
                         : 'Select Ruangan'}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
@@ -204,7 +205,7 @@ function CreateFormJadwal() {
                     <CommandList>
                       <CommandEmpty>No Ruangan found.</CommandEmpty>
                       <CommandGroup>
-                        {RUANG_ID_FAKE.map((ruang) => (
+                        {ruangan.map((ruang) => (
                           <CommandItem
                             value={ruang.id.toString()}
                             key={ruang.id}
@@ -236,7 +237,7 @@ function CreateFormJadwal() {
 
         <FormField
           control={form.control}
-          name="kelas_praktikum_id"
+          name="kelas_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Kelas Praktikum</FormLabel>
@@ -252,8 +253,7 @@ function CreateFormJadwal() {
                       )}
                     >
                       {field.value
-                        ? KELAS_FAKE.find((kelas) => kelas.id === field.value)
-                            ?.nama
+                        ? kelas.find((kelas) => kelas.id === field.value)?.nama
                         : 'Select Kelas Praktikum'}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
@@ -265,15 +265,12 @@ function CreateFormJadwal() {
                     <CommandList>
                       <CommandEmpty>No Kelas Praktikum found.</CommandEmpty>
                       <CommandGroup>
-                        {KELAS_FAKE.map((kelas) => (
+                        {kelas.map((kelas) => (
                           <CommandItem
                             value={kelas.id.toString()}
                             key={kelas.id}
                             onSelect={(value) => {
-                              form.setValue(
-                                'kelas_praktikum_id',
-                                Number(value),
-                              );
+                              form.setValue('kelas_id', Number(value));
                             }}
                           >
                             {kelas.nama} ({kelas.id})
@@ -376,8 +373,12 @@ function CreateFormJadwal() {
 }
 
 export default function CreateFormKelasButton() {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <Button>
           <PlusCircle />
@@ -391,7 +392,7 @@ export default function CreateFormKelasButton() {
             Fill in the details to create a new jadwal.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <CreateFormJadwal />
+        <CreateFormJadwal onOpenChange={handleOpenChange} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

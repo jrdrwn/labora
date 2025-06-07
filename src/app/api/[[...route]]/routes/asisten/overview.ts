@@ -8,74 +8,77 @@ export const overview = new Hono().basePath('/overview');
 overview.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
 
-  const jumlah_praktikan_belum_dinilai = await prisma.praktikan.count({
+  // Praktikan yang belum dinilai
+  const praktikanBelumDinilai = await prisma.praktikan.findMany({
     where: {
-      kelaspraktikumpraktikan: {
+      praktikan_kelas: {
         some: {
-          kelaspraktikum: {
-            asisten: {
-              id: jwtPayload.sub,
-            },
+          kelas: {
+            asisten_id: jwtPayload.sub,
           },
         },
       },
-      detailpenilaian: {
+      penilaian: {
         some: {
-          tipe: { not: null },
           nilai: null,
-        },
-      },
-    },
-  });
-
-  const sisa_pertemuan_praktikum = await prisma.jadwalpraktikum.count({
-    where: {
-      kelaspraktikum: {
-        asisten: {
-          id: jwtPayload.sub,
-        },
-      },
-      status: 'belum_dilaksanakan',
-    },
-  });
-
-  const kelas = await prisma.kelaspraktikum.findFirst({
-    where: {
-      asisten: {
-        id: jwtPayload.sub,
-      },
-    },
-    select: {
-      id: true,
-      nama: true,
-    },
-  });
-
-  const ruang = await prisma.ruang.findFirst({
-    where: {
-      jadwalpraktikum: {
-        some: {
-          kelaspraktikum: {
-            asisten: {
-              id: jwtPayload.sub,
+          laporan: {
+            jadwal: {
+              kelas: {
+                asisten_id: jwtPayload.sub,
+              },
             },
           },
         },
       },
     },
+    select: { id: true },
+  });
+  const jumlah_praktikan_belum_dinilai = praktikanBelumDinilai.length;
+
+  // Sisa jadwal yang belum dilaksanakan
+  const sisa_pertemuan_praktikum = await prisma.jadwal.count({
+    where: {
+      kelas: {
+        asisten_id: jwtPayload.sub,
+      },
+      is_dilaksanakan: false,
+    },
+  });
+
+  // Kelas milik asisten
+  const kelas = await prisma.kelas.findFirst({
+    where: {
+      asisten_id: jwtPayload.sub,
+    },
     select: {
       id: true,
       nama: true,
     },
   });
 
-  const mata_kuliah_praktikum = await prisma.matakuliahpraktikum.findFirst({
+  // Ruangan yang digunakan oleh jadwal milik asisten
+  const ruang = await prisma.ruangan.findFirst({
     where: {
-      kelaspraktikum: {
+      jadwal: {
         some: {
-          asisten: {
-            id: jwtPayload.sub,
+          kelas: {
+            asisten_id: jwtPayload.sub,
           },
+        },
+      },
+    },
+    select: {
+      id: true,
+      nama: true,
+    },
+  });
+
+  // Mata kuliah dari kelas asisten
+  const mata_kuliah_praktikum = await prisma.mata_kuliah.findFirst({
+    where: {
+      kelas: {
+        some: {
+          asisten_id: jwtPayload.sub,
         },
       },
     },
@@ -86,14 +89,13 @@ overview.get('/', async (c) => {
     },
   });
 
-  const jadwal_selanjutnya = await prisma.jadwalpraktikum.findFirst({
+  // Jadwal praktikum berikutnya
+  const jadwal_selanjutnya = await prisma.jadwal.findFirst({
     where: {
-      kelaspraktikum: {
-        asisten: {
-          id: jwtPayload.sub,
-        },
+      kelas: {
+        asisten_id: jwtPayload.sub,
       },
-      status: 'belum_dilaksanakan',
+      is_dilaksanakan: false,
     },
     orderBy: {
       mulai: 'asc',
@@ -102,34 +104,33 @@ overview.get('/', async (c) => {
       id: true,
       mulai: true,
       selesai: true,
-      status: true,
+      is_dilaksanakan: true,
     },
   });
 
-  const jadwal_sendiri_raw = await prisma.jadwalpraktikum.findMany({
+  // Semua jadwal asisten
+  const jadwal_sendiri_raw = await prisma.jadwal.findMany({
     where: {
-      kelaspraktikum: {
-        asisten: {
-          id: jwtPayload.sub,
-        },
+      kelas: {
+        asisten_id: jwtPayload.sub,
       },
     },
     select: {
       id: true,
       mulai: true,
       selesai: true,
-      status: true,
-      ruang: {
+      is_dilaksanakan: true,
+      ruangan: {
         select: {
           id: true,
           nama: true,
         },
       },
-      kelaspraktikum: {
+      kelas: {
         select: {
           id: true,
           nama: true,
-          matakuliahpraktikum: {
+          mata_kuliah: {
             select: {
               id: true,
               kode: true,
@@ -149,36 +150,36 @@ overview.get('/', async (c) => {
   });
 
   const jadwal_sendiri = jadwal_sendiri_raw.map((j) => ({
-    ruang: j.ruang,
+    ruang: j.ruangan,
     kelas: {
-      id: j.kelaspraktikum?.id,
-      nama: j.kelaspraktikum?.nama,
+      id: j.kelas?.id,
+      nama: j.kelas?.nama,
     },
-    mata_kuliah_praktikum: j.kelaspraktikum?.matakuliahpraktikum,
-    asisten: j.kelaspraktikum?.asisten,
+    mata_kuliah_praktikum: j.kelas?.mata_kuliah,
+    asisten: j.kelas?.asisten,
     jadwal: {
       id: j.id,
       mulai: j.mulai,
       selesai: j.selesai,
-      status: j.status?.replaceAll('_', ' ') ?? null,
+      status: j.is_dilaksanakan ? 'sudah dilaksanakan' : 'belum dilaksanakan',
     },
   }));
 
+  // Top 5 praktikan berdasarkan total nilai
   const top_raw = await prisma.praktikan.findMany({
     where: {
-      kelaspraktikumpraktikan: {
+      praktikan_kelas: {
         some: {
-          kelaspraktikum: {
-            asisten: {
-              id: jwtPayload.sub,
-            },
+          kelas: {
+            asisten_id: jwtPayload.sub,
           },
         },
       },
-      detailpenilaian: {
+      penilaian: {
         some: {
-          tipe: { not: null },
-          nilai: { not: null },
+          nilai: {
+            not: null,
+          },
         },
       },
     },
@@ -186,7 +187,16 @@ overview.get('/', async (c) => {
       id: true,
       nim: true,
       nama: true,
-      detailpenilaian: {
+      penilaian: {
+        where: {
+          laporan: {
+            jadwal: {
+              kelas: {
+                asisten_id: jwtPayload.sub,
+              },
+            },
+          },
+        },
         select: {
           nilai: true,
         },
@@ -199,10 +209,7 @@ overview.get('/', async (c) => {
       id: p.id,
       nim: p.nim,
       nama: p.nama,
-      total_nilai: p.detailpenilaian.reduce(
-        (sum, d) => sum + (d.nilai || 0),
-        0,
-      ),
+      total_nilai: p.penilaian.reduce((sum, d) => sum + (d.nilai || 0), 0),
     }))
     .sort((a, b) => b.total_nilai - a.total_nilai)
     .slice(0, 5);
@@ -217,8 +224,12 @@ overview.get('/', async (c) => {
       mata_kuliah_praktikum,
       jadwal_selanjutnya: jadwal_selanjutnya
         ? {
-            ...jadwal_selanjutnya,
-            status: jadwal_selanjutnya.status?.replaceAll('_', ' ') ?? null,
+            id: jadwal_selanjutnya.id,
+            mulai: jadwal_selanjutnya.mulai,
+            selesai: jadwal_selanjutnya.selesai,
+            status: jadwal_selanjutnya.is_dilaksanakan
+              ? 'sudah dilaksanakan'
+              : 'belum dilaksanakan',
           }
         : null,
       jadwal_sendiri,

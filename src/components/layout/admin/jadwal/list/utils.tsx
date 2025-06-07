@@ -99,7 +99,7 @@ export function FilterByRuanganButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [row.getValue('ruang_nama'), row]),
+                    .rows.map((row) => [row.getValue('ruangan_nama'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -109,28 +109,28 @@ export function FilterByRuanganButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table.getColumn('ruang_nama')?.getFilterValue(),
+                          table.getColumn('ruangan_nama')?.getFilterValue(),
                         )
                           ? (
                               table
-                                .getColumn('ruang_nama')
+                                .getColumn('ruangan_nama')
                                 ?.getFilterValue() as string[]
-                            ).includes(row.getValue('ruang_nama'))
+                            ).includes(row.getValue('ruangan_nama'))
                           : false
                       }
                       onCheckedChange={(checked) => {
                         const prev =
                           (table
-                            .getColumn('ruang_nama')
+                            .getColumn('ruangan_nama')
                             ?.getFilterValue() as string[]) || [];
                         table
-                          .getColumn('ruang_nama')
+                          .getColumn('ruangan_nama')
                           ?.setFilterValue(
                             checked
-                              ? [...prev, row.getValue('ruang_nama')]
+                              ? [...prev, row.getValue('ruangan_nama')]
                               : prev.filter(
                                   (c: string) =>
-                                    c !== row.getValue('ruang_nama'),
+                                    c !== row.getValue('ruangan_nama'),
                                 ),
                           );
                       }}
@@ -140,7 +140,7 @@ export function FilterByRuanganButton<TData>({
                       className="ml-2"
                       htmlFor={`filter-ruangan-${row.id}`}
                     >
-                      {row.getValue('ruang_nama') as string}
+                      {row.getValue('ruangan_nama') as string}
                     </label>
                   </CommandItem>
                 );
@@ -173,10 +173,7 @@ export function FilterByKelasButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [
-                      row.getValue('kelaspraktikum_nama'),
-                      row,
-                    ]),
+                    .rows.map((row) => [row.getValue('kelas_nama'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -186,37 +183,35 @@ export function FilterByKelasButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table
-                            .getColumn('kelaspraktikum_nama')
-                            ?.getFilterValue(),
+                          table.getColumn('kelas_nama')?.getFilterValue(),
                         )
                           ? (
                               table
-                                .getColumn('kelaspraktikum_nama')
+                                .getColumn('kelas_nama')
                                 ?.getFilterValue() as string[]
-                            ).includes(row.getValue('kelaspraktikum_nama'))
+                            ).includes(row.getValue('kelas_nama'))
                           : false
                       }
                       onCheckedChange={(checked) => {
                         const prev =
                           (table
-                            .getColumn('kelaspraktikum_nama')
+                            .getColumn('kelas_nama')
                             ?.getFilterValue() as string[]) || [];
                         table
-                          .getColumn('kelaspraktikum_nama')
+                          .getColumn('kelas_nama')
                           ?.setFilterValue(
                             checked
-                              ? [...prev, row.getValue('kelaspraktikum_nama')]
+                              ? [...prev, row.getValue('kelas_nama')]
                               : prev.filter(
                                   (c: string) =>
-                                    c !== row.getValue('kelaspraktikum_nama'),
+                                    c !== row.getValue('kelas_nama'),
                                 ),
                           );
                       }}
                       id={`filter-kelas-${row.id}`}
                     />
                     <label className="ml-2" htmlFor={`filter-kelas-${row.id}`}>
-                      {(row.getValue('kelaspraktikum_nama') as string) ?? '-'}
+                      {(row.getValue('kelas_nama') as string) ?? '-'}
                     </label>
                   </CommandItem>
                 );
@@ -249,7 +244,7 @@ export function FilterByStatusButton<TData>({
                 new Map(
                   table
                     .getCoreRowModel()
-                    .rows.map((row) => [row.getValue('status'), row]),
+                    .rows.map((row) => [row.getValue('is_dilaksanakan'), row]),
                 ).values(),
               ).map((row) => {
                 return (
@@ -259,34 +254,38 @@ export function FilterByStatusButton<TData>({
                       onSelect={(e) => e.preventDefault()}
                       checked={
                         Array.isArray(
-                          table.getColumn('status')?.getFilterValue(),
+                          table.getColumn('is_dilaksanakan')?.getFilterValue(),
                         )
                           ? (
                               table
-                                .getColumn('status')
+                                .getColumn('is_dilaksanakan')
                                 ?.getFilterValue() as string[]
-                            ).includes(row.getValue('status'))
+                            ).includes(row.getValue('is_dilaksanakan'))
                           : false
                       }
                       onCheckedChange={(checked) => {
                         const prev =
                           (table
-                            .getColumn('status')
+                            .getColumn('is_dilaksanakan')
                             ?.getFilterValue() as string[]) || [];
                         table
-                          .getColumn('status')
+                          .getColumn('is_dilaksanakan')
                           ?.setFilterValue(
                             checked
-                              ? [...prev, row.getValue('status')]
+                              ? [...prev, row.getValue('is_dilaksanakan')]
                               : prev.filter(
-                                  (c: string) => c !== row.getValue('status'),
+                                  (c: string) =>
+                                    c !== row.getValue('is_dilaksanakan'),
                                 ),
                           );
                       }}
-                      id={`filter-status-${row.id}`}
+                      id={`filter-dilaksanakan-${row.id}`}
                     />
-                    <label className="ml-2" htmlFor={`filter-status-${row.id}`}>
-                      {(row.getValue('status') as string) ?? '-'}
+                    <label
+                      className="ml-2"
+                      htmlFor={`filter-dilaksanakan-${row.id}`}
+                    >
+                      {row.getValue('is_dilaksanakan') ? 'Sudah' : 'Belum'}
                     </label>
                   </CommandItem>
                 );

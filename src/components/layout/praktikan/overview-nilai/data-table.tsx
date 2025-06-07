@@ -15,6 +15,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+
 import { Penilaian } from './columns';
 
 interface DataTableProps<TData, TValue> {
@@ -92,22 +93,16 @@ export function DataTable<TData, TValue>({
               <TableCell colSpan={3} className="text-right">
                 <strong>Responsi:</strong>
               </TableCell>
-                <TableCell colSpan={1} className="text-center">
-                  {
-                    (data as Penilaian[]).filter(data => data.detail.filter(detail => detail.tipe === 'responsi')[0]?.nilai)[0]?.detail[0].nilai
-                  }
-                </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell colSpan={3} className="text-right">
-                <strong>Total nilai:</strong>
+              <TableCell colSpan={1} className="text-center">
+                {
+                  (data as Penilaian[]).filter(
+                    (data) =>
+                      data.detail.filter(
+                        (detail) => detail.tipe === 'responsi',
+                      )[0]?.nilai,
+                  )[0]?.detail[0].nilai
+                }
               </TableCell>
-                <TableCell colSpan={1} className="text-center">
-                  {/* TODO: buat total nilai  */}
-                  {
-                    (data as Penilaian[]).filter(data => data.detail.filter(detail => detail.tipe === 'responsi')[0]?.nilai)[0]?.detail[0].nilai
-                  }
-                </TableCell>
             </TableRow>
           </TableBody>
         </Table>

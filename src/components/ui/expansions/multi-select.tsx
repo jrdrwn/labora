@@ -65,7 +65,7 @@ interface MultiSelectProps
    */
   options: {
     /** The text to display for the option. */
-    label: string;
+    label: React.ReactNode;
     /** The unique value associated with the option. */
     value: string;
     /** Optional icon component to display alongside the option. */
@@ -191,6 +191,12 @@ export const MultiSelect = React.forwardRef<
       }
     };
 
+    React.useEffect(() => {
+      if (defaultValue.length > 0) {
+        setSelectedValues(defaultValue);
+      }
+    }, [defaultValue]);
+
     return (
       <Popover
         open={isPopoverOpen}
@@ -225,7 +231,9 @@ export const MultiSelect = React.forwardRef<
                         {IconComponent && (
                           <IconComponent className="mr-2 h-4 w-4" />
                         )}
-                        {option?.label}
+                        <span className="max-w-3xs overflow-hidden text-left text-ellipsis whitespace-nowrap">
+                          {option?.label}
+                        </span>
                         <XCircle
                           className="ml-2 h-4 w-4 cursor-pointer"
                           onClick={(event) => {

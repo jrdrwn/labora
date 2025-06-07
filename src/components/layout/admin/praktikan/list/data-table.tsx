@@ -157,19 +157,17 @@ export function DataTable<TData, TValue>({
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {(
-                              row.original as Praktikan
-                            ).kelaspraktikumpraktikan.map((kelas) => (
-                              <TableRow key={kelas.id}>
-                                <TableCell>
-                                  {kelas.kelaspraktikum.nama}
-                                </TableCell>
-                                <TableCell>
-                                  {kelas.kelaspraktikum.asisten.nama}
-                                </TableCell>
-                                <TableCell>{kelas.perangkat}</TableCell>
-                              </TableRow>
-                            ))}
+                            {(row.original as Praktikan).praktikan_kelas.map(
+                              (kelas) => (
+                                <TableRow key={kelas.id}>
+                                  <TableCell>{kelas.kelas.nama}</TableCell>
+                                  <TableCell>
+                                    {kelas.kelas.asisten.nama}
+                                  </TableCell>
+                                  <TableCell>{kelas.perangkat}</TableCell>
+                                </TableRow>
+                              ),
+                            )}
                           </TableBody>
                         </Table>
                       </TableCell>

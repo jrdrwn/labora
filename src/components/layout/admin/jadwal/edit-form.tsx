@@ -35,71 +35,41 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react';
+import { useGetCookie } from 'cookies-next/client';
+import { Check, ChevronsUpDown, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { Jadwal } from './list/columns';
-
-const RUANG_ID_FAKE = [
-  {
-    id: 1,
-    nama: 'Data Science 1',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-  {
-    id: 2,
-    nama: 'Data Science 2',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-  {
-    id: 3,
-    nama: 'Data Science 3',
-    kuota: {
-      komputer: 20,
-    },
-    admin: {
-      id: 1,
-      nama: 'admin',
-      email: 'admin@example.com',
-    },
-  },
-];
+import { Jadwal, Ruangan } from './list/columns';
 
 const formSchema = z.object({
-  ruang_id: z.coerce.number().min(1, 'Ruang ID harus diisi').optional(),
-  jam_mulai: z
-    .string()
-    .regex(
-      /^([01]\d|2[0-3]):([0-5]\d)$/,
-      'Jam harus dalam format HH:mm (contoh: 20:18)',
-    ),
-  jam_selesai: z
-    .string()
-    .regex(
-      /^([01]\d|2[0-3]):([0-5]\d)$/,
-      'Jam harus dalam format HH:mm (contoh: 20:18)',
-    ),
-  tanggal_mulai: z
-    .string()
-    .regex(
-      /^\d{4}-\d{2}-\d{2}$/,
-      'Tanggal harus dalam format YYYY-MM-DD (contoh: 2023-10-01)',
-    ),
+  where: z.object({
+    jadwal_id: z.coerce.number().min(0, 'Jadwal ID harus diisi'),
+  }),
+  update: z.object({
+    ruang_id: z.coerce.number().min(1, 'Ruang ID harus diisi').optional(),
+    jam_mulai: z
+      .string()
+      .regex(
+        /^([01]\d|2[0-3]):([0-5]\d)$/,
+        'Jam harus dalam format HH:mm (contoh: 20:18)',
+      ),
+    jam_selesai: z
+      .string()
+      .regex(
+        /^([01]\d|2[0-3]):([0-5]\d)$/,
+        'Jam harus dalam format HH:mm (contoh: 20:18)',
+      ),
+    tanggal_mulai: z
+      .string()
+      .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        'Tanggal harus dalam format YYYY-MM-DD (contoh: 2023-10-01)',
+      ),
+  }),
 });
 
 export interface EditJadwal {
@@ -121,20 +91,78 @@ function getDateFromDateTime(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
+function EditFormJadwal({
+  defaultValues,
+  onOpenChange,
+}: {
+  defaultValues: Jadwal;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+  const [ruangan, setRuangan] = useState<Ruangan[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ruang_id: defaultValues.ruang.id || 0,
-      jam_mulai: getTimeFromDate(defaultValues.mulai),
-      jam_selesai: getTimeFromDate(defaultValues.selesai),
-      tanggal_mulai: getDateFromDateTime(defaultValues.mulai),
+      where: {
+        jadwal_id: defaultValues.id,
+      },
+      update: {
+        ruang_id: defaultValues.ruangan.id || 0,
+        jam_mulai: getTimeFromDate(new Date(defaultValues.mulai)),
+        jam_selesai: getTimeFromDate(new Date(defaultValues.selesai)),
+        tanggal_mulai: getDateFromDateTime(new Date(defaultValues.mulai)),
+      },
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  useEffect(() => {
+    async function getRuangan() {
+      const res = await fetch('/api/admin/ruangan', {
+        headers: {
+          authorization: `Bearer ${_cookies('token')}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(`Error: ${json.message || 'Gagal mengambil mata kuliah'}`);
+        setRuangan([]);
+      }
+      setRuangan(json.data);
+    }
+
+    getRuangan();
+  }, [_cookies]);
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/jadwal', {
+      method: 'PUT',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        where: {
+          jadwal_id: data.where.jadwal_id,
+        },
+        update: {
+          ruang_id: data.update.ruang_id,
+          jam_mulai: data.update.jam_mulai,
+          jam_selesai: data.update.jam_selesai,
+          tanggal_mulai: data.update.tanggal_mulai,
+        },
+      }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Ruangan berhasil diperbarui');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal memperbarui ruangan'}`);
+    }
   }
 
   return (
@@ -142,7 +170,7 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="ruang_id"
+          name="update.ruang_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Ruangan</FormLabel>
@@ -158,9 +186,8 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
                       )}
                     >
                       {field.value
-                        ? RUANG_ID_FAKE.find(
-                            (ruang) => ruang.id === field.value,
-                          )?.nama
+                        ? ruangan.find((ruang) => ruang.id === field.value)
+                            ?.nama
                         : 'Select Ruangan'}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
@@ -172,12 +199,12 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
                     <CommandList>
                       <CommandEmpty>No Ruangan found.</CommandEmpty>
                       <CommandGroup>
-                        {RUANG_ID_FAKE.map((ruang) => (
+                        {ruangan.map((ruang) => (
                           <CommandItem
                             value={ruang.id.toString()}
                             key={ruang.id}
                             onSelect={(value) => {
-                              form.setValue('ruang_id', Number(value));
+                              form.setValue('update.ruang_id', Number(value));
                             }}
                           >
                             {ruang.nama} ({ruang.id})
@@ -205,7 +232,7 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
         <div className="flex w-full items-start gap-4">
           <FormField
             control={form.control}
-            name="tanggal_mulai"
+            name="update.tanggal_mulai"
             render={({ field }) => (
               <FormItem className="w-1/2">
                 <FormLabel>Tanggal mulai pertemuan</FormLabel>
@@ -221,7 +248,7 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
           />
           <FormField
             control={form.control}
-            name="jam_mulai"
+            name="update.jam_mulai"
             render={({ field }) => (
               <FormItem className="w-1/4">
                 <FormLabel>Mulai</FormLabel>
@@ -235,7 +262,7 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
           />
           <FormField
             control={form.control}
-            name="jam_selesai"
+            name="update.jam_selesai"
             render={({ field }) => (
               <FormItem className="w-1/4">
                 <FormLabel>Selesai</FormLabel>
@@ -262,12 +289,16 @@ function EditFormJadwal({ defaultValues }: { defaultValues: Jadwal }) {
 }
 
 export default function EditFormJadwalButton({ jadwal }: { jadwal: Jadwal }) {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
-        <DropdownMenuItem>
-          <PlusCircle />
-          Edit Jadwal
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <Pencil />
+          Edit
         </DropdownMenuItem>
       </ResponsiveModalTrigger>
       <ResponsiveModalContent>
@@ -277,7 +308,10 @@ export default function EditFormJadwalButton({ jadwal }: { jadwal: Jadwal }) {
             Fill in the details to edit jadwal.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormJadwal defaultValues={jadwal} />
+        <EditFormJadwal
+          defaultValues={jadwal}
+          onOpenChange={handleOpenChange}
+        />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

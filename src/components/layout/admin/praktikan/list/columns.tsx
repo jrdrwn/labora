@@ -20,7 +20,7 @@ export type Kelas = {
 export type KelasPraktikan = {
   id: number;
   perangkat: string;
-  kelaspraktikum: Kelas;
+  kelas: Kelas;
 };
 
 export type Praktikan = {
@@ -28,7 +28,7 @@ export type Praktikan = {
   nama: string;
   nim: string;
   email: string;
-  kelaspraktikumpraktikan: KelasPraktikan[];
+  praktikan_kelas: KelasPraktikan[];
 };
 
 export const columns: ColumnDef<Praktikan>[] = [
@@ -89,7 +89,7 @@ export const columns: ColumnDef<Praktikan>[] = [
   {
     header: 'Jumlah Kelas Praktikum',
     cell: ({ row }) => {
-      const kelas = row.original.kelaspraktikumpraktikan;
+      const kelas = row.original.praktikan_kelas;
       return <span>{kelas.length}</span>;
     },
   },

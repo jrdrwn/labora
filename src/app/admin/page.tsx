@@ -1,4 +1,4 @@
-import OverviewLaporan from '@/components/layout/admin/overview-laporan';
+import OverviewLaporan from '@/components/layout/admin/overview/overview-laporan';
 import Calendar from '@/components/layout/shared/calendar';
 import {
   Card,

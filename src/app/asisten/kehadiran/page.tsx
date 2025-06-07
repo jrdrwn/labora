@@ -1,16 +1,7 @@
 'use client';
 
-import CreateFormKehadiran from '@/components/layout/asisten/kehadiran/create-form-kehadiran';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalDescription,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
-  ResponsiveModalTrigger,
-} from '@/components/ui/expansions/responsive-modal';
 import {
   Select,
   SelectContent,
@@ -26,11 +17,37 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit, Eye, Info, Pencil } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { useGetCookie } from 'cookies-next/client';
+import { Eye, Info, Pencil } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function KehadiranPage() {
+  const _cookies = useGetCookie();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [detailKehadiran, setdetailKehadiran] =
+    useState<DetailKehadiran | null>(null);
+
+  const getDetailKehadiran = useCallback(async () => {
+    const res = await fetch(`/api/asisten/kehadiran`, {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(
+        `Error: ${json.message || 'Gagal mengambil detail kehadiran'}`,
+      );
+      setdetailKehadiran(null);
+    }
+    setdetailKehadiran(json.data);
+  }, [_cookies]);
+
+  useEffect(() => {
+    getDetailKehadiran();
+  }, [getDetailKehadiran, mode]);
+
   return (
     <section className="m-8 flex flex-col gap-4 pb-8">
       <div className="flex items-center justify-between">
@@ -59,13 +76,35 @@ export default function KehadiranPage() {
                     <TableHead className="text-center">No</TableHead>
                     <TableHead className="text-center">NIM</TableHead>
                     <TableHead className="text-center">Nama</TableHead>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => (
-                      <EditHead jadwal={jadwal} key={jadwal.id} />
+                    {detailKehadiran?.kelas.jadwal.map((jadwal, idx) => (
+                      <TableHead key={jadwal.id} className="text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Info className="size-3" />
+                          {detailKehadiran.laporan
+                            .filter(
+                              (laporan) => laporan.jadwal.id === jadwal.id,
+                            )
+                            .map((laporan) => (
+                              <Fragment key={laporan.id}>
+                                <span className="font-medium">
+                                  {`Pertemuan ${idx + 1}`}
+                                </span>
+                              </Fragment>
+                            ))}
+                          {detailKehadiran.laporan.filter(
+                            (laporan) => laporan.jadwal.id === jadwal.id,
+                          ).length === 0 && (
+                            <span className="text-muted-foreground">
+                              Kehadiran belum diatur
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
+                  {detailKehadiran?.praktikan.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
                       <TableCell className="text-center font-medium">
                         {idx + 1}
@@ -76,11 +115,11 @@ export default function KehadiranPage() {
                       <TableCell className="text-center">
                         {praktikan.nama}
                       </TableCell>
-                      {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => {
+                      {detailKehadiran?.laporan.map((laporan) => {
                         return (
                           <EditCell
-                            key={jadwal.id}
-                            jadwalId={jadwal.id}
+                            key={laporan.id}
+                            laporan={laporan}
                             praktikan={praktikan}
                           />
                         );
@@ -97,23 +136,23 @@ export default function KehadiranPage() {
                     <TableHead className="text-center">No</TableHead>
                     <TableHead className="text-center">NIM</TableHead>
                     <TableHead className="text-center">Nama</TableHead>
-                    {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => (
+                    {detailKehadiran?.kelas.jadwal.map((jadwal, idx) => (
                       <TableHead key={jadwal.id} className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           <Info className="size-3" />
-                          {PENILAIAN_FAKE.filter(
-                            (penilaian) =>
-                              penilaian.jadwal_praktikum.id === jadwal.id,
-                          ).map((penilaian) => (
-                            <Fragment key={penilaian.id}>
-                              <span className="font-medium">
-                                {penilaian.judul}
-                              </span>
-                            </Fragment>
-                          ))}
-                          {PENILAIAN_FAKE.filter(
-                            (penilaian) =>
-                              penilaian.jadwal_praktikum.id === jadwal.id,
+                          {detailKehadiran.laporan
+                            .filter(
+                              (laporan) => laporan.jadwal.id === jadwal.id,
+                            )
+                            .map((laporan) => (
+                              <Fragment key={laporan.id}>
+                                <span className="font-medium">
+                                  {`Pertemuan ${idx + 1}`}
+                                </span>
+                              </Fragment>
+                            ))}
+                          {detailKehadiran.laporan.filter(
+                            (laporan) => laporan.jadwal.id === jadwal.id,
                           ).length === 0 && (
                             <span className="text-muted-foreground">
                               Kehadiran belum diatur
@@ -125,7 +164,7 @@ export default function KehadiranPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {PRAKTIKAN_FAKE.map((praktikan, idx) => (
+                  {detailKehadiran?.praktikan.map((praktikan, idx) => (
                     <TableRow key={praktikan.id}>
                       <TableCell className="text-center font-medium">
                         {idx + 1}
@@ -136,17 +175,14 @@ export default function KehadiranPage() {
                       <TableCell className="text-center">
                         {praktikan.nama}
                       </TableCell>
-                      {JADWAL_PRAKTIKUM_FAKE.map((jadwal) => {
-                        const detailPenilaian = praktikan.detailpenilaian.find(
-                          (dp) =>
-                            dp.penilaian.jadwal_praktikum_id === jadwal.id,
+                      {detailKehadiran.kelas.jadwal.map((jadwal) => {
+                        const kehadiran = praktikan.kehadiran.find(
+                          (dp) => dp.laporan.jadwal_id === jadwal.id,
                         );
                         return (
                           <TableCell key={jadwal.id} className="text-center">
-                            {detailPenilaian ? (
-                              <span className="italic">
-                                {detailPenilaian.kehadiran}
-                              </span>
+                            {kehadiran ? (
+                              <span className="italic">{kehadiran.tipe}</span>
                             ) : (
                               <span className="text-muted-foreground">?</span>
                             )}
@@ -166,41 +202,88 @@ export default function KehadiranPage() {
 }
 
 function EditCell({
-  jadwalId,
+  laporan,
   praktikan,
 }: {
-  jadwalId: number;
+  laporan: Laporan;
   praktikan: Praktikan;
 }) {
-  const [kehadiran, setKehadiran] = useState<string | null>();
+  const _cookies = useGetCookie();
+  const [tipe, setTipe] = useState<string | null>();
 
   useEffect(() => {
-    const detailPenilaian = praktikan.detailpenilaian.find(
-      (dp) => dp.penilaian.jadwal_praktikum_id === jadwalId,
+    const kehadiran = praktikan.kehadiran.find(
+      (dp) => dp.laporan.id === laporan.id,
     );
-    if (detailPenilaian) {
-      setKehadiran(detailPenilaian.kehadiran);
+    if (kehadiran) {
+      setTipe(kehadiran.tipe);
     } else {
-      setKehadiran(null);
+      setTipe(null);
     }
-  }, [jadwalId, praktikan.detailpenilaian]);
+  }, [laporan, praktikan]);
+
+  async function handleTipeChange(value: string) {
+    let res;
+    if (!value) return;
+    if (!tipe) {
+      res = await fetch(`/api/asisten/kehadiran`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': `Bearer ${_cookies('token')}`,
+        },
+        body: JSON.stringify({
+          laporan_id: laporan.id,
+          praktikan_id: praktikan.id,
+          tipe: value,
+        }),
+      });
+    } else {
+      res = await fetch(`/api/asisten/kehadiran`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': `Bearer ${_cookies('token')}`,
+        },
+        body: JSON.stringify({
+          where: {
+            kehadiran_id: praktikan.kehadiran.find(
+              (dp) => dp.laporan.id === laporan.id,
+            )?.id,
+            laporan_id: laporan.id,
+            praktikan_id: praktikan.id,
+          },
+          update: {
+            tipe: value,
+          },
+        }),
+      });
+    }
+
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengubah kehadiran'}`);
+      return;
+    }
+    setTipe(value);
+    toast.success('Kehadiran berhasil diubah');
+  }
 
   return (
     <TableCell className="text-center">
       <Select
-        onValueChange={(value) => {
-          setKehadiran(value);
-        }}
-        value={kehadiran ? kehadiran.toLocaleLowerCase() : '?'}
+        onValueChange={handleTipeChange}
+        value={tipe ? tipe.toLocaleLowerCase() : '?'}
       >
         <SelectTrigger className="mx-auto !h-auto w-full max-w-30 border-none py-0 shadow-none">
           <SelectValue placeholder="Pilih Kehadiran" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="?">?</SelectItem>
+          <SelectItem value="?" disabled>
+            ?
+          </SelectItem>
           <SelectItem value="hadir">Hadir</SelectItem>
           <SelectItem value="izin">Izin</SelectItem>
-          <SelectItem value="sakit">Sakit</SelectItem>
           <SelectItem value="alpha">Alpha</SelectItem>
         </SelectContent>
       </Select>
@@ -208,359 +291,58 @@ function EditCell({
   );
 }
 
-function EditHead({ jadwal }: { jadwal: JadwalPraktikum }) {
-  return (
-    <TableHead key={jadwal.id} className="text-center">
-      <ResponsiveModal>
-        <ResponsiveModalTrigger asChild>
-          <Button variant={'outline'} size={'sm'}>
-            <div className="flex items-center justify-center gap-1.5">
-              <Edit className="size-3" />
-              {PENILAIAN_FAKE.filter(
-                (penilaian) => penilaian.jadwal_praktikum.id === jadwal.id,
-              ).map((penilaian) => (
-                <Fragment key={penilaian.id}>
-                  <span className="font-medium">{penilaian.judul}</span>
-                </Fragment>
-              ))}
-              {PENILAIAN_FAKE.filter(
-                (penilaian) => penilaian.jadwal_praktikum.id === jadwal.id,
-              ).length === 0 && (
-                <span className="text-muted-foreground">
-                  Kehadiran belum diatur
-                </span>
-              )}
-            </div>
-          </Button>
-        </ResponsiveModalTrigger>
-        <ResponsiveModalContent>
-          <ResponsiveModalHeader className="mb-4">
-            <ResponsiveModalTitle>Edit Kehadiran</ResponsiveModalTitle>
-            <ResponsiveModalDescription>
-              Untuk mengatur informasi kehadiran praktikan pada jadwal praktikum
-              ini.
-            </ResponsiveModalDescription>
-          </ResponsiveModalHeader>
-          <CreateFormKehadiran
-            data={{
-              jadwal_praktikum_id: jadwal.id,
-            }}
-          />
-        </ResponsiveModalContent>
-      </ResponsiveModal>
-    </TableHead>
-  );
+export interface DetailKehadiran {
+  asisten: Asisten;
+  kelas: Kelas;
+  praktikan: Praktikan[];
+  laporan: Laporan[];
 }
 
-interface JadwalPraktikum {
+export interface Asisten {
   id: number;
-  mulai: string;
-  selesai: string;
+  nim: string;
+  email: string;
+  nama: string;
+  status: string;
+  komitmen_url: string;
+  dokumen_pendukung_url: string;
+  event_id: number;
+  mata_kuliah_pilihan: string[];
 }
 
-interface Penilaian {
+export interface Kelas {
   id: number;
-  judul: string;
-  bukti_pertemuan: string;
-  jadwal_praktikum: JadwalPraktikum;
+  nama: string;
+  kapasitas_praktikan: number;
+  mata_kuliah_id: number;
+  asisten_id: number;
+  admin_id: number;
+  jadwal: Jadwal[];
 }
 
-interface Praktikan {
+export interface Jadwal {
+  id: number;
+  mulai: Date;
+  selesai: Date;
+}
+
+export interface Laporan {
+  id: number;
+  judul: null | string;
+  bukti_pertemuan_url: null | string;
+  jadwal: Jadwal;
+}
+
+export interface Praktikan {
   id: number;
   nama: string;
   nim: string;
-  detailpenilaian: {
+  kehadiran: {
     id: number;
-    kehadiran: string;
-    penilaian: {
+    tipe: string;
+    laporan: {
       id: number;
-      jadwal_praktikum_id: number;
+      jadwal_id: number;
     };
   }[];
 }
-
-const JADWAL_PRAKTIKUM_FAKE: JadwalPraktikum[] = [
-  { id: 301, mulai: '2025-06-01 08:00', selesai: '2025-06-01 10:00' },
-  { id: 302, mulai: '2025-06-02 09:00', selesai: '2025-06-02 11:00' },
-  { id: 303, mulai: '2025-06-03 13:00', selesai: '2025-06-03 15:00' },
-  { id: 304, mulai: '2025-06-04 10:00', selesai: '2025-06-04 12:00' },
-  { id: 305, mulai: '2025-06-05 14:00', selesai: '2025-06-05 16:00' },
-  { id: 306, mulai: '2025-06-06 18:00', selesai: '2025-06-06 20:00' },
-];
-
-const PENILAIAN_FAKE: Penilaian[] = [
-  {
-    id: 201,
-    judul: 'Pertemuan 1',
-    bukti_pertemuan: 'bukti1.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[0],
-  },
-  {
-    id: 202,
-    judul: 'Pertemuan 2',
-    bukti_pertemuan: 'bukti2.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[1],
-  },
-  {
-    id: 203,
-    judul: 'Pertemuan 3',
-    bukti_pertemuan: 'bukti3.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[2],
-  },
-  {
-    id: 204,
-    judul: 'Pertemuan 4',
-    bukti_pertemuan: 'bukti4.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[3],
-  },
-  {
-    id: 205,
-    judul: 'Pertemuan 5',
-    bukti_pertemuan: 'bukti5.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[4],
-  },
-  {
-    id: 206,
-    judul: 'Pertemuan 5',
-    bukti_pertemuan: 'bukti5.jpg',
-    jadwal_praktikum: JADWAL_PRAKTIKUM_FAKE[5],
-  },
-];
-
-const PRAKTIKAN_FAKE: Praktikan[] = [
-  {
-    id: 1,
-    nama: 'Budi Santoso',
-    nim: '220001',
-    detailpenilaian: [
-      {
-        id: 101,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[0].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[0].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 102,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[1].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[1].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 103,
-        kehadiran: 'Izin',
-        penilaian: {
-          id: PENILAIAN_FAKE[2].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[2].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 104,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[3].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[3].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 105,
-        kehadiran: 'Alpha',
-        penilaian: {
-          id: PENILAIAN_FAKE[4].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[4].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 2,
-    nama: 'Siti Aminah',
-    nim: '220002',
-    detailpenilaian: [
-      {
-        id: 106,
-        kehadiran: 'Izin',
-        penilaian: {
-          id: PENILAIAN_FAKE[0].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[0].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 107,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[1].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[1].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 108,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[2].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[2].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 109,
-        kehadiran: 'Alpha',
-        penilaian: {
-          id: PENILAIAN_FAKE[3].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[3].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 110,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[4].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[4].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 3,
-    nama: 'Rizky Pratama',
-    nim: '220003',
-    detailpenilaian: [
-      {
-        id: 111,
-        kehadiran: 'Alpha',
-        penilaian: {
-          id: PENILAIAN_FAKE[0].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[0].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 112,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[1].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[1].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 113,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[2].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[2].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 114,
-        kehadiran: 'Sakit',
-        penilaian: {
-          id: PENILAIAN_FAKE[3].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[3].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 115,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[4].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[4].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 4,
-    nama: 'Dewi Lestari',
-    nim: '220004',
-    detailpenilaian: [
-      {
-        id: 116,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[0].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[0].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 117,
-        kehadiran: 'Sakit',
-        penilaian: {
-          id: PENILAIAN_FAKE[1].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[1].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 118,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[2].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[2].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 119,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[3].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[3].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 120,
-        kehadiran: 'Izin',
-        penilaian: {
-          id: PENILAIAN_FAKE[4].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[4].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-  {
-    id: 5,
-    nama: 'Andi Wijaya',
-    nim: '220005',
-    detailpenilaian: [
-      {
-        id: 121,
-        kehadiran: 'Sakit',
-        penilaian: {
-          id: PENILAIAN_FAKE[0].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[0].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 122,
-        kehadiran: 'Alpha',
-        penilaian: {
-          id: PENILAIAN_FAKE[1].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[1].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 123,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[2].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[2].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 124,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[3].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[3].jadwal_praktikum.id,
-        },
-      },
-      {
-        id: 125,
-        kehadiran: 'Hadir',
-        penilaian: {
-          id: PENILAIAN_FAKE[4].id,
-          jadwal_praktikum_id: PENILAIAN_FAKE[4].jadwal_praktikum.id,
-        },
-      },
-    ],
-  },
-];

@@ -38,9 +38,9 @@ export type MataKuliah = {
 export type Kelas = {
   id: number;
   nama: string;
-  kuota_praktikan: number;
+  kapasitas_praktikan: number;
   asisten: AsistenKelas | null;
-  matakuliahpraktikum: MataKuliah;
+  mata_kuliah: MataKuliah;
 };
 
 export const columns: ColumnDef<Kelas>[] = [
@@ -90,7 +90,7 @@ export const columns: ColumnDef<Kelas>[] = [
     header: 'Nama',
   },
   {
-    accessorKey: 'matakuliahpraktikum.nama',
+    accessorKey: 'mata_kuliah.nama',
     header: 'Mata Kuliah',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -110,12 +110,12 @@ export const columns: ColumnDef<Kelas>[] = [
     },
   },
   {
-    accessorKey: 'kuota_praktikan',
+    accessorKey: 'kapasitas_praktikan',
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
-          Kuota
-          <span className="sr-only">Sort by Kuota Praktikan</span>
+          Kapasitas
+          <span className="sr-only">Sort by Kapasitas Praktikan</span>
           {{
             asc: <ChevronUp />,
             desc: <ChevronDown />,
@@ -124,8 +124,8 @@ export const columns: ColumnDef<Kelas>[] = [
       );
     },
     cell: ({ row }) => {
-      const kuota_praktikan = row.original.kuota_praktikan;
-      return <span className="pl-2">{kuota_praktikan}</span>;
+      const kapasitas_praktikan = row.original.kapasitas_praktikan;
+      return <span className="pl-2">{kapasitas_praktikan}</span>;
     },
   },
   {
