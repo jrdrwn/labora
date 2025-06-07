@@ -101,10 +101,11 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     accessorKey: 'jenis',
+    accessorFn: (row) => row.jenis.split('_').join(' '),
     header: 'Jenis',
     cell: ({ row }) => {
       const jenis = row.original.jenis;
-      return <span className="capitalize">{jenis}</span>;
+      return <span className="capitalize">{jenis.split('_').join(' ')}</span>;
     },
   },
   {

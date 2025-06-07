@@ -116,7 +116,12 @@ export const columns: ColumnDef<LaporanList>[] = [
     header: 'Mata Kuliah',
   },
   {
-    // TODO: Implement a custom filter for status
+    accessorFn: (row) =>
+      row.laporan.filter(
+        (laporan) => !laporan.judul || !laporan.bukti_pertemuan,
+      ).length > 0
+        ? 'Belum'
+        : 'Sudah',
     accessorKey: 'status',
     header: 'Status',
     filterFn: (row, id, value) => {
