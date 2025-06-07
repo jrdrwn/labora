@@ -12,6 +12,13 @@ overview.get('/', async (c) => {
 
   // Ambil dan ubah struktur jadwal
   const jadwalRaw = await prisma.jadwal.findMany({
+    where: {
+      kelas: {
+        asisten_id: {
+          not: null,
+        },
+      },
+    },
     select: {
       id: true,
       mulai: true,
@@ -64,6 +71,11 @@ overview.get('/', async (c) => {
 
   // Ambil dan ubah struktur laporan
   const laporanRaw = await prisma.kelas.findMany({
+    where: {
+      NOT: {
+        asisten_id: null,
+      },
+    },
     select: {
       id: true,
       nama: true,
