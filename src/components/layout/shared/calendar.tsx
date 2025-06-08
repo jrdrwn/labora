@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import {
+  CalendarOptions,
   EventChangeArg,
   EventClickArg,
   EventSourceInput,
@@ -30,7 +31,8 @@ export default function Calendar({
   eventClick,
   eventChange,
   eventOverlap,
-}: CalendarProps) {
+  ...rest
+}: CalendarProps & CalendarOptions) {
   return (
     <Card className={cn('w-full max-w-6xl', className)}>
       <CardContent>
@@ -73,6 +75,7 @@ export default function Calendar({
             interactionPlugin,
           ]}
           initialView="dayGridMonth"
+          {...rest}
         />
       </CardContent>
     </Card>

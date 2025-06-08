@@ -9,6 +9,7 @@ import {
   ResponsiveModalHeader,
   ResponsiveModalTitle,
 } from '@/components/ui/expansions/responsive-modal';
+import { cn } from '@/lib/utils';
 import { EventSourceInput } from '@fullcalendar/core/index.js';
 import { useState } from 'react';
 
@@ -31,7 +32,10 @@ export default function AdvancedCalendar({
             end: jadwal.detail.selesai,
             color: '#10b981',
             editable: false,
-            className: 'cursor-pointer',
+            className: cn(
+              'cursor-pointer',
+              jadwal.detail.is_dilaksanakan && '[&>div]:line-through',
+            ),
             extendedProps: {
               ...jadwal,
             },

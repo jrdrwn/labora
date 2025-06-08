@@ -31,6 +31,7 @@ export interface Jadwal {
   id: number;
   mulai: Date;
   selesai: Date;
+  is_dilaksanakan: boolean;
 }
 /**
  * Extract date in format YYYY-MM-DD from Date or ISO string
@@ -116,6 +117,21 @@ export const columns: ColumnDef<Laporan>[] = [
         >
           {url ? 'Lihat Bukti' : 'Tidak Ada Bukti'}
         </Link>
+      );
+    },
+  },
+  {
+    id: 'status',
+    accessorKey: 'jadwal.is_dilaksanakan',
+    accessorFn: (row) =>
+      row.jadwal.is_dilaksanakan ? 'Sudah Dilaksanakan' : 'Belum Dilaksanakan',
+    header: 'Status',
+    cell: ({ row }) => {
+      const isDilaksanakan = row.original.jadwal?.is_dilaksanakan;
+      return (
+        <span>
+          {isDilaksanakan ? 'Sudah Dilaksanakan' : 'Belum Dilaksanakan'}
+        </span>
       );
     },
   },

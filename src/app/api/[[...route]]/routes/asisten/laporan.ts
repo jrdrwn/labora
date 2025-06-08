@@ -65,6 +65,7 @@ laporan.get('/', async (c) => {
           id: true,
           mulai: true,
           selesai: true,
+          is_dilaksanakan: true,
         },
       },
     },
@@ -114,6 +115,15 @@ laporan.put(
         404,
       );
     }
+
+    await prisma.jadwal.update({
+      where: {
+        id: laporan.jadwal_id!,
+      },
+      data: {
+        is_dilaksanakan: true,
+      },
+    });
 
     await prisma.laporan.update({
       where: {

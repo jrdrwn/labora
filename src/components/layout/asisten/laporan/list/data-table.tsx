@@ -1,6 +1,7 @@
 'use client';
 
 import DataTableFooter from '@/components/layout/shared/data-table-footer';
+import { FilterBy } from '@/components/layout/shared/filter-by';
 import { FilterColumnsButton } from '@/components/layout/shared/filter-columns';
 import { GlobalSearchInput } from '@/components/layout/shared/global-search';
 import {
@@ -74,6 +75,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center justify-between pb-4">
           <div className="flex items-center gap-2">
             <GlobalSearchInput table={table} />
+            <FilterBy value="status" table={table} />
             <SelectRowsActionButton table={table} />
           </div>
           <div className="flex items-center gap-2">

@@ -78,6 +78,7 @@ jadwal.put(
 
     const existingBookings = await prisma.jadwal.findMany({
       where: {
+        is_dilaksanakan: false,
         id: {
           not: json.where.jadwal_id,
         },
