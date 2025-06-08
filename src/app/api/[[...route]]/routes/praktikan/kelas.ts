@@ -60,7 +60,7 @@ kelas.get('/pre', async (c) => {
   const mata_kuliah_praktikum = await prisma.mata_kuliah.findMany({
     where: {
       kode: {
-        in: [...krs.map((k) => k.mkkurKode), '1DCP314032'],
+        in: [...krs.map((k) => k.mkkurKode)],
       },
     },
     select: {

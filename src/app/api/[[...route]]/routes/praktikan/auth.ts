@@ -133,6 +133,28 @@ auth.post(
       },
     });
 
+    const oldDIfferentKelas = await prisma.praktikan_kelas.findMany({
+      where: {
+        praktikan_id: jwtPayload.sub,
+        kelas: {
+          NOT: {
+            id: json.kelas_praktikum_id,
+          },
+          mata_kuliah_id: json.mata_kuliah_praktikum_id,
+        },
+      },
+    });
+
+    if (oldDIfferentKelas.length) {
+      await prisma.praktikan_kelas.deleteMany({
+        where: {
+          id: {
+            in: oldDIfferentKelas.map((k) => k.id),
+          },
+        },
+      });
+    }
+
     const kelasPraktikumPraktikan = await prisma.praktikan_kelas.findFirst({
       where: {
         praktikan_id: jwtPayload.sub,

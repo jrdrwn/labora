@@ -57,7 +57,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -160,52 +160,52 @@ export default function RegisterForm() {
     },
   });
 
+  const getPraktikan = useCallback(async () => {
+    const res = await fetch(`/api/praktikan/me`, {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
+      setPraktikan(null);
+      return;
+    }
+    json.data.kelas.forEach((kelas: Kela) => {
+      setPrevData((prev) => ({
+        ...prev,
+        [kelas.mata_kuliah.id]: {
+          mataKuliahPraktikumId: kelas.mata_kuliah.id,
+          perangkat: kelas.mata_kuliah.perangkat,
+          kelasPraktikumId: kelas.id,
+        },
+      }));
+    });
+    setPraktikan(json.data);
+  }, [_cookies]);
+
+  const getPreKelas = useCallback(async () => {
+    const res = await fetch('/api/praktikan/kelas/pre', {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengambil mata kuliah'}`);
+      setPreKelas([]);
+      return;
+    }
+    setPreKelas(json.data);
+  }, [_cookies]);
+
   useEffect(() => {
     if (_cookies('token')) {
-      async function getPraktikan() {
-        const res = await fetch(`/api/praktikan/me`, {
-          headers: {
-            authorization: `Bearer ${_cookies('token')}`,
-          },
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
-          setPraktikan(null);
-        }
-        json.data.kelas.forEach((kelas: Kela) => {
-          setPrevData((prev) => ({
-            ...prev,
-            [kelas.mata_kuliah.id]: {
-              mataKuliahPraktikumId: kelas.mata_kuliah.id,
-              perangkat: kelas.mata_kuliah.perangkat,
-              kelasPraktikumId: kelas.id,
-            },
-          }));
-        });
-        setPraktikan(json.data);
-      }
-
-      async function getPreKelas() {
-        const res = await fetch('/api/praktikan/kelas/pre', {
-          headers: {
-            authorization: `Bearer ${_cookies('token')}`,
-          },
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          toast.error(
-            `Error: ${json.message || 'Gagal mengambil mata kuliah'}`,
-          );
-          setPreKelas([]);
-        }
-        setPreKelas(json.data);
-      }
-
       getPraktikan();
       getPreKelas();
     }
-  }, [_cookies, form]);
+  }, [_cookies, getPraktikan, getPreKelas]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -231,6 +231,8 @@ export default function RegisterForm() {
         },
       }));
       form.reset();
+      getPreKelas();
+      getPraktikan();
       router.refresh();
     } else {
       toast.error(`Pendaftaran gagal`, {
@@ -465,6 +467,17 @@ export default function RegisterForm() {
                                 >
                                   Nama: {kelas.nama}
                                   <br />
+                                  Kapasitas: {kelas.praktikan_kelas.length}/
+                                  {kelas.kapasitas_praktikan}
+                                  <br />
+                                  Komputer Tersedia:{' '}
+                                  {kelas.jadwal[0]?.ruangan.kapasitas.komputer -
+                                    kelas.praktikan_kelas.filter(
+                                      (pk) => pk.perangkat === 'komputer_lab',
+                                    ).length}
+                                  /{kelas.jadwal[0]?.ruangan.kapasitas.komputer}
+                                  <br />
+                                  {/* Perangkat: {kelas.perangkat} */}
                                   {/* Kuota: {kelas.kuota.tersisa}/{kelas.kuota.total}
                                 <br />
                                 Kuota Komputer: {kelas.kuota.komputer}
