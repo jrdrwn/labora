@@ -1,114 +1,83 @@
-'use client';
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { setCookie, useGetCookie } from 'cookies-next/client';
-import { ChevronsUpDown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
 
-export default function Prefix() {
+import GantiKelasButton from './GantiKelasButton';
+
+export default async function Prefix() {
+  const event = await getEvent();
   return (
     <>
       <GantiKelasButton />
-      <Button variant={'secondary'} className="rounded-full">
-        Event
+      <Button variant={'outline'} className="cursor-pointer rounded-full">
+        Event:{' '}
+        {event
+          .find((e) => e.is_aktif)
+          ?.jenis.split('_')
+          .join(' ') || 'Tidak ada event aktif'}
+        <ChevronsUpDown />
       </Button>
-      <Button variant={'outline'} className="rounded-full px-2">
-        Praktikan
-        <Avatar className="size-6">
-          <AvatarImage
-            src={'https://images.unsplash.com/photo-1733621770053-9b1a5f433a8c'}
-          />
-          <AvatarFallback>LB</AvatarFallback>
-        </Avatar>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant={'outline'} className="rounded-full px-2">
+            Praktikan
+            <Avatar className="size-6">
+              <AvatarImage
+                src={
+                  'https://images.unsplash.com/photo-1733621770053-9b1a5f433a8c'
+                }
+              />
+              <AvatarFallback>LB</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="start">
+          <Link href={'/'}>
+            <DropdownMenuItem>
+              <LogOut />
+              Log out
+            </DropdownMenuItem>
+          </Link>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 }
 
-function GantiKelasButton() {
-  const _cookies = useGetCookie();
-  const router = useRouter();
-  const [currentKelas, setCurrentKelas] = useState<Kelas | null>(null);
-  const [kelas, setKelas] = useState<Kelas[]>([]);
-  useEffect(() => {
-    async function getPreKelas() {
-      const res = await fetch('/api/praktikan/kelas', {
-        headers: {
-          authorization: `Bearer ${_cookies('token')}`,
-        },
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
-        setKelas([]);
-      }
-      const kelasCookie = _cookies('kelas');
-      if (kelasCookie) {
-        const parsedKelas = JSON.parse(kelasCookie) as Kelas;
-        setCurrentKelas(parsedKelas);
-      } else {
-        setCookie('kelas', JSON.stringify(json.data[0] || null));
-        toast.info(
-          'Kelas belum dipilih, menggunakan kelas pertama sebagai default',
-        );
-        router.refresh();
-        setCurrentKelas(json.data[0] || null);
-      }
-      setKelas(json.data);
-    }
-    getPreKelas();
-  }, [_cookies, router]);
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant={'secondary'} className="rounded-full">
-          {currentKelas
-            ? `${currentKelas.nama} (${currentKelas.mata_kuliah.kode} - ${currentKelas.mata_kuliah.nama})`
-            : 'Pilih Kelas'}
-          <span className="sr-only">Ganti kelas</span>
-          <ChevronsUpDown />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48">
-        <DropdownMenuLabel>Ganti kelas</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {kelas.map((k) => (
-          <DropdownMenuItem
-            key={k.id}
-            onClick={() => {
-              setCurrentKelas(k);
-              setCookie('kelas', JSON.stringify(k));
-              toast.success(`Berhasil ganti kelas ke ${k.nama}`);
-              router.refresh();
-            }}
-          >
-            {k.nama} ({k.mata_kuliah.kode} - {k.mata_kuliah.nama})
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-export interface Kelas {
-  id: number;
-  nama: string;
-  mata_kuliah: MataKuliah;
+async function getEvent(): Promise<Event[]> {
+  const _cookies = await cookies();
+  const res = await fetch(`${process.env.APP_URL}/api/praktikan/event`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'authorization': `Bearer ${_cookies.get('token')?.value}`,
+    },
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(json.message || 'Gagal mengambil event');
+  }
+  return json.data;
 }
 
-export interface MataKuliah {
+export interface Event {
+  id: number;
+  is_aktif: boolean;
+  jenis: string;
+  mulai: Date;
+  selesai: Date;
+  admin: Admin;
+}
+
+export interface Admin {
   id: number;
   nama: string;
-  kode: string;
+  email: string;
 }

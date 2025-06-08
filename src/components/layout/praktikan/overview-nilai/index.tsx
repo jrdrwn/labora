@@ -9,10 +9,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import { columns, Penilaian } from './columns';
+import { columns, PenilaianKehadiran } from './columns';
 import { DataTable } from './data-table';
 
-export default function OverviewNilai({ data }: { data: Penilaian[] }) {
+export default function OverviewNilai({
+  data,
+}: {
+  data: PenilaianKehadiran[];
+}) {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>

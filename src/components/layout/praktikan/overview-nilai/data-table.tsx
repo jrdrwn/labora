@@ -16,7 +16,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
-import { Penilaian } from './columns';
+import { PenilaianKehadiran } from './columns';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -90,12 +90,12 @@ export function DataTable<TData, TValue>({
               </TableRow>
             )}
             <TableRow>
-              <TableCell colSpan={3} className="text-right">
+              <TableCell colSpan={4} className="text-right">
                 <strong>Responsi:</strong>
               </TableCell>
               <TableCell colSpan={1} className="text-center">
                 {
-                  (data as Penilaian[]).filter(
+                  (data as PenilaianKehadiran[]).filter(
                     (data) =>
                       data.detail.filter(
                         (detail) => detail.tipe === 'responsi',

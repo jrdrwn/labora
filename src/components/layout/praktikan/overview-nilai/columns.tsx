@@ -2,8 +2,9 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 
-export type Penilaian = {
+export type PenilaianKehadiran = {
   id: number;
+  kehadiran: string;
   jadwal: {
     id: number;
     mulai: Date;
@@ -16,7 +17,7 @@ export type Penilaian = {
   }[];
 };
 
-export const columns: ColumnDef<Penilaian>[] = [
+export const columns: ColumnDef<PenilaianKehadiran>[] = [
   {
     accessorKey: 'jadwal',
     header: 'Pertemuan',
@@ -24,6 +25,10 @@ export const columns: ColumnDef<Penilaian>[] = [
       const jadwal = row.original.jadwal;
       return `${jadwal.mulai.toLocaleDateString()} ${jadwal.mulai.toLocaleTimeString()} - ${jadwal.selesai.toLocaleTimeString()}`;
     },
+  },
+  {
+    accessorKey: 'kehadiran',
+    header: 'Kehadiran',
   },
   {
     id: 'pretest',

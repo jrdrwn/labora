@@ -1,5 +1,5 @@
 import OverviewNilai from '@/components/layout/praktikan/overview-nilai';
-import Calendar from '@/components/layout/shared/calendar';
+import AdvancedCalendar from '@/components/layout/shared/advanced-calendar';
 import {
   Card,
   CardContent,
@@ -9,8 +9,10 @@ import {
 } from '@/components/ui/card';
 import {
   BookOpen,
+  Calendar,
   CalendarClock,
   Shapes,
+  Timer,
   UserPen,
   Users,
   Warehouse,
@@ -132,23 +134,36 @@ export default async function PraktikanPage() {
               <CardTitle>Jadwal</CardTitle>
               <CardDescription>Jadwal praktikum selanjutnya</CardDescription>
             </CardHeader>
-            <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-primary" />
+                <span className="text-muted-foreground">
+                  {extractDate(overview.jadwal_selanjutnya.mulai)}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Timer className="size-4 text-primary" />
+                <span className="text-muted-foreground">
+                  {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
+                  {extractTime(overview.jadwal_selanjutnya.selesai)}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
       </section>
       <section className="m-8">
         <div className="flex gap-8">
-          <Calendar />
+          <AdvancedCalendar jadwalList={overview.jadwal_sendiri} />
           <OverviewNilai
-            data={overview.penilaian.map((penilaian) => ({
-              id: penilaian.id,
-              detail: penilaian.detail,
+            data={overview.penilaian_kehadiran.map((pk) => ({
+              id: pk.id,
+              detail: pk.detail,
+              kehadiran: pk.kehadiran,
               jadwal: {
-                id: penilaian.jadwal.id,
-                mulai: new Date(penilaian.jadwal.mulai),
-                selesai: new Date(penilaian.jadwal.selesai),
+                id: pk.jadwal.id,
+                mulai: new Date(pk.jadwal.mulai),
+                selesai: new Date(pk.jadwal.selesai),
               },
             }))}
           />
@@ -157,7 +172,26 @@ export default async function PraktikanPage() {
     </>
   );
 }
+/**
+ * Extract date in format YYYY-MM-DD from Date or ISO string
+ */
+export function extractDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  // timezone handling to +0700
+  d.setHours(d.getHours() + 7);
+  // return date in YYYY-MM-DD format
+  return d.toISOString().slice(0, 10);
+}
 
+/**
+ * Extract time in format HH:mm from Date or ISO string
+ */
+export function extractTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  // timezone handling to +0700
+  d.setHours(d.getHours() + 7);
+  return d.toISOString().slice(11, 16);
+}
 export interface Data {
   total_nilai: number;
   sisa_pertemuan_praktikum: number;
@@ -166,14 +200,14 @@ export interface Data {
   mata_kuliah_praktikum: MataKuliahPraktikum;
   jadwal_selanjutnya: Jadwal;
   jadwal_sendiri: JadwalSendiri[];
-  penilaian: Penilaian[];
+  penilaian_kehadiran: PenilaianKehadiran[];
 }
 
 export interface Jadwal {
   id: number;
   mulai: Date;
   selesai: Date;
-  status?: string;
+  is_dilaksanakan: boolean;
 }
 
 export interface JadwalSendiri {
@@ -181,7 +215,7 @@ export interface JadwalSendiri {
   kelas: Kelas;
   mata_kuliah_praktikum: MataKuliahPraktikum;
   asisten: Asisten;
-  jadwal: Jadwal;
+  detail: Jadwal;
 }
 
 export interface Asisten {
@@ -201,9 +235,10 @@ export interface MataKuliahPraktikum {
   nama: string;
 }
 
-export interface Penilaian {
+export interface PenilaianKehadiran {
   id: number;
   jadwal: Jadwal;
+  kehadiran: string;
   detail: Detail[];
 }
 

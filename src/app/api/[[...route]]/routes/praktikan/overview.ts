@@ -44,6 +44,11 @@ overview.get('/:kelasId', async (c) => {
           laporan: {
             select: {
               id: true,
+              kehadiran: {
+                where: {
+                  praktikan_id: jwtPayload.sub,
+                },
+              },
               penilaian: {
                 where: {
                   praktikan_id: jwtPayload.sub,
@@ -70,7 +75,7 @@ overview.get('/:kelasId', async (c) => {
   let sisa_pertemuan_praktikum = 0;
   let ruangUtama = null;
   let jadwal_selanjutnya = null;
-  const penilaian = [];
+  const penilaian_kehadiran = [];
   const jadwal_sendiri = [];
 
   for (const jadwal of kelas.jadwal) {
@@ -90,13 +95,11 @@ overview.get('/:kelasId', async (c) => {
       },
       mata_kuliah_praktikum: kelas.mata_kuliah,
       asisten: kelas.asisten,
-      jadwal: {
+      detail: {
         id: jadwal.id,
         mulai: jadwal.mulai,
         selesai: jadwal.selesai,
-        status: jadwal.is_dilaksanakan
-          ? 'sudah dilaksanakan'
-          : 'belum dilaksanakan',
+        is_dilaksanakan: jadwal.is_dilaksanakan,
       },
     });
 
@@ -106,7 +109,7 @@ overview.get('/:kelasId', async (c) => {
         id: jadwal.id,
         mulai: jadwal.mulai,
         selesai: jadwal.selesai,
-        status: 'belum dilaksanakan',
+        is_dilaksanakan: jadwal.is_dilaksanakan,
       };
     }
 
@@ -126,8 +129,9 @@ overview.get('/:kelasId', async (c) => {
         };
       });
 
-      penilaian.push({
+      penilaian_kehadiran.push({
         id: laporan.id,
+        kehadiran: laporan.kehadiran[0]?.tipe,
         jadwal: {
           id: jadwal.id,
           mulai: jadwal.mulai,
@@ -151,7 +155,7 @@ overview.get('/:kelasId', async (c) => {
       mata_kuliah_praktikum: kelas.mata_kuliah,
       jadwal_selanjutnya,
       jadwal_sendiri,
-      penilaian,
+      penilaian_kehadiran,
     },
   });
 });
