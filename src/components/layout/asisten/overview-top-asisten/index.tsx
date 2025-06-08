@@ -8,29 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import Link from 'next/link';
 
 import { columns, Praktikan } from './columns';
 import { DataTable } from './data-table';
 
-export default function OverviewLaporan() {
-  const data: Praktikan[] = [
-    ...Array<Praktikan>(21)
-      .fill({
-        id: 0,
-        nim: 'NIM',
-        nama: 'Nama',
-        total_nilai: 0,
-      })
-      .map(
-        (_, i) =>
-          ({
-            id: i + 1,
-            nim: `NIM ${i + 1}`,
-            nama: `Nama ${i + 1}`,
-            total_nilai: Math.floor(Math.random() * 100), // Random total nilai for demonstration
-          }) as Praktikan,
-      ),
-  ];
+export default function OverviewLaporan(
+  { data }: { data: Praktikan[] } = { data: [] },
+) {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
@@ -44,9 +29,11 @@ export default function OverviewLaporan() {
       </CardContent>
       <CardFooter className="justify-end">
         <CardAction>
-          <Button variant="outline" size="sm">
-            Lihat semua
-          </Button>
+          <Link href="/asisten/penilaian">
+            <Button variant="outline" size="sm">
+              Lihat semua
+            </Button>
+          </Link>
         </CardAction>
       </CardFooter>
     </Card>

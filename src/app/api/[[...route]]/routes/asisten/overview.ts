@@ -8,8 +8,28 @@ export const overview = new Hono().basePath('/overview');
 overview.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
 
-  // Praktikan yang belum dinilai
-  const praktikanBelumDinilai = await prisma.praktikan.findMany({
+  const laporan = await prisma.laporan.findMany({
+    where: {
+      NOT: {
+        judul: null,
+        bukti_pertemuan_url: null,
+      },
+      jadwal: {
+        kelas: {
+          asisten_id: jwtPayload.sub,
+        },
+      },
+    },
+    select: {
+      id: true,
+      judul: true,
+      bukti_pertemuan_url: true,
+      penilaian: {
+        select: { nilai: true, tipe: true },
+      },
+    },
+  });
+  const jumlah_praktikan = await prisma.praktikan.count({
     where: {
       praktikan_kelas: {
         some: {
@@ -18,22 +38,16 @@ overview.get('/', async (c) => {
           },
         },
       },
-      penilaian: {
-        some: {
-          nilai: null,
-          laporan: {
-            jadwal: {
-              kelas: {
-                asisten_id: jwtPayload.sub,
-              },
-            },
-          },
-        },
-      },
     },
-    select: { id: true },
   });
-  const jumlah_praktikan_belum_dinilai = praktikanBelumDinilai.length;
+
+  const jumlah_praktikan_belum_dinilai = laporan
+    .map((l) =>
+      l.penilaian.length
+        ? l.penilaian.length % jumlah_praktikan
+        : jumlah_praktikan,
+    )
+    .sort((a, b) => b - a)[0];
 
   // Sisa jadwal yang belum dilaksanakan
   const sisa_pertemuan_praktikum = await prisma.jadwal.count({
@@ -157,11 +171,11 @@ overview.get('/', async (c) => {
     },
     mata_kuliah_praktikum: j.kelas?.mata_kuliah,
     asisten: j.kelas?.asisten,
-    jadwal: {
+    detail: {
       id: j.id,
       mulai: j.mulai,
       selesai: j.selesai,
-      status: j.is_dilaksanakan ? 'sudah dilaksanakan' : 'belum dilaksanakan',
+      is_dilaksanakan: j.is_dilaksanakan,
     },
   }));
 

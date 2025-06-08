@@ -1,5 +1,5 @@
 import OverviewLaporan from '@/components/layout/asisten/overview-top-asisten';
-import Calendar from '@/components/layout/shared/calendar';
+import AdvancedCalendar from '@/components/layout/shared/advanced-calendar';
 import {
   Card,
   CardContent,
@@ -9,14 +9,28 @@ import {
 } from '@/components/ui/card';
 import {
   BookOpen,
+  Calendar,
   CalendarClock,
   Shapes,
+  Timer,
   UserPen,
   Users,
-  Warehouse,
+  Warehouse
 } from 'lucide-react';
+import { cookies } from 'next/headers';
 
-export default function AsistenPage() {
+export default async function AsistenPage() {
+    const _cookies = await cookies();
+    const res = await fetch(`${process.env.APP_URL}/api/asisten/overview`, {
+      headers: {
+        authorization: `Bearer ${_cookies.get('token')?.value}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(`Error: ${json.message || 'Gagal mengambil overview'}`);
+    }
+      const overview: Data = json.data;
   return (
     <>
       <section className="m-8">
@@ -32,7 +46,7 @@ export default function AsistenPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">{overview.jumlah_praktikan_belum_dinilai}</span>
             </CardContent>
           </Card>
           <Card>
@@ -46,7 +60,7 @@ export default function AsistenPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">{overview.sisa_pertemuan_praktikum}</span>
             </CardContent>
           </Card>
           <Card className="gap-4">
@@ -59,16 +73,16 @@ export default function AsistenPage() {
             <CardContent className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <Shapes className="size-4 text-primary" />
-                <span className="text-muted-foreground">Nama Kelas AP-1</span>
+                <span className="text-muted-foreground">{overview.kelas.nama}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Warehouse className="size-4 text-primary" />
-                <span className="text-muted-foreground">Data Science</span>
+                <span className="text-muted-foreground">{overview.ruang.nama}</span>
               </div>
               <div className="flex items-center gap-3">
                 <BookOpen className="size-4 text-primary" />
-                <span className="text-muted-foreground">
-                  Algoritma Pemrograman
+                <span className="text-muted-foreground line-clamp-1">
+                  {overview.mata_kuliah_praktikum.nama}
                 </span>
               </div>
             </CardContent>
@@ -79,20 +93,97 @@ export default function AsistenPage() {
                 <CalendarClock className="size-6 text-secondary-foreground" />
               </div>
               <CardTitle>Jadwal</CardTitle>
-              <CardDescription>Jadwal praktikum selanjutnya</CardDescription>
+                <CardDescription>Jadwal praktikum selanjutnya</CardDescription>
             </CardHeader>
-            <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-primary" />
+                <span className="text-muted-foreground">{extractDate(overview.jadwal_selanjutnya.mulai)}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Timer className="size-4 text-primary" />
+                <span className="text-muted-foreground">{extractTime(overview.jadwal_selanjutnya.mulai)} - {extractTime(overview.jadwal_selanjutnya.selesai)}</span>
+              </div>
             </CardContent>
-          </Card>
+            </Card>
         </div>
       </section>
       <section className="m-8">
         <div className="flex gap-8">
-          <Calendar />
-          <OverviewLaporan />
+          <AdvancedCalendar jadwalList={overview.jadwal_sendiri} />
+          <OverviewLaporan data={overview.top_praktikan} />
         </div>
       </section>
     </>
   );
+}
+/**
+ * Extract date in format YYYY-MM-DD from Date or ISO string
+ */
+export function extractDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  // timezone handling to +0700
+  d.setHours(d.getHours() + 7);
+  // return date in YYYY-MM-DD format
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Extract time in format HH:mm from Date or ISO string
+ */
+export function extractTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  // timezone handling to +0700
+  d.setHours(d.getHours() + 7);
+  return d.toISOString().slice(11, 16);
+}
+export interface Data {
+  jumlah_praktikan_belum_dinilai: number;
+  sisa_pertemuan_praktikum:       number;
+  kelas:                          Kelas;
+  ruang:                          Kelas;
+  mata_kuliah_praktikum:          MataKuliahPraktikum;
+  jadwal_selanjutnya:             Jadwal;
+  jadwal_sendiri:                 JadwalSendiri[];
+  top_praktikan:                  TopPraktikan[];
+}
+
+export interface TopPraktikan {
+  id:           number;
+  nim:          string;
+  nama:         string;
+  total_nilai:  number;
+}
+
+export interface Jadwal {
+  id:      number;
+  mulai:   Date;
+  selesai: Date;
+
+  is_dilaksanakan: boolean;
+}
+
+export interface JadwalSendiri {
+  ruang:                 Kelas;
+  kelas:                 Kelas;
+  mata_kuliah_praktikum: MataKuliahPraktikum;
+  asisten:               Asisten;
+  detail:                Jadwal;
+}
+
+export interface Asisten {
+  id:   number;
+  nim:  string;
+  nama: string;
+}
+
+export interface Kelas {
+  id:   number;
+  nama: string;
+}
+
+export interface MataKuliahPraktikum {
+  id:   number;
+  kode: string;
+  nama: string;
 }

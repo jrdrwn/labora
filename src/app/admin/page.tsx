@@ -1,5 +1,5 @@
-import AdvancedCalendar from '@/components/layout/admin/overview/advanced-calendar';
 import OverviewLaporan from '@/components/layout/admin/overview/overview-laporan';
+import AdvancedCalendar from '@/components/layout/shared/advanced-calendar';
 import {
   Card,
   CardContent,
