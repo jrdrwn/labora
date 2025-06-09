@@ -3,7 +3,7 @@ import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
 import { cookies } from 'next/headers';
 
-import LoginPage from './(login)/login/page';
+import LoginPage from './login/page';
 
 export default async function AdminLayout({
   children,
