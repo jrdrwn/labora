@@ -24,6 +24,9 @@ export default async function PraktikanLayout({
   });
   const json = await res.json();
   if (!res.ok) {
+    if (res.status === 401) {
+      return <LoginPage />;
+    }
     throw new Error(json.message || 'Gagal mengambil event');
   }
   const event = json.data as Event[];

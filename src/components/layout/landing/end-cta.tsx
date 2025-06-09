@@ -1,9 +1,9 @@
 'use client';
 
 import { Boxes } from '@/components/ui/background-boxes';
+import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
-import { ArrowUpRight } from 'lucide-react';
 import { Button } from '../../ui/button';
 
 export default function EndCTA() {
@@ -20,11 +20,9 @@ export default function EndCTA() {
           dalam satu platform.
         </p>
         <Link href="#" className="z-10">
-          <Button
-            size={'lg'}
-          >
+          <Button size={'lg'}>
             Coba Sekarang
-            <ArrowUpRight  />
+            <ArrowUpRight />
           </Button>
         </Link>
         <Boxes />

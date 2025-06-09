@@ -166,6 +166,7 @@ export default function RegisterForm() {
         icon: <BadgeCheck />,
       });
       router.push('/asisten');
+      router.refresh();
     } else {
       toast.error('Pendaftaran gagal: ' + json?.status, {
         icon: <BadgeAlert />,

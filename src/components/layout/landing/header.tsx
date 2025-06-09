@@ -56,28 +56,28 @@ export default function Header() {
           </Button>
         </Link>
         <div className="flex items-center gap-4">
-        <NavigationMenu>
-          <NavigationMenuList className="hidden items-center gap-2 text-sm font-medium lg:flex lg:gap-2 xl:gap-6">
-            {menus.map((menu) => (
-              <NavigationMenuItem key={menu.title}>
-                <NavigationMenuLink
-                  className={navigationMenuTriggerStyle({
-                    className: cn(
-                      'bg-transparent',
-                      pathname === menu.href
-                        ? 'underline underline-offset-2'
-                        : '',
-                    ),
-                  })}
-                  active={pathname === menu.href}
-                  asChild
-                >
-                  <Link href={menu.href}>{menu.title}</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+          <NavigationMenu>
+            <NavigationMenuList className="hidden items-center gap-2 text-sm font-medium lg:flex lg:gap-2 xl:gap-6">
+              {menus.map((menu) => (
+                <NavigationMenuItem key={menu.title}>
+                  <NavigationMenuLink
+                    className={navigationMenuTriggerStyle({
+                      className: cn(
+                        'bg-transparent',
+                        pathname === menu.href
+                          ? 'underline underline-offset-2'
+                          : '',
+                      ),
+                    })}
+                    active={pathname === menu.href}
+                    asChild
+                  >
+                    <Link href={menu.href}>{menu.title}</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -113,4 +113,3 @@ export default function Header() {
     </header>
   );
 }
-

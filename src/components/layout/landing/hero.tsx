@@ -1,15 +1,21 @@
 'use client';
 
-import { AlertTriangle, ArrowRight, ArrowUpRight, BellDot, Mail } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  BellDot,
+  Mail,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '../../ui/button';
 
 export default function Hero() {
   return (
-    <section className="container mx-auto flex flex-col justify-center px-2 py-16 lg:flex-row lg:justify-between lg:pr-2 lg:pl-12 border-x-1">
+    <section className="container mx-auto flex flex-col justify-center border-x-1 px-2 py-16 lg:flex-row lg:justify-between lg:pr-2 lg:pl-12">
       <div className="text-center lg:text-start">
         <div className="mx-auto flex w-max items-center gap-2 rounded-full bg-muted px-2 py-1 text-muted-foreground lg:mx-0 xl:gap-4 xl:px-4 xl:py-2">
           <span>
@@ -36,29 +42,28 @@ export default function Hero() {
             target="_blank"
             rel="noopener noreferrer"
           >
-          <Button
-            className="flex items-center gap-2 lg:px-6 lg:py-5 xl:px-8 xl:py-6"
-          >
+            <Button className="flex items-center gap-2 lg:px-6 lg:py-5 xl:px-8 xl:py-6">
               <span>Hubungi Developer</span>
               <ArrowUpRight className="size-4" />
-          </Button>
-            </Link>
+            </Button>
+          </Link>
           <Link
             href="mailto:developer@example.com"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button className="flex items-center gap-2  lg:px-6 lg:py-5 xl:px-4 xl:py-6" variant={'outline'}>
+            <Button
+              className="flex items-center gap-2 lg:px-6 lg:py-5 xl:px-4 xl:py-6"
+              variant={'outline'}
+            >
               <Mail className="size-5" />
             </Button>
           </Link>
         </div>
-        <div className='mt-8'>
+        <div className="mt-8">
           <Alert>
             <AlertTriangle />
-            <AlertTitle>
-              Sistem ini masih dalam tahap pengembangan.
-            </AlertTitle>
+            <AlertTitle>Sistem ini masih dalam tahap pengembangan.</AlertTitle>
             <AlertDescription>
               Beberapa fitur mungkin belum tersedia atau mengalami perubahan.
               Kami menghargai masukan Anda untuk perbaikan sistem ini.

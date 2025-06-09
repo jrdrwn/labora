@@ -15,6 +15,20 @@ export default async function AdminLayout({
     return <LoginPage />;
   }
 
+  const res = await fetch(`${process.env.APP_URL}/api/admin/event`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'authorization': `Bearer ${_cookies.get('token')?.value}`,
+    },
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    if (res.status === 401) {
+      return <LoginPage />;
+    }
+    throw new Error(json.message || 'Gagal mengambil event');
+  }
+
   return (
     <>
       <Header
