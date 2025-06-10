@@ -238,9 +238,39 @@ export default function RegisterForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Komitmen</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ketik URL komitmen Anda" {...field} />
-                  </FormControl>
+                    <FormControl>
+                    <Input
+                      type="file"
+                      id='komitmen_url'
+                      placeholder="Ketik URL komitmen Anda"
+                      onChange={async (e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('name', file.name);
+                        try {
+                        const res = await fetch('/api/asisten/upload', {
+                          method: 'POST',
+                          body: formData,
+                          headers: {
+                          'authorization': `Bearer ${_cookies('token')}`,
+                          },
+                        });
+                        const json = await res.json();
+                        if (json.status) {
+                          const url = json.data.url;
+                          field.onChange(url);
+                        } else {
+                          toast.error(json.message || 'Gagal mengunggah file');
+                        }
+                        } catch (err: any ) {
+                        toast.error('Gagal mengunggah file: ' + err.message);
+                        }
+                      }
+                      }}
+                    />
+                    </FormControl>
                   <FormDescription>
                     Masukkan URL dokumen komitmen Anda sebagai asisten.
                   </FormDescription>
