@@ -21,11 +21,11 @@ export default async function AdminLayout({
       'authorization': `Bearer ${_cookies.get('token')?.value}`,
     },
   });
+  if (res.status === 401) {
+    return <LoginPage />;
+  }
   const json = await res.json();
   if (!res.ok) {
-    if (res.status === 401) {
-      return <LoginPage />;
-    }
     throw new Error(json.message || 'Gagal mengambil event');
   }
 
