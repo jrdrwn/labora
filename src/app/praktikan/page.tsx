@@ -135,19 +135,25 @@ export default async function PraktikanPage() {
               <CardDescription>Jadwal praktikum selanjutnya</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <Calendar className="size-4 text-primary" />
-                <span className="text-muted-foreground">
-                  {extractDate(overview.jadwal_selanjutnya.mulai)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Timer className="size-4 text-primary" />
-                <span className="text-muted-foreground">
-                  {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
-                  {extractTime(overview.jadwal_selanjutnya.selesai)}
-                </span>
-              </div>
+              {overview.jadwal_selanjutnya ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="size-4 text-primary" />
+                    <span className="text-muted-foreground">
+                      {extractDate(overview.jadwal_selanjutnya.mulai)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Timer className="size-4 text-primary" />
+                    <span className="text-muted-foreground">
+                      {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
+                      {extractTime(overview.jadwal_selanjutnya.selesai)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>Jadwal sudah selesai</>
+              )}
             </CardContent>
           </Card>
         </div>
