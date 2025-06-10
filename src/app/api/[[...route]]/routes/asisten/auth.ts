@@ -153,6 +153,7 @@ auth.get('/me', async (c) => {
       email: true,
       status: true,
       mata_kuliah_pilihan: true,
+      dokumen_pendukung_url: true,
       komitmen_url: true,
       event: true,
     },

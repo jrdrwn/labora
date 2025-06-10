@@ -20,15 +20,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetCookie } from 'cookies-next/client';
 import { Pencil } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import uploadFile from '../utils/upload-file';
 import { Laporan } from './list/columns';
 
 const formSchema = z.object({
@@ -92,6 +95,15 @@ function EditFormLaporan({
     }
   }
 
+  const handleUploadFile = async (file: File) => {
+    const url = await uploadFile(
+      _cookies('token')!,
+      `laporan-asisten-${defaultValues.id}`,
+      file,
+    );
+    return url;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -119,10 +131,32 @@ function EditFormLaporan({
             <FormItem>
               <FormLabel>Bukti Pertemuan URL</FormLabel>
               <FormControl>
-                <Input placeholder="Masukkan url" {...field} />
+                <Input
+                  type="file"
+                  placeholder="Ketik URL Anda"
+                  onChange={async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const url = await handleUploadFile(e.target.files[0]);
+                      field.onChange(url);
+                    }
+                  }}
+                />
               </FormControl>
-              <FormDescription>
-                URL bukti pertemuan yang akan ditambahkan. Pastikan URL valid.
+
+              <FormDescription
+                className={cn(field.value && 'line-clamp-1 text-ellipsis')}
+              >
+                {field.value ? (
+                  <Link
+                    href={field.value}
+                    target="_blank"
+                    className="italic hover:underline"
+                  >
+                    {field.value}
+                  </Link>
+                ) : (
+                  'URL bukti pertemuan yang akan ditambahkan. Pastikan URL valid.'
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>

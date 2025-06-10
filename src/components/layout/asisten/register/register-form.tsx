@@ -19,14 +19,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetCookie } from 'cookies-next/client';
 import { BadgeAlert, BadgeCheck, Loader2, User2 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+import uploadFile from '../utils/upload-file';
 
 const formSchema = z.object({
   mata_kuliah_praktikum: z.array(
@@ -150,6 +154,15 @@ export default function RegisterForm() {
     }
   }, [_cookies, form]);
 
+  const handleUploadFile = async (id: string, file: File) => {
+    const url = await uploadFile(
+      _cookies('token')!,
+      `${id}-register-asisten-${asisten?.id}`,
+      file,
+    );
+    return url;
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     const res = await fetch('/api/asisten/register', {
@@ -223,10 +236,34 @@ export default function RegisterForm() {
                 <FormItem>
                   <FormLabel>Dokumen pendukung</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ketik URL Anda" {...field} />
+                    <Input
+                      type="file"
+                      placeholder="Ketik URL Anda"
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const url = await handleUploadFile(
+                            'pendukung',
+                            e.target.files[0],
+                          );
+                          field.onChange(url);
+                        }
+                      }}
+                    />
                   </FormControl>
-                  <FormDescription>
-                    Masukkan URL dokumen pendukung Anda sebagai asisten.
+                  <FormDescription
+                    className={cn(field.value && 'line-clamp-1 text-ellipsis')}
+                  >
+                    {field.value ? (
+                      <Link
+                        href={field.value}
+                        target="_blank"
+                        className="italic hover:underline"
+                      >
+                        {field.value}
+                      </Link>
+                    ) : (
+                      'Masukkan URL dokumen pendukung Anda sebagai asisten.'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -238,41 +275,36 @@ export default function RegisterForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Komitmen</FormLabel>
-                    <FormControl>
+                  <FormControl>
                     <Input
                       type="file"
-                      id='komitmen_url'
+                      id="komitmen_url"
                       placeholder="Ketik URL komitmen Anda"
                       onChange={async (e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        const file = e.target.files[0];
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        formData.append('name', file.name);
-                        try {
-                        const res = await fetch('/api/asisten/upload', {
-                          method: 'POST',
-                          body: formData,
-                          headers: {
-                          'authorization': `Bearer ${_cookies('token')}`,
-                          },
-                        });
-                        const json = await res.json();
-                        if (json.status) {
-                          const url = json.data.url;
+                        if (e.target.files && e.target.files[0]) {
+                          const url = await handleUploadFile(
+                            'komitmen',
+                            e.target.files[0],
+                          );
                           field.onChange(url);
-                        } else {
-                          toast.error(json.message || 'Gagal mengunggah file');
                         }
-                        } catch (err: any ) {
-                        toast.error('Gagal mengunggah file: ' + err.message);
-                        }
-                      }
                       }}
                     />
-                    </FormControl>
-                  <FormDescription>
-                    Masukkan URL dokumen komitmen Anda sebagai asisten.
+                  </FormControl>
+                  <FormDescription
+                    className={cn(field.value && 'line-clamp-1 text-ellipsis')}
+                  >
+                    {field.value ? (
+                      <Link
+                        href={field.value}
+                        target="_blank"
+                        className="italic hover:underline"
+                      >
+                        {field.value}
+                      </Link>
+                    ) : (
+                      'Masukkan URL dokumen komitmen Anda sebagai asisten.'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
