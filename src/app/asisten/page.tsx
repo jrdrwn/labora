@@ -107,14 +107,14 @@ export default async function AsistenPage() {
               <div className="flex items-center gap-3">
                 <Calendar className="size-4 text-primary" />
                 <span className="text-muted-foreground">
-                  {extractDate(overview.jadwal_selanjutnya.mulai)}
+                  {extractDate(overview?.jadwal_selanjutnya?.mulai)}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <Timer className="size-4 text-primary" />
                 <span className="text-muted-foreground">
-                  {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
-                  {extractTime(overview.jadwal_selanjutnya.selesai)}
+                  {extractTime(overview?.jadwal_selanjutnya?.mulai)} -{' '}
+                  {extractTime(overview?.jadwal_selanjutnya?.selesai)}
                 </span>
               </div>
             </CardContent>
