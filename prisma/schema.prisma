@@ -22,7 +22,7 @@ model admin {
 
 model asisten {
   id                    Int             @id @default(autoincrement())
-  nim                   String?         @unique(map: "nim") @db.VarChar(12)
+  nim                   String?         @unique(map: "nim") @db.VarChar(20)
   email                 String?         @unique(map: "email") @db.VarChar(120)
   nama                  String?         @db.VarChar(120)
   status                asisten_status?
@@ -65,7 +65,7 @@ model penilaian {
 
 model praktikan {
   id              Int               @id @default(autoincrement())
-  nim             String?           @unique(map: "nim") @db.VarChar(12)
+  nim             String?           @unique(map: "nim") @db.VarChar(20)
   email           String?           @unique(map: "email") @db.VarChar(120)
   nama            String?           @db.VarChar(120)
   event_id        Int?
@@ -128,7 +128,7 @@ model laporan {
   judul               String?     @db.VarChar(120)
   bukti_pertemuan_url String?     @db.Text
   kehadiran           kehadiran[]
-  jadwal              jadwal?     @relation(fields: [jadwal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "laporan_ibfk_1")
+  jadwal              jadwal?     @relation(fields: [jadwal_id], references: [id], onUpdate: NoAction, map: "laporan_ibfk_1")
   penilaian           penilaian[]
 
   @@index([jadwal_id], map: "jadwal_id")
