@@ -11,6 +11,7 @@ import { kehadiran } from './kehadiran';
 import { laporan } from './laporan';
 import { overview } from './overview';
 import { penilaian } from './penilaian';
+import { ruangan } from './ruangan';
 import { upload } from './upload';
 
 export const asisten = new Hono().basePath('/asisten');
@@ -49,3 +50,4 @@ asisten.route('/', laporan);
 asisten.route('/', overview);
 asisten.route('/', penilaian);
 asisten.route('/', upload);
+asisten.route('/', ruangan)

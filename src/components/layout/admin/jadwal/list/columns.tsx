@@ -23,6 +23,7 @@ import EditFormJadwalButton from '../edit-form';
 export type Ruangan = {
   id: number;
   nama: string;
+  kapasitas: Record<string, number>; // Assuming kapasitas is a record of string keys and number values
 };
 
 export type Kelas = {

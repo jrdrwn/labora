@@ -2,6 +2,15 @@
 
 import Calendar from '@/components/layout/shared/calendar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -9,9 +18,15 @@ import {
   ResponsiveModalHeader,
   ResponsiveModalTitle,
 } from '@/components/ui/expansions/responsive-modal';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { EventChangeArg, EventSourceInput } from '@fullcalendar/core/index.js';
 import { useGetCookie } from 'cookies-next/client';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -85,7 +100,7 @@ export default function AdvancedCalendar() {
           tanggal_mulai,
           jam_mulai,
           jam_selesai,
-          ruang_id
+          ruang_id,
         },
       }),
     });
@@ -161,6 +176,7 @@ export default function AdvancedCalendar() {
       />
       {selectedJadwal && (
         <JadwalDetail
+          me={me}
           jadwal={selectedJadwal}
           openDetail={openDetail}
           setOpenDetail={setOpenDetail}
@@ -184,14 +200,85 @@ function getDateFromDateTime(date: Date): string {
 }
 
 function JadwalDetail({
+  me,
   jadwal,
   openDetail,
   setOpenDetail,
 }: {
+  me: Me | null;
   jadwal: Jadwal;
   openDetail?: boolean;
   setOpenDetail?: (open: boolean) => void;
 }) {
+  const _cookies = useGetCookie();
+  const [ruangan, setRuangan] = useState<Ruangan[]>([]);
+  const [selectedRuanganId, setSelectedRuanganId] = useState<number | null>(
+    jadwal.ruangan.id,
+  );
+
+  const getRuangan = useCallback(async () => {
+    if (jadwal.kelas.asisten.id !== me?.id) {
+      setRuangan([]);
+      return;
+    }
+    const res = await fetch(`/api/asisten/ruangan`, {
+      headers: {
+        authorization: `Bearer ${_cookies('token')}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengambil jadwal'}`);
+      setRuangan([]);
+    }
+    setRuangan(json.data);
+  }, [_cookies, jadwal.kelas.asisten.id, me?.id]);
+
+  useEffect(() => {
+    getRuangan();
+  }, [getRuangan]);
+
+  const handleJadwalChange = async ({
+    jadwal_id,
+    tanggal_mulai,
+    jam_mulai,
+    jam_selesai,
+    ruang_id,
+  }: {
+    jadwal_id: number;
+    tanggal_mulai: string;
+    jam_mulai: string;
+    jam_selesai: string;
+    ruang_id: number;
+  }) => {
+    const res = await fetch(`/api/asisten/jadwal`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${_cookies('token')}`,
+      },
+      body: JSON.stringify({
+        where: {
+          jadwal_id,
+        },
+        update: {
+          tanggal_mulai,
+          jam_mulai,
+          jam_selesai,
+          ruang_id,
+        },
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(`Error: ${json.message || 'Gagal mengubah jadwal'}`);
+      setSelectedRuanganId(jadwal.ruangan.id);
+      return;
+    }
+    toast.success('jadwal berhasil diubah');
+  };
+
   return (
     <ResponsiveModal open={openDetail || false} onOpenChange={setOpenDetail}>
       <ResponsiveModalContent>
@@ -223,9 +310,87 @@ function JadwalDetail({
               <div className="font-medium">{jadwal.kelas.mata_kuliah.nama}</div>
             </div>
             <div>
-              {/* TODO: ganti jadwal */}
               <div className="mb-1 text-sm text-muted-foreground">Ruang</div>
-              <div className="font-medium">{jadwal.ruangan.nama}</div>
+              {jadwal.kelas.asisten.id === me?.id ? (
+                <>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        size={'sm'}
+                        variant={'outline'}
+                        role="combobox"
+                        className={cn(
+                          'w-full justify-between',
+                          !selectedRuanganId && 'text-muted-foreground',
+                        )}
+                      >
+                        {selectedRuanganId
+                          ? ruangan.find(
+                              (ruang) => ruang.id === selectedRuanganId,
+                            )?.nama
+                          : 'Select Ruangan'}
+                        <ChevronsUpDown className="opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0">
+                      <Command>
+                        <CommandInput placeholder="Search Ruangan" />
+                        <CommandList>
+                          <CommandEmpty>No Ruangan found.</CommandEmpty>
+                          <CommandGroup>
+                            {ruangan.map((ruang) => (
+                              <CommandItem
+                                value={ruang.id.toString()}
+                                key={ruang.id}
+                                onSelect={(value) => {
+                                  setSelectedRuanganId(+value);
+                                  handleJadwalChange({
+                                    jadwal_id: jadwal.id,
+                                    tanggal_mulai: getDateFromDateTime(
+                                      new Date(jadwal.mulai),
+                                    ),
+                                    jam_mulai: getTimeFromDate(
+                                      new Date(jadwal.mulai),
+                                    ),
+                                    jam_selesai: getTimeFromDate(
+                                      new Date(jadwal.selesai),
+                                    ),
+                                    ruang_id: +value,
+                                  });
+                                }}
+                              >
+                                <span>
+                                  ID: {ruang.id}
+                                  <br />
+                                  NAMA: {ruang.nama}
+                                  <br />
+                                  KAPASITAS: {ruang.kapasitas.mahasiswa}{' '}
+                                  Mahasiswa
+                                  <br />
+                                  KAPASITAS KOMPUTER: {ruang.kapasitas.komputer}{' '}
+                                  Komputer
+                                </span>
+                                <Check
+                                  className={cn(
+                                    'ml-auto',
+                                    ruang.id === selectedRuanganId
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </>
+              ) : (
+                <>
+                  <div className="font-medium">{jadwal.ruangan.nama}</div>
+                </>
+              )}
             </div>
             <div>
               <div className="mb-1 text-sm text-muted-foreground">Mulai</div>
@@ -316,4 +481,5 @@ export interface MataKuliah {
 export interface Ruangan {
   id: number;
   nama: string;
+  kapasitas: Record<string, number>; // Assuming kapasitas is a record of string keys and number values
 }

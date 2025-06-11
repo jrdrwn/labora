@@ -207,7 +207,18 @@ function EditFormJadwal({
                               form.setValue('update.ruang_id', Number(value));
                             }}
                           >
-                            {ruang.nama} ({ruang.id})
+                            <span>
+                              ID: {ruang.id}
+                              <br />
+                              NAMA: {ruang.nama}
+                              <br />
+                              KAPASITAS: {ruang.kapasitas.mahasiswa} Mahasiswa
+                              <br />
+                              KAPASITAS KOMPUTER: {
+                                ruang.kapasitas.komputer
+                              }{' '}
+                              Komputer
+                            </span>
                             <Check
                               className={cn(
                                 'ml-auto',

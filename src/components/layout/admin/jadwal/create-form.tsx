@@ -220,6 +220,11 @@ function CreateFormJadwal({
                               NAMA: {ruang.nama}
                               <br />
                               KAPASITAS: {ruang.kapasitas.mahasiswa} Mahasiswa
+                              <br />
+                              KAPASITAS KOMPUTER: {
+                                ruang.kapasitas.komputer
+                              }{' '}
+                              Komputer
                             </span>
                             <Check
                               className={cn(
