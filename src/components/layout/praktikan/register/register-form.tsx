@@ -469,10 +469,16 @@ export default function RegisterForm() {
                                   value={kelas.id.toString()}
                                   key={kelas.id}
                                   disabled={
-                                    kelas.jadwal[0]?.ruangan.kapasitas.komputer -
-                                    kelas.praktikan_kelas.filter(
-                                      (pk) => pk.perangkat === 'komputer_lab',
-                                    ).length === 0 && form.watch('perangkat') === 'komputer_lab' || kelas.praktikan_kelas.length >= kelas.kapasitas_praktikan
+                                    (kelas.jadwal[0]?.ruangan.kapasitas
+                                      .komputer -
+                                      kelas.praktikan_kelas.filter(
+                                        (pk) => pk.perangkat === 'komputer_lab',
+                                      ).length ===
+                                      0 &&
+                                      form.watch('perangkat') ===
+                                        'komputer_lab') ||
+                                    kelas.praktikan_kelas.length >=
+                                      kelas.kapasitas_praktikan
                                   }
                                   onSelect={(value) => {
                                     form.setValue(
@@ -495,11 +501,14 @@ export default function RegisterForm() {
                                   <br />
                                   Jumlah pertemuan: {kelas.jadwal.length}
                                   <br />
-                                  Tanggal mulai: {extractDate(kelas.jadwal[0].mulai)}
+                                  Tanggal mulai:{' '}
+                                  {extractDate(kelas.jadwal[0].mulai)}
                                   <br />
                                   Hari: {extractDay(kelas.jadwal[0].mulai)}
                                   <br />
-                                  Jam: {extractTime(kelas.jadwal[0].mulai)} - {extractTime(kelas.jadwal[0].selesai)}
+                                  Jam: {extractTime(
+                                    kelas.jadwal[0].mulai,
+                                  )} - {extractTime(kelas.jadwal[0].selesai)}
                                   <br />
                                   Ruangan: {kelas.jadwal[0].ruangan.nama}
                                   <br />
@@ -551,15 +560,7 @@ export default function RegisterForm() {
 
 function extractDay(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  const days = [
-    'Minggu',
-    'Senin',
-    'Selasa',
-    'Rabu',
-    'Kamis',
-    'Jumat',
-    'Sabtu',
-  ];
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   return days[d.getDay()];
 }
 

@@ -48,4 +48,4 @@ asisten.route('/', event);
 asisten.route('/', laporan);
 asisten.route('/', overview);
 asisten.route('/', penilaian);
-asisten.route('/', upload)
+asisten.route('/', upload);
