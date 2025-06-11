@@ -61,12 +61,14 @@ export default function AdvancedCalendar() {
     tanggal_mulai,
     jam_mulai,
     jam_selesai,
+    ruang_id,
     info,
   }: {
     jadwal_id: number;
     tanggal_mulai: string;
     jam_mulai: string;
     jam_selesai: string;
+    ruang_id: number;
     info: EventChangeArg;
   }) => {
     const res = await fetch(`/api/asisten/jadwal`, {
@@ -83,6 +85,7 @@ export default function AdvancedCalendar() {
           tanggal_mulai,
           jam_mulai,
           jam_selesai,
+          ruang_id
         },
       }),
     });
@@ -151,6 +154,7 @@ export default function AdvancedCalendar() {
             tanggal_mulai: tanggalMulai,
             jam_mulai: jamMulai,
             jam_selesai: jamSelesai,
+            ruang_id: jadwal.ruangan.id,
             info,
           });
         }}
@@ -219,6 +223,7 @@ function JadwalDetail({
               <div className="font-medium">{jadwal.kelas.mata_kuliah.nama}</div>
             </div>
             <div>
+              {/* TODO: ganti jadwal */}
               <div className="mb-1 text-sm text-muted-foreground">Ruang</div>
               <div className="font-medium">{jadwal.ruangan.nama}</div>
             </div>
