@@ -63,6 +63,17 @@ jadwal.post(
       return c.json({ status: false, message: 'Kelas not found' }, 404);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if((ruang.kapasitas as any).mahasiswa <= kelas.kapasitas_praktikan!) {
+      return c.json(
+        {
+          status: false,
+          message: 'Ruang tidak cukup untuk menampung jumlah praktikan',
+        },
+        400,
+      );
+    }
+
     const meetingsDates = generateDates(
       json.tanggal_mulai,
       json.jam_mulai,
