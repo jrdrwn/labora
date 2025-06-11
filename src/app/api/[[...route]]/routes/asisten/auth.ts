@@ -1,7 +1,7 @@
 import prisma from '@db';
 import prismaCloud from '@db/cloud';
 import { zValidator } from '@hono/zod-validator';
-import { checkMahasiswa } from '@sql/cloud';
+import { checkMahasiswa, getMataKuliahAsistenByNIM } from '@sql/cloud';
 import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 import { sign } from 'hono/jwt';
@@ -214,15 +214,33 @@ auth.get('/me', async (c) => {
 });
 
 auth.get('/mata-kuliah', async (c) => {
+  const jwtPayload = c.get('jwtPayload') as JWTPayload;
+  const asisten = await prisma.asisten.findFirst({
+    where: {
+      id: jwtPayload.sub,
+    },
+  });
+
+  if (!asisten) {
+    return c.json({ status: false, message: 'Asisten not found' }, 404);
+  }
+
+  const mataKuliahCloud = await prismaCloud.$queryRawTyped(
+    getMataKuliahAsistenByNIM(asisten.nim!)
+  )
+
   const mataKuliah = await prisma.mata_kuliah.findMany({
+    where: {
+      kode: {
+        in: mataKuliahCloud.map((mk) => mk.mkkurKode),
+      },
+    },
     select: {
       id: true,
       nama: true,
       kode: true,
     },
-  });
-
-  // TODO: filter mata kuliah berdasarkan data asisten
+  })
 
   return c.json({ status: true, data: mataKuliah }, 200);
 });
