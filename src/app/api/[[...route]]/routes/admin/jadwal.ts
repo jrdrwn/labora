@@ -67,7 +67,7 @@ jadwal.post(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if((ruang.kapasitas as any).mahasiswa <= kelas.kapasitas_praktikan!) {
+    if((ruang.kapasitas as any).mahasiswa < kelas.kapasitas_praktikan!) {
       return c.json(
         {
           status: false,
@@ -78,7 +78,7 @@ jadwal.post(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((ruang.kapasitas as any).komputer <= kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
+    if ((ruang.kapasitas as any).komputer < kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
       return c.json(
         { status: false, message: 'Ruang tidak cukup untuk komputer' },
         400,
@@ -237,7 +237,7 @@ jadwal.put(
 
     // kapasitas komputer
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((ruang.kapasitas as any).komputer <= kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
+    if ((ruang.kapasitas as any).komputer < kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
       return c.json(
         { status: false, message: 'Ruang tidak cukup untuk komputer' },
         400,

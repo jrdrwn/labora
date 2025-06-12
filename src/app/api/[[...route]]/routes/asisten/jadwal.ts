@@ -134,7 +134,7 @@ jadwal.put(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if((ruang.kapasitas as any).mahasiswa <= kelas.kapasitas_praktikan!) {
+    if((ruang.kapasitas as any).mahasiswa < kelas.kapasitas_praktikan!) {
       return c.json(
         { status: false, message: 'Ruang tidak cukup untuk kelas ini' },
         400,
