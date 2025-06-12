@@ -109,6 +109,13 @@ ruangan.put(
           },
         },
       },
+      include: {
+        praktikan_kelas: {
+          select: {
+            perangkat: true
+          },
+        }
+      }
     });
     if (
       kelas.some(
@@ -121,6 +128,24 @@ ruangan.put(
         {
           status: false,
           message: 'Kapasitas ruangan  kurang dari kapasitas praktikan',
+        },
+        400,
+      );
+    }
+
+    console.log(kelas)
+
+    if (
+      kelas.some(
+        (k) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          k.praktikan_kelas.filter(pk => pk.perangkat === 'komputer_lab').length! > (json.update.kapasitas as any).komputer,
+      )
+    ) {
+      return c.json(
+        {
+          status: false,
+          message: 'Kapasitas ruangan kurang dari kapasitas perangkat',
         },
         400,
       );

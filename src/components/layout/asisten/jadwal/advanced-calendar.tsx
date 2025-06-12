@@ -178,6 +178,7 @@ export default function AdvancedCalendar() {
       {selectedJadwal && (
         <JadwalDetail
           me={me}
+          getJadwalList={getJadwalList}
           jadwal={selectedJadwal}
           openDetail={openDetail}
           setOpenDetail={setOpenDetail}
@@ -205,11 +206,13 @@ function JadwalDetail({
   jadwal,
   openDetail,
   setOpenDetail,
+  getJadwalList,
 }: {
   me: Me | null;
   jadwal: Jadwal;
   openDetail?: boolean;
   setOpenDetail?: (open: boolean) => void;
+  getJadwalList: () => Promise<void>;
 }) {
   const _cookies = useGetCookie();
   const router = useRouter()
@@ -279,6 +282,7 @@ function JadwalDetail({
       return;
     }
     toast.success('jadwal berhasil diubah');
+    getJadwalList(); // Refresh the jadwal list
     router.refresh(); // Refresh the page to reflect changes
   };
 
