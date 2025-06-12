@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { EventChangeArg, EventSourceInput } from '@fullcalendar/core/index.js';
 import { useGetCookie } from 'cookies-next/client';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -211,6 +212,7 @@ function JadwalDetail({
   setOpenDetail?: (open: boolean) => void;
 }) {
   const _cookies = useGetCookie();
+  const router = useRouter()
   const [ruangan, setRuangan] = useState<Ruangan[]>([]);
   const [selectedRuanganId, setSelectedRuanganId] = useState<number | null>(
     jadwal.ruangan.id,
@@ -277,6 +279,7 @@ function JadwalDetail({
       return;
     }
     toast.success('jadwal berhasil diubah');
+    router.refresh(); // Refresh the page to reflect changes
   };
 
   return (
