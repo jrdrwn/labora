@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,17 +14,16 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormJadwalButton from '../edit-form';
 
-export type RuangKelas = {
+export type Ruangan = {
   id: number;
   nama: string;
+  kapasitas: Record<string, number>; // Assuming kapasitas is a record of string keys and number values
 };
 
 export type Kelas = {
@@ -37,9 +35,9 @@ export type Jadwal = {
   id: number;
   mulai: Date;
   selesai: Date;
-  status: string | null;
-  ruang: RuangKelas;
-  kelaspraktikum: Kelas;
+  is_dilaksanakan: boolean;
+  ruangan: Ruangan;
+  kelas: Kelas;
 };
 
 export const columns: ColumnDef<Jadwal>[] = [
@@ -66,6 +64,7 @@ export const columns: ColumnDef<Jadwal>[] = [
     enableHiding: false,
   },
   {
+    id: 'ID',
     accessorKey: 'id',
     header: ({ column }) => {
       return (
@@ -85,7 +84,8 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'ruang.nama',
+    id: 'ruangan',
+    accessorKey: 'ruangan.nama',
     header: 'Ruangan',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -93,7 +93,8 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'kelaspraktikum.nama',
+    id: 'kelas',
+    accessorKey: 'kelas.nama',
     header: 'Kelas',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -101,11 +102,19 @@ export const columns: ColumnDef<Jadwal>[] = [
     },
   },
   {
-    accessorKey: 'status',
+    id: 'status',
+    accessorFn: (row) => (row.is_dilaksanakan ? 'Sudah' : 'Belum'),
+    accessorKey: 'is_dilaksanakan',
     header: 'Status',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
+    },
+    cell: ({ row }) => {
+      const isDilaksanakan = row.original.is_dilaksanakan;
+      return (
+        <span className="capitalize">{isDilaksanakan ? 'Sudah' : 'Belum'}</span>
+      );
     },
   },
   {
@@ -181,17 +190,6 @@ export const columns: ColumnDef<Jadwal>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormJadwalButton jadwal={jadwal} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(jadwal.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Jadwal ID ${jadwal.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
             <DeleteConfirmationButton listJadwal={[jadwal]} />
           </DropdownMenuContent>
         </DropdownMenu>

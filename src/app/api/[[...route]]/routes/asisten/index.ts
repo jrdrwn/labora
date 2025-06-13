@@ -8,7 +8,11 @@ import { auth } from './auth';
 import { event } from './event';
 import { jadwal } from './jadwal';
 import { kehadiran } from './kehadiran';
+import { laporan } from './laporan';
+import { overview } from './overview';
 import { penilaian } from './penilaian';
+import { ruangan } from './ruangan';
+import { upload } from './upload';
 
 export const asisten = new Hono().basePath('/asisten');
 
@@ -42,4 +46,8 @@ asisten.route('/', auth);
 asisten.route('/', kehadiran);
 asisten.route('/', jadwal);
 asisten.route('/', event);
+asisten.route('/', laporan);
+asisten.route('/', overview);
 asisten.route('/', penilaian);
+asisten.route('/', upload);
+asisten.route('/', ruangan)

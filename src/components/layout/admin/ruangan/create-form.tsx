@@ -20,31 +20,59 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama ruangan harus diisi'),
-  kuota: z.object({
+  kapasitas: z.object({
+    mahasiswa: z.coerce.number().min(1, 'Kuota mahasiswa harus lebih dari 0'),
     komputer: z.coerce.number().min(1, 'Kuota komputer harus lebih dari 0'),
   }),
 });
 
-function CreateFormRuangan() {
+function CreateFormRuangan({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nama: '',
-      kuota: {
+      kapasitas: {
         komputer: 1,
+        mahasiswa: 1,
       },
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/ruangan', {
+      method: 'POST',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast('Ruangan berhasil dibuat');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast(`Error: ${json.message || 'Gagal membuat ruangan'}`);
+    }
   }
 
   return (
@@ -68,7 +96,27 @@ function CreateFormRuangan() {
         />
         <FormField
           control={form.control}
-          name="kuota.komputer"
+          name="kapasitas.mahasiswa"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Kapasitas Mahasiswa</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="Masukkan Kapasitas Mahasiswa"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Kapasitas Mahasiswa yang tersedia di ruangan ini.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="kapasitas.komputer"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Kuota Komputer</FormLabel>
@@ -95,8 +143,12 @@ function CreateFormRuangan() {
 }
 
 export default function CreateFormRuanganButton() {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <Button>
           <PlusCircle />
@@ -110,7 +162,7 @@ export default function CreateFormRuanganButton() {
             Fill in the details to create a new ruangan.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <CreateFormRuangan />
+        <CreateFormRuangan onOpenChange={handleOpenChange} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

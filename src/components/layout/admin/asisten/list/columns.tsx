@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,10 +14,8 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DetailAsistenButton from '../detail';
 import EditFormAsistenButton from '../edit-form';
@@ -26,6 +23,13 @@ import EditFormAsistenButton from '../edit-form';
 export type Kelas = {
   id: number;
   nama: string;
+  mata_kuliah: MataKuliah;
+};
+
+export type MataKuliah = {
+  id: number;
+  nama: string;
+  kode: string;
 };
 
 export type Asisten = {
@@ -34,9 +38,10 @@ export type Asisten = {
   nim: string;
   email: string;
   status: string;
-  pre_mata_kuliah_praktikum: string[];
+  mata_kuliah_pilihan: MataKuliah[];
   komitmen_url: string;
-  kelaspraktikum: Kelas[];
+  dokumen_pendukung_url: string;
+  kelas: Kelas[];
 };
 
 export const columns: ColumnDef<Asisten>[] = [
@@ -94,11 +99,13 @@ export const columns: ColumnDef<Asisten>[] = [
     header: 'Email',
   },
   {
-    header: 'Kelas Praktikum',
+    accessorKey: 'kelas',
+    header: 'Kelas',
     cell: ({ row }) => {
-      const kelas = row.original.kelaspraktikum;
+      const kelas = row.original.kelas;
       return (
         <div className="flex flex-col">
+          {!kelas.length && '-'}
           {kelas.map((k) => (
             <span key={k.id}>{k.nama}</span>
           ))}
@@ -132,17 +139,6 @@ export const columns: ColumnDef<Asisten>[] = [
             <DropdownMenuSeparator />
             <DetailAsistenButton asisten={asisten} />
             <EditFormAsistenButton asisten={asisten} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(asisten.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Asisten ID ${asisten.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

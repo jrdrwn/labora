@@ -20,8 +20,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetCookie } from 'cookies-next/client';
 import { PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -29,7 +33,14 @@ const formSchema = z.object({
   kode: z.string().min(1, 'Kode mata kuliah harus diisi'),
 });
 
-function CreateFormMataKuliah() {
+function CreateFormMataKuliah({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,9 +49,24 @@ function CreateFormMataKuliah() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/mata-kuliah', {
+      method: 'POST',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Mata kuliah berhasil dibuat');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal membuat ruangan'}`);
+    }
   }
 
   return (
@@ -86,8 +112,12 @@ function CreateFormMataKuliah() {
 }
 
 export default function CreateFormMataKuliahButton() {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <Button>
           <PlusCircle />
@@ -101,7 +131,7 @@ export default function CreateFormMataKuliahButton() {
             Fill in the details to create a new mata kuliah.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <CreateFormMataKuliah />
+        <CreateFormMataKuliah onOpenChange={handleOpenChange} />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,13 +14,11 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
-import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormEventButton from '../edit-form';
+import { StatusSwitch } from './utils';
 
 export type AdminEvent = {
   id: number;
@@ -36,7 +33,7 @@ export type JenisEvent =
 
 export type Event = {
   id: number;
-  nama: string;
+  is_aktif: boolean;
   jenis: JenisEvent;
   mulai: Date;
   selesai: Date;
@@ -86,12 +83,17 @@ export const columns: ColumnDef<Event>[] = [
     },
   },
   {
-    accessorKey: 'nama',
-    header: 'Nama Event',
+    id: 'status',
+    accessorKey: 'is_aktif',
+    header: 'Status',
+    cell: ({ row }) => {
+      return <StatusSwitch event={row.original} />;
+    },
   },
   {
+    id: 'admin',
     accessorKey: 'admin.nama',
-    header: 'Admin Event',
+    header: 'Admin',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
@@ -99,10 +101,11 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     accessorKey: 'jenis',
-    header: 'Jenis Event',
+    accessorFn: (row) => row.jenis.split('_').join(' '),
+    header: 'Jenis',
     cell: ({ row }) => {
       const jenis = row.original.jenis;
-      return <span className="capitalize">{jenis}</span>;
+      return <span className="capitalize">{jenis.split('_').join(' ')}</span>;
     },
   },
   {
@@ -178,18 +181,6 @@ export const columns: ColumnDef<Event>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormEventButton event={event} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(event.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Event ID ${event.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
-            <DeleteConfirmationButton listEvent={[event]} />
           </DropdownMenuContent>
         </DropdownMenu>
       );

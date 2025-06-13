@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,15 +14,13 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormKelasButton from '../edit-form';
 
-export type AsistenKelas = {
+export type Asisten = {
   id: number;
   nama: string;
   nim: string;
@@ -38,9 +35,13 @@ export type MataKuliah = {
 export type Kelas = {
   id: number;
   nama: string;
-  kuota_praktikan: number;
-  asisten: AsistenKelas | null;
-  matakuliahpraktikum: MataKuliah;
+  kapasitas_praktikan: number;
+  asisten: Asisten | null;
+  mata_kuliah: MataKuliah;
+  _count: {
+    jadwal: number;
+    praktikan_kelas: number;
+  };
 };
 
 export const columns: ColumnDef<Kelas>[] = [
@@ -67,6 +68,7 @@ export const columns: ColumnDef<Kelas>[] = [
     enableHiding: false,
   },
   {
+    id: 'ID',
     accessorKey: 'id',
     header: ({ column }) => {
       return (
@@ -90,7 +92,8 @@ export const columns: ColumnDef<Kelas>[] = [
     header: 'Nama',
   },
   {
-    accessorKey: 'matakuliahpraktikum.nama',
+    id: 'Mata Kuliah',
+    accessorKey: 'mata_kuliah.nama',
     header: 'Mata Kuliah',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
@@ -98,6 +101,7 @@ export const columns: ColumnDef<Kelas>[] = [
     },
   },
   {
+    id: 'Asisten',
     accessorKey: 'asisten.nama',
     header: 'Asisten',
     cell: ({ row }) => {
@@ -110,12 +114,13 @@ export const columns: ColumnDef<Kelas>[] = [
     },
   },
   {
-    accessorKey: 'kuota_praktikan',
+    id: 'Kapasitas Praktikan',
+    accessorKey: 'kapasitas_praktikan',
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
-          Kuota
-          <span className="sr-only">Sort by Kuota Praktikan</span>
+          Kapasitas
+          <span className="sr-only">Sort by Kapasitas Praktikan</span>
           {{
             asc: <ChevronUp />,
             desc: <ChevronDown />,
@@ -124,8 +129,46 @@ export const columns: ColumnDef<Kelas>[] = [
       );
     },
     cell: ({ row }) => {
-      const kuota_praktikan = row.original.kuota_praktikan;
-      return <span className="pl-2">{kuota_praktikan}</span>;
+      const kapasitas_praktikan = row.original.kapasitas_praktikan;
+      return <span className="pl-2">{kapasitas_praktikan}</span>;
+    },
+  },
+  {
+    accessorFn: (row) => row._count.jadwal,
+    id: 'Jadwal',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
+          Jadwal Terkait
+          {{
+            asc: <ChevronUp />,
+            desc: <ChevronDown />,
+          }[column.getIsSorted() as string] || <ChevronsUpDown />}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const jadwalCount = row.original._count.jadwal;
+      return <span className="pl-2">{jadwalCount}</span>;
+    },
+  },
+  {
+    accessorFn: (row) => row._count.praktikan_kelas,
+    id: 'Praktikan',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
+          Praktikan Terkait
+          {{
+            asc: <ChevronUp />,
+            desc: <ChevronDown />,
+          }[column.getIsSorted() as string] || <ChevronsUpDown />}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const praktikanCount = row.original._count.praktikan_kelas;
+      return <span className="pl-2">{praktikanCount}</span>;
     },
   },
   {
@@ -145,17 +188,6 @@ export const columns: ColumnDef<Kelas>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormKelasButton kelas={kelas} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(kelas.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Kelas ID ${kelas.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
             <DeleteConfirmationButton listKelas={[kelas]} />
           </DropdownMenuContent>
         </DropdownMenu>

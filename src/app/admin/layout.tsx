@@ -1,38 +1,39 @@
+import Prefix from '@/components/layout/admin/core/Prefix';
 import Header from '@/components/layout/shared/header';
 import MainLayout from '@/components/layout/shared/main-layout';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { cookies } from 'next/headers';
 
-export default function AdminLayout({
+import LoginPage from './login/page';
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const _cookies = await cookies();
+  if (!_cookies.get('token')?.value) {
+    return <LoginPage />;
+  }
+
+  const res = await fetch(`${process.env.APP_URL}/api/admin/event`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'authorization': `Bearer ${_cookies.get('token')?.value}`,
+    },
+  });
+  if (res.status === 401) {
+    return <LoginPage />;
+  }
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(json.message || 'Gagal mengambil event');
+  }
+
   return (
     <>
       <Header
         suffix={'Labora'}
-        prefix={
-          <>
-            <Link href={'/admin/event'}>
-              <Button variant={'secondary'} className="rounded-full">
-                Event
-              </Button>
-            </Link>
-            <Button variant={'outline'} className="rounded-full px-2">
-              Admin
-              <Avatar className="size-6">
-                <AvatarImage
-                  src={
-                    'https://images.unsplash.com/photo-1733621770053-9b1a5f433a8c'
-                  }
-                />
-                <AvatarFallback>LB</AvatarFallback>
-              </Avatar>
-            </Button>
-          </>
-        }
+        prefix={<Prefix />}
         menus={[
           {
             title: 'Overview',

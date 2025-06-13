@@ -1,5 +1,5 @@
-import OverviewLaporan from '@/components/layout/admin/overview-laporan';
-import Calendar from '@/components/layout/shared/calendar';
+import OverviewLaporan from '@/components/layout/admin/overview/overview-laporan';
+import AdvancedCalendar from '@/components/layout/shared/advanced-calendar';
 import {
   Card,
   CardContent,
@@ -8,8 +8,20 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Shapes, UserPen, Users, Warehouse } from 'lucide-react';
+import { cookies } from 'next/headers';
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const _cookies = await cookies();
+  const res = await fetch(`${process.env.APP_URL}/api/admin/overview`, {
+    headers: {
+      authorization: `Bearer ${_cookies.get('token')?.value}`,
+    },
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(`Error: ${json.message || 'Gagal mengambil overview'}`);
+  }
+  const overview: Data = json.data;
   return (
     <>
       <section className="m-8">
@@ -23,7 +35,9 @@ export default function AdminPage() {
               <CardDescription>Jumlah praktikan yang terdaftar</CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">
+                {overview.total_praktikan}
+              </span>
             </CardContent>
           </Card>
           <Card>
@@ -37,7 +51,9 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">
+                {overview.total_asisten}
+              </span>
             </CardContent>
           </Card>
           <Card>
@@ -51,7 +67,9 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">
+                {overview.total_kelas}
+              </span>
             </CardContent>
           </Card>
           <Card>
@@ -63,17 +81,75 @@ export default function AdminPage() {
               <CardDescription>Jumlah ruangan yang tersedia</CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="mr-1 text-6xl font-medium">100</span>
+              <span className="mr-1 text-6xl font-medium">
+                {overview.total_ruangan}
+              </span>
             </CardContent>
           </Card>
         </div>
       </section>
       <section className="m-8">
         <div className="flex gap-8">
-          <Calendar />
-          <OverviewLaporan />
+          <AdvancedCalendar jadwalList={overview.jadwal} />
+          <OverviewLaporan laporan={overview.laporan} />
         </div>
       </section>
     </>
   );
+}
+
+export interface Data {
+  total_praktikan: number;
+  total_asisten: number;
+  total_kelas: number;
+  total_ruangan: number;
+  jadwal: Jadwal[];
+  laporan: Laporan[];
+}
+
+export interface Jadwal {
+  ruang: Kelas;
+  kelas: Kelas;
+  mata_kuliah_praktikum: MataKuliahPraktikum;
+  asisten: JadwalAsisten;
+  detail: Detail;
+}
+
+export interface JadwalAsisten {
+  id: number;
+  nim: string;
+  nama: string;
+}
+
+export interface Detail {
+  id: number;
+  mulai: Date;
+  selesai: Date;
+  is_dilaksanakan: boolean;
+}
+
+export interface Kelas {
+  id: number;
+  nama: string;
+}
+
+export interface MataKuliahPraktikum {
+  id: number;
+  kode: string;
+  nama: string;
+  kapasitas_praktikan: number;
+}
+
+export interface Laporan {
+  asisten: LaporanAsisten;
+  kelas: Kelas;
+  mata_kuliah_praktikum: MataKuliahPraktikum;
+}
+
+export interface LaporanAsisten {
+  id: number;
+  nim: string;
+  email: string;
+  nama: string;
+  status: string;
 }

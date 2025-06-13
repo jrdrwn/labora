@@ -9,7 +9,9 @@ import { auth } from './auth';
 import { event } from './event';
 import { jadwal } from './jadwal';
 import { kelas } from './kelas';
-import { mataKuliahPraktikum } from './mata-kuliah-praktikum';
+import { laporan } from './laporan';
+import { mataKuliah } from './mata-kuliah';
+import { overview } from './overview';
 import { praktikan } from './praktikan';
 import { ruangan } from './ruangan';
 
@@ -44,8 +46,10 @@ admin.get('/echo', (c) => {
 admin.route('/', auth);
 admin.route('/', event);
 admin.route('/', ruangan);
-admin.route('/', mataKuliahPraktikum);
+admin.route('/', mataKuliah);
 admin.route('/', kelas);
 admin.route('/', jadwal);
 admin.route('/', asisten);
 admin.route('/', praktikan);
+admin.route('/', overview);
+admin.route('/', laporan);

@@ -8,40 +8,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import Link from 'next/link';
 
 import { columns, Laporan } from './columns';
 import { DataTable } from './data-table';
 
-export default function OverviewLaporan() {
-  const data: Laporan[] = [
-    ...Array<Laporan>(21)
-      .fill({
-        asisten: '',
-        kelas: '',
-        mata_kuliah_praktikum: '',
-      })
-      .map((_, i) => ({
-        asisten: `Asisten ${i}`,
-        kelas: `Kelas ${i}`,
-        mata_kuliah_praktikum: `Mata Kuliah Praktikum ${i}`,
-      })),
-  ];
+export default function OverviewLaporan({ laporan }: { laporan: Laporan[] }) {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Top 10 Laporan</CardTitle>
+        <CardTitle>Laporan</CardTitle>
         <CardDescription>
           Asisten yang sudah menyelesaikan semua jadwal praktikum
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable columns={columns} data={data} />
+        <DataTable columns={columns} data={laporan} />
       </CardContent>
       <CardFooter className="justify-end">
         <CardAction>
-          <Button variant="outline" size="sm">
-            Lihat semua
-          </Button>
+          <Link href="/admin/laporan">
+            <Button variant="outline" size="sm">
+              Lihat semua
+            </Button>
+          </Link>
         </CardAction>
       </CardFooter>
     </Card>

@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,15 +14,13 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormMataKuliahButton from '../edit-form';
 
-export type AdminMataKuliah = {
+export type Admin = {
   id: number;
   nama: string;
   email: string;
@@ -33,7 +30,10 @@ export type MataKuliah = {
   id: number;
   nama: string;
   kode: string;
-  admin: AdminMataKuliah;
+  admin: Admin;
+  _count: {
+    kelas: number;
+  };
 };
 
 export const columns: ColumnDef<MataKuliah>[] = [
@@ -60,6 +60,7 @@ export const columns: ColumnDef<MataKuliah>[] = [
     enableHiding: false,
   },
   {
+    id: 'ID',
     accessorKey: 'id',
     header: ({ column }) => {
       return (
@@ -87,11 +88,21 @@ export const columns: ColumnDef<MataKuliah>[] = [
     header: 'Kode',
   },
   {
+    id: 'Nama Admin',
     accessorKey: 'admin.nama',
-    header: 'Admin Mata Kuliah',
+    header: 'Nama Admin',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
+    },
+  },
+  {
+    id: 'Kelas',
+    accessorKey: '_count.kelas',
+    header: 'Kelas Terkait',
+    cell: ({ row }) => {
+      const kelasCount = row.original._count.kelas;
+      return <span className="pl-2">{kelasCount}</span>;
     },
   },
   {
@@ -111,17 +122,6 @@ export const columns: ColumnDef<MataKuliah>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormMataKuliahButton matakuliah={matakuliah} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(matakuliah.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Mata Kuliah ID ${matakuliah.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
             <DeleteConfirmationButton listMataKuliah={[matakuliah]} />
           </DropdownMenuContent>
         </DropdownMenu>

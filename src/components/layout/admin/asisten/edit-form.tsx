@@ -8,6 +8,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from '@/components/ui/command';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
@@ -41,82 +42,114 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronsUpDown, Pencil } from 'lucide-react';
+import { useGetCookie } from 'cookies-next/client';
+import { Check, ChevronsUpDown, Pencil, RefreshCcw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Asisten } from './list/columns';
 
-const KELAS_FAKE = [
-  {
-    id: 1,
-    nama: 'BASDAT 1-A',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-  {
-    id: 2,
-    nama: 'BASDAT 1-B',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-  {
-    id: 3,
-    nama: 'BASDAT 1-B',
-    kuota_praktikan: 10,
-    asisten: {
-      id: 5,
-      nama: 'JORDI IRAWAN',
-      nim: '223010503002',
-    },
-    matakuliahpraktikum: {
-      id: 1,
-      nama: 'Pemrograman Dasar',
-      kode: 'PM001',
-    },
-  },
-];
+interface Kelas {
+  id: number;
+  nama: string;
+  asisten: {
+    id: number;
+    nama: string;
+    nim: string;
+  };
+  mata_kuliah: {
+    id: number;
+    nama: string;
+    kode: string;
+  };
+}
+
 const formSchema = z.object({
-  status: z.string(),
-  kelas_id: z.coerce.number().min(1, {
-    message: 'Kelas harus dipilih',
+  where: z.object({
+    asisten_id: z.coerce.number().int().min(1, {
+      message: 'ID asisten harus diisi',
+    }),
   }),
-  asisten_id: z.coerce.number().min(1, {
-    message: 'Asisten harus dipilih',
+  update: z.object({
+    status: z.string(),
+    kelas_id: z.coerce.number().nullable(),
   }),
 });
 
-function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
+function EditFormAsisten({
+  defaultValues,
+  onOpenChange,
+}: {
+  defaultValues: Asisten;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const _cookies = useGetCookie();
+  const router = useRouter();
+  const [kelas, setKelas] = useState<Kelas[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      status: defaultValues.status,
-      kelas_id: defaultValues.kelaspraktikum[0]?.id || 0,
-      asisten_id: defaultValues.id,
+      where: {
+        asisten_id: defaultValues.id,
+      },
+      update: {
+        status: defaultValues.status,
+        kelas_id: defaultValues.kelas?.[0]?.id || 0,
+      },
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', data);
-    // Handle form submission logic here
+  useEffect(() => {
+    async function getKelas() {
+      const res = await fetch(
+        `/api/admin/asisten/kelas?asisten_id=${defaultValues.id}`,
+        {
+          headers: {
+            authorization: `Bearer ${_cookies('token')}`,
+          },
+        },
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(`Error: ${json.message || 'Gagal mengambil kelas'}`);
+        setKelas([]);
+      }
+      setKelas(json.data);
+    }
+
+    getKelas();
+  }, [_cookies, defaultValues.id]);
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const res = await fetch('/api/admin/asisten', {
+      method: 'PUT',
+      headers: {
+        'authorization': `Bearer ${_cookies('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        where: {
+          asisten_id: data.where.asisten_id,
+        },
+        update: {
+          status: data.update.status,
+          kelas_id: data.update.kelas_id || null,
+        },
+      }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast.success('Asisten berhasil diperbarui');
+      form.reset();
+      router.refresh();
+      onOpenChange(false);
+    } else {
+      toast.error(`Error: ${json.message || 'Gagal memperbarui Asisten'}`);
+    }
   }
 
   return (
@@ -125,10 +158,11 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
         <div className="flex items-center gap-2">
           <FormField
             control={form.control}
-            name="kelas_id"
+            name="update.kelas_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Kelas Praktikum</FormLabel>
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -141,7 +175,7 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
                         )}
                       >
                         {field.value
-                          ? KELAS_FAKE.find((kelas) => kelas.id === field.value)
+                          ? kelas.find((kelas) => kelas.id === field.value)
                               ?.nama
                           : 'Select Kelas Praktikum'}
                         <ChevronsUpDown className="opacity-50" />
@@ -153,31 +187,50 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
                       <CommandInput placeholder="Search Kelas Praktikum" />
                       <CommandList>
                         <CommandEmpty>No Kelas Praktikum found.</CommandEmpty>
-                        <CommandGroup>
-                          {KELAS_FAKE.map((kelas) => (
-                            <CommandItem
-                              value={kelas.id.toString()}
-                              key={kelas.id}
-                              onSelect={(value) => {
-                                form.setValue('kelas_id', Number(value));
-                              }}
-                            >
-                              {kelas.nama} ({kelas.id})
-                              <Check
-                                className={cn(
-                                  'ml-auto',
-                                  kelas.id === field.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0',
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
+                        {defaultValues.mata_kuliah_pilihan.map((mk) => {
+                          return (
+                            <Fragment key={mk.id}>
+                              <CommandGroup key={mk.id} heading={mk.nama}>
+                                {kelas
+                                  .filter(
+                                    (kelas) => kelas.mata_kuliah.id === mk.id,
+                                  )
+                                  .map((kelas) => (
+                                    <CommandItem
+                                      value={kelas.id.toString()}
+                                      key={kelas.id}
+                                      onSelect={(value) => {
+                                        form.setValue(
+                                          'update.kelas_id',
+                                          Number(value),
+                                        );
+                                      }}
+                                    >
+                                      ({kelas.id}) {kelas.nama} (
+                                      {kelas.asisten
+                                        ? `#${kelas.asisten.id} - ${kelas.asisten.nama}`
+                                        : 'Belum ada asisten'}
+                                      )
+                                      <Check
+                                        className={cn(
+                                          'ml-auto',
+                                          kelas.id === field.value
+                                            ? 'opacity-100'
+                                            : 'opacity-0',
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                              <CommandSeparator />
+                            </Fragment>
+                          );
+                        })}
                       </CommandList>
                     </Command>
                   </PopoverContent>
                 </Popover>
+
                 <FormDescription>
                   Kelas praktikum yang akan jadi tanggung jawab asisten.
                 </FormDescription>
@@ -187,13 +240,14 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
           />
           <FormField
             control={form.control}
-            name="status"
+            name="update.status"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl className="w-full">
                     <SelectTrigger>
@@ -203,7 +257,7 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
                   <SelectContent>
                     <SelectItem value="diterima">Diterima</SelectItem>
                     <SelectItem value="ditolak">Ditolak</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="diproses">Diproses</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
@@ -214,9 +268,23 @@ function EditFormAsisten({ defaultValues }: { defaultValues: Asisten }) {
             )}
           />
         </div>
-        <Button type="submit" className="w-full">
-          Submit
-        </Button>
+        <div className="flex w-full gap-2">
+          <Button
+            type="button"
+            size={'icon'}
+            onClick={() => {
+              form.reset();
+              form.setValue('update.kelas_id', null);
+              form.setValue('update.status', 'diproses');
+            }}
+          >
+            <RefreshCcw />
+            <span className="sr-only">Reset Kelas</span>
+          </Button>
+          <Button type="submit" className="flex-1">
+            Submit
+          </Button>
+        </div>
       </form>
     </Form>
   );
@@ -227,8 +295,12 @@ export default function EditFormAsistenButton({
 }: {
   asisten: Asisten;
 }) {
+  const [open, setOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+  };
   return (
-    <ResponsiveModal>
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
       <ResponsiveModalTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <Pencil />
@@ -242,7 +314,10 @@ export default function EditFormAsistenButton({
             Edit details for #{asisten.id} - {asisten.nama}.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <EditFormAsisten defaultValues={asisten} />
+        <EditFormAsisten
+          defaultValues={asisten}
+          onOpenChange={handleOpenChange}
+        />
       </ResponsiveModalContent>
     </ResponsiveModal>
   );

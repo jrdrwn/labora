@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,15 +14,13 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  Copy,
   MoreHorizontal,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import DeleteConfirmationButton from '../delete-confirmation';
 import EditFormRuanganButton from '../edit-form';
 
-export type AdminRuangan = {
+export type Admin = {
   id: number;
   nama: string;
   email: string;
@@ -32,8 +29,11 @@ export type AdminRuangan = {
 export type Ruangan = {
   id: number;
   nama: string;
-  kuota: Record<string, number>;
-  admin: AdminRuangan;
+  kapasitas: Record<string, number>;
+  admin: Admin;
+  _count: {
+    jadwal: number;
+  };
 };
 
 export const columns: ColumnDef<Ruangan>[] = [
@@ -60,6 +60,7 @@ export const columns: ColumnDef<Ruangan>[] = [
     enableHiding: false,
   },
   {
+    id: 'ID',
     accessorKey: 'id',
     header: ({ column }) => {
       return (
@@ -84,14 +85,37 @@ export const columns: ColumnDef<Ruangan>[] = [
   },
   {
     accessorKey: 'admin.nama',
-    header: 'Admin Ruangan',
+    header: 'Nama Admin',
     filterFn: (row, id, value) => {
       if (!Array.isArray(value) || value.length === 0) return true;
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: 'kuota.komputer',
+    id: 'kapasitas Mahasiswa',
+    accessorKey: 'kapasitas.mahasiswa',
+    accessorFn: (row) => row.kapasitas.mahasiswa,
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
+          Kapasitas Mahasiswa
+          <span className="sr-only">Sort by Kapasitas Mahasiswa</span>
+          {{
+            asc: <ChevronUp />,
+            desc: <ChevronDown />,
+          }[column.getIsSorted() as string] || <ChevronsUpDown />}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.original.kapasitas.mahasiswa;
+      return <span className="pl-2">{value || 0}</span>;
+    },
+  },
+  {
+    id: 'kapasitas Komputer',
+    accessorKey: 'kapasitas.komputer',
+    accessorFn: (row) => row.kapasitas.komputer,
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
@@ -105,7 +129,28 @@ export const columns: ColumnDef<Ruangan>[] = [
       );
     },
     cell: ({ row }) => {
-      const value = row.original.kuota.komputer;
+      const value = row.original.kapasitas.komputer;
+      return <span className="pl-2">{value}</span>;
+    },
+  },
+  {
+    id: 'Jadwal Terkait',
+    accessorKey: '_count.jadwal',
+    accessorFn: (row) => row._count.jadwal,
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
+          Jadwal Terkait
+          <span className="sr-only">Sort by Jadwal Terkait</span>
+          {{
+            asc: <ChevronUp />,
+            desc: <ChevronDown />,
+          }[column.getIsSorted() as string] || <ChevronsUpDown />}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.original._count.jadwal;
       return <span className="pl-2">{value}</span>;
     },
   },
@@ -126,17 +171,6 @@ export const columns: ColumnDef<Ruangan>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <EditFormRuanganButton ruangan={ruangan} />
-            <DropdownMenuItem
-              onClick={(_e) => {
-                navigator.clipboard.writeText(ruangan.id.toString());
-                toast('ID copied to clipboard', {
-                  description: `Ruangan ID ${ruangan.id} has been copied.`,
-                });
-              }}
-            >
-              <Copy />
-              Copy ID
-            </DropdownMenuItem>
             <DeleteConfirmationButton ruangan={[ruangan]} />
           </DropdownMenuContent>
         </DropdownMenu>

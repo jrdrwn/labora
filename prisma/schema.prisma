@@ -10,52 +10,39 @@ datasource db {
 }
 
 model admin {
-  id                  Int                   @id @default(autoincrement())
-  nama                String?               @db.VarChar(100)
-  password            String?               @db.VarChar(100)
-  email               String?               @unique(map: "email") @db.VarChar(120)
-  event               event[]
-  kelaspraktikum      kelaspraktikum[]
-  matakuliahpraktikum matakuliahpraktikum[]
-  ruang               ruang[]
+  id          Int           @id @default(autoincrement())
+  nama        String?       @db.VarChar(100)
+  password    String?       @db.VarChar(100)
+  email       String?       @unique(map: "email") @db.VarChar(120)
+  event       event[]
+  kelas       kelas[]
+  mata_kuliah mata_kuliah[]
+  ruangan     ruangan[]
 }
 
 model asisten {
-  id                        Int              @id @default(autoincrement())
-  nim                       String?          @unique(map: "nim") @db.VarChar(24)
-  email                     String?          @unique(map: "email") @db.VarChar(120)
-  nama                      String?          @db.VarChar(120)
-  status                    asisten_status?
-  komitmen_url              String?          @db.Text
-  event_id                  Int?
-  pre_mata_kuliah_praktikum Json?
-  event                     event?           @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "asisten_ibfk_1")
-  kelaspraktikum            kelaspraktikum[]
+  id                    Int             @id @default(autoincrement())
+  nim                   String?         @unique(map: "nim") @db.VarChar(20)
+  email                 String?         @unique(map: "email") @db.VarChar(120)
+  nama                  String?         @db.VarChar(120)
+  status                asisten_status?
+  komitmen_url          String?         @db.Text
+  dokumen_pendukung_url String?         @db.Text
+  event_id              Int?
+  mata_kuliah_pilihan   Json?
+  event                 event?          @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "asisten_ibfk_1")
+  kelas                 kelas[]
 
   @@index([event_id], map: "event_id")
-}
-
-model detailpenilaian {
-  id           Int                        @id @default(autoincrement())
-  penilaian_id Int?
-  praktikan_id Int?
-  kehadiran    detailpenilaian_kehadiran?
-  tipe         detailpenilaian_tipe?
-  nilai        Float?
-  penilaian    penilaian?                 @relation(fields: [penilaian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "detailpenilaian_ibfk_1")
-  praktikan    praktikan?                 @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "detailpenilaian_ibfk_2")
-
-  @@index([penilaian_id], map: "penilaian_id")
-  @@index([praktikan_id], map: "praktikan_id")
 }
 
 model event {
   id        Int          @id @default(autoincrement())
   admin_id  Int?
-  nama      String?      @db.VarChar(120)
   jenis     event_jenis?
   mulai     DateTime?    @db.Timestamp(0)
   selesai   DateTime?    @db.Timestamp(0)
+  is_aktif  Boolean      @default(false)
   asisten   asisten[]
   admin     admin?       @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "event_ibfk_1")
   praktikan praktikan[]
@@ -63,93 +50,122 @@ model event {
   @@index([admin_id], map: "admin_id")
 }
 
-model jadwalpraktikum {
-  id                 Int                     @id @default(autoincrement())
-  ruang_id           Int?
-  kelas_praktikum_id Int?
-  mulai              DateTime?               @db.Timestamp(0)
-  selesai            DateTime?               @db.Timestamp(0)
-  status             jadwalpraktikum_status?
-  ruang              ruang?                  @relation(fields: [ruang_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_1")
-  kelaspraktikum     kelaspraktikum?         @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwalpraktikum_ibfk_2")
-  penilaian          penilaian[]
+model penilaian {
+  id           Int             @id @default(autoincrement())
+  laporan_id   Int?
+  praktikan_id Int?
+  tipe         penilaian_tipe?
+  nilai        Float?
+  laporan      laporan?        @relation(fields: [laporan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_1")
+  praktikan    praktikan?      @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_2")
 
-  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
-  @@index([ruang_id], map: "ruang_id")
-}
-
-model kelaspraktikum {
-  id                       Int                       @id @default(autoincrement())
-  nama                     String?                   @db.VarChar(120)
-  kuota_praktikan          Int?
-  mata_kuliah_praktikum_id Int?
-  asisten_id               Int?
-  admin_id                 Int?
-  jadwalpraktikum          jadwalpraktikum[]
-  matakuliahpraktikum      matakuliahpraktikum?      @relation(fields: [mata_kuliah_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_1")
-  asisten                  asisten?                  @relation(fields: [asisten_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_2")
-  admin                    admin?                    @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikum_ibfk_3")
-  kelaspraktikumpraktikan  kelaspraktikumpraktikan[]
-
-  @@index([asisten_id], map: "asisten_id")
-  @@index([mata_kuliah_praktikum_id], map: "mata_kuliah_praktikum_id")
-  @@index([admin_id], map: "admin_id")
-}
-
-model kelaspraktikumpraktikan {
-  id                 Int             @id @default(autoincrement())
-  praktikan_id       Int?
-  kelas_praktikum_id Int?
-  perangkat          String?         @db.VarChar(120)
-  praktikan          praktikan?      @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_1")
-  kelaspraktikum     kelaspraktikum? @relation(fields: [kelas_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelaspraktikumpraktikan_ibfk_2")
-
-  @@index([kelas_praktikum_id], map: "kelas_praktikum_id")
+  @@index([laporan_id], map: "laporan_id")
   @@index([praktikan_id], map: "praktikan_id")
 }
 
-model matakuliahpraktikum {
-  id             Int              @id @default(autoincrement())
-  kode           String?          @unique(map: "kode") @db.VarChar(120)
-  nama           String?          @db.VarChar(120)
-  admin_id       Int?
-  kelaspraktikum kelaspraktikum[]
-  admin          admin?           @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "matakuliahpraktikum_ibfk_1")
-
-  @@index([admin_id], map: "admin_id")
-}
-
-model penilaian {
-  id                  Int               @id @default(autoincrement())
-  judul               String?           @db.VarChar(120)
-  bukti_pertemuan     String?           @db.Text
-  jadwal_praktikum_id Int?
-  detailpenilaian     detailpenilaian[]
-  jadwalpraktikum     jadwalpraktikum?  @relation(fields: [jadwal_praktikum_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penilaian_ibfk_1")
-
-  @@index([jadwal_praktikum_id], map: "jadwal_praktikum_id")
-}
-
 model praktikan {
-  id                      Int                       @id @default(autoincrement())
-  nim                     String?                   @unique(map: "nim") @db.VarChar(24)
-  email                   String?                   @unique(map: "email") @db.VarChar(120)
-  nama                    String?                   @db.VarChar(120)
-  event_id                Int?
-  detailpenilaian         detailpenilaian[]
-  kelaspraktikumpraktikan kelaspraktikumpraktikan[]
-  event                   event?                    @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "praktikan_ibfk_1")
+  id              Int               @id @default(autoincrement())
+  nim             String?           @unique(map: "nim") @db.VarChar(20)
+  email           String?           @unique(map: "email") @db.VarChar(120)
+  nama            String?           @db.VarChar(120)
+  event_id        Int?
+  kehadiran       kehadiran[]
+  penilaian       penilaian[]
+  event           event?            @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "praktikan_ibfk_1")
+  praktikan_kelas praktikan_kelas[]
 
   @@index([event_id], map: "event_id")
 }
 
-model ruang {
-  id              Int               @id @default(autoincrement())
-  nama            String?           @db.VarChar(100)
-  kuota           Json?
-  admin_id        Int?
-  jadwalpraktikum jadwalpraktikum[]
-  admin           admin?            @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ruang_ibfk_1")
+model jadwal {
+  id              Int       @id @default(autoincrement())
+  ruang_id        Int?
+  kelas_id        Int?
+  mulai           DateTime? @db.Timestamp(0)
+  selesai         DateTime? @db.Timestamp(0)
+  is_dilaksanakan Boolean?  @default(false)
+  ruangan         ruangan?  @relation(fields: [ruang_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwal_ibfk_1")
+  kelas           kelas?    @relation(fields: [kelas_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jadwal_ibfk_2")
+  laporan         laporan[]
+
+  @@index([kelas_id], map: "kelas_id")
+  @@index([ruang_id], map: "ruang_id")
+}
+
+model kehadiran {
+  id           Int             @id @default(autoincrement())
+  laporan_id   Int?
+  praktikan_id Int?
+  tipe         kehadiran_tipe?
+  laporan      laporan?        @relation(fields: [laporan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kehadiran_ibfk_1")
+  praktikan    praktikan?      @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kehadiran_ibfk_2")
+
+  @@index([laporan_id], map: "laporan_id")
+  @@index([praktikan_id], map: "praktikan_id")
+}
+
+model kelas {
+  id                  Int               @id @default(autoincrement())
+  nama                String?           @db.VarChar(120)
+  kapasitas_praktikan Int?
+  mata_kuliah_id      Int?
+  asisten_id          Int?
+  admin_id            Int?
+  jadwal              jadwal[]
+  mata_kuliah         mata_kuliah?      @relation(fields: [mata_kuliah_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelas_ibfk_1")
+  asisten             asisten?          @relation(fields: [asisten_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelas_ibfk_2")
+  admin               admin?            @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelas_ibfk_3")
+  praktikan_kelas     praktikan_kelas[]
+
+  @@index([admin_id], map: "admin_id")
+  @@index([asisten_id], map: "asisten_id")
+  @@index([mata_kuliah_id], map: "mata_kuliah_id")
+}
+
+model laporan {
+  id                  Int         @id @default(autoincrement())
+  jadwal_id           Int?
+  judul               String?     @db.VarChar(120)
+  bukti_pertemuan_url String?     @db.Text
+  kehadiran           kehadiran[]
+  jadwal              jadwal?     @relation(fields: [jadwal_id], references: [id], onUpdate: NoAction, map: "laporan_ibfk_1")
+  penilaian           penilaian[]
+
+  @@index([jadwal_id], map: "jadwal_id")
+}
+
+model mata_kuliah {
+  id       Int     @id @default(autoincrement())
+  kode     String? @unique(map: "kode") @db.VarChar(120)
+  nama     String? @db.VarChar(120)
+  admin_id Int?
+  kelas    kelas[]
+  admin    admin?  @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mata_kuliah_ibfk_1")
+
+  @@index([admin_id], map: "admin_id")
+}
+
+model praktikan_kelas {
+  id           Int                        @id @default(autoincrement())
+  praktikan_id Int?
+  kelas_id     Int?
+  perangkat    praktikan_kelas_perangkat?
+  created_at   DateTime?                  @default(dbgenerated("(now())")) @db.Timestamp(0)
+  updated_at   DateTime?                  @default(dbgenerated("(now())")) @db.Timestamp(0)
+  praktikan    praktikan?                 @relation(fields: [praktikan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "praktikan_kelas_ibfk_1")
+  kelas        kelas?                     @relation(fields: [kelas_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "praktikan_kelas_ibfk_2")
+
+  @@index([kelas_id], map: "kelas_id")
+  @@index([praktikan_id], map: "praktikan_id")
+}
+
+model ruangan {
+  id        Int      @id @default(autoincrement())
+  nama      String?  @db.VarChar(100)
+  kapasitas Json?
+  admin_id  Int?
+  jadwal    jadwal[]
+  admin     admin?   @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ruangan_ibfk_1")
 
   @@index([admin_id], map: "admin_id")
 }
@@ -160,26 +176,26 @@ enum event_jenis {
   praktikum
 }
 
-enum detailpenilaian_kehadiran {
+enum penilaian_tipe {
+  pretest
+  laporan
+  praktikum
+  responsi
+}
+
+enum praktikan_kelas_perangkat {
+  laptop
+  komputer_lab
+}
+
+enum kehadiran_tipe {
   hadir
   izin
   alpha
 }
 
 enum asisten_status {
-  pending
+  diproses
   diterima
   ditolak
-}
-
-enum jadwalpraktikum_status {
-  belum_dilaksanakan
-  telah_dilaksanakan
-}
-
-enum detailpenilaian_tipe {
-  pretest
-  laporan
-  praktikum
-  responsi
 }

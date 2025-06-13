@@ -1,6 +1,5 @@
 'use client';
 
-import { PasswordInput } from '@/components/layout/admin/login/password-input';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +25,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+import { PasswordInput } from '../../shared/password-input';
 
 const formSchema = z.object({
   identifier: z.string().email(),
@@ -63,6 +64,7 @@ export default function LoginForm() {
         icon: <BadgeCheck />,
       });
       router.push('/admin');
+      router.refresh();
     } else {
       toast('Login Gagal', {
         icon: <BadgeAlert />,

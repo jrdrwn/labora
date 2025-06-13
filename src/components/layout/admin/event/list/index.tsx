@@ -1,32 +1,16 @@
+import { cookies } from 'next/headers';
+
 import { columns, Event } from './columns';
 import { DataTable } from './data-table';
 
-export default function ListEvent() {
-  const data: Event[] = [
-    {
-      id: 1,
-      nama: 'Pendaftaran Praktikan',
-      jenis: 'pendaftaran_praktikan',
-      mulai: new Date('2025-01-01'),
-      selesai: new Date('2025-02-01'),
-      admin: { id: 1, nama: 'Jordi Irawan', email: 'admin@email.com' },
+export default async function ListEvent() {
+  const _cookies = await cookies();
+  const res = await fetch(`${process.env.APP_URL}/api/admin/event`, {
+    headers: {
+      authorization: `Bearer ${_cookies.get('token')?.value}`,
     },
-    {
-      id: 2,
-      nama: 'Pendaftaran Asisten',
-      jenis: 'pendaftaran_asisten',
-      mulai: new Date('2025-02-01'),
-      selesai: new Date('2025-03-01'),
-      admin: { id: 1, nama: 'Jordi Irawan', email: 'admin@email.com' },
-    },
-    {
-      id: 3,
-      nama: 'Praktikum',
-      jenis: 'praktikum',
-      mulai: new Date('2025-03-01'),
-      selesai: new Date('2025-06-01'),
-      admin: { id: 1, nama: 'Jordi Irawan', email: 'admin@email.com' },
-    },
-  ];
+  });
+  const json = await res.json();
+  const data = json.data as Event[];
   return <DataTable data={data} columns={columns} />;
 }

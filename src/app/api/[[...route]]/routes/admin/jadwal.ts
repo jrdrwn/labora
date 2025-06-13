@@ -1,349 +1,380 @@
 import prisma from '@db';
+import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
+import { z } from 'zod';
 
+import { EventType } from '../../constants';
 import generateDates from '../../utils/generateDates';
 import generateSingleDate from '../../utils/generateSingleDate';
 
 export const jadwal = new Hono().basePath('/jadwal');
 
-jadwal.get('/', async (c) => {
-  const jadwal = await prisma.jadwalpraktikum.findMany({
-    skip: c.req.query('offset') ? Number(c.req.query('offset')) : 0,
-    take: c.req.query('limit') ? Number(c.req.query('limit')) : 10,
-    select: {
-      id: true,
-      mulai: true,
-      selesai: true,
-      status: true,
-      ruang: {
-        select: {
-          id: true,
-          nama: true,
+jadwal.post(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      kelas_id: z.number().int().min(1),
+      ruang_id: z.number().int().min(1),
+      tanggal_mulai: z.coerce.date(),
+      jam_mulai: z.string().min(1),
+      jam_selesai: z.string().min(1),
+      jumlah_pertemuan: z.number().int().min(1).default(1),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+
+    if (json.jam_mulai === json.jam_selesai) {
+      return c.json(
+        {
+          status: false,
+          message: 'Jam mulai dan jam selesai tidak boleh sama',
+        },
+        400,
+      );
+    }
+
+    if (json.jam_mulai > json.jam_selesai) {
+      return c.json(
+        {
+          status: false,
+          message: 'Jam mulai tidak boleh lebih besar dari jam selesai',
+        },
+        400,
+      );
+    }
+
+    const ruang = await prisma.ruangan.findFirst({
+      where: {
+        id: json.ruang_id,
+      },
+    });
+    if (!ruang) {
+      return c.json({ status: false, message: 'Ruang not found' }, 404);
+    }
+
+    const kelas = await prisma.kelas.findFirst({
+      where: {
+        id: json.kelas_id,
+      },
+      include: {
+        praktikan_kelas: true,
+      },
+    });
+    if (!kelas) {
+      return c.json({ status: false, message: 'Kelas not found' }, 404);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if((ruang.kapasitas as any).mahasiswa < kelas.kapasitas_praktikan!) {
+      return c.json(
+        {
+          status: false,
+          message: 'Ruang tidak cukup untuk menampung jumlah praktikan',
+        },
+        400,
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((ruang.kapasitas as any).komputer < kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
+      return c.json(
+        { status: false, message: 'Ruang tidak cukup untuk komputer' },
+        400,
+      );
+    }
+
+    const meetingsDates = generateDates(
+      json.tanggal_mulai,
+      json.jam_mulai,
+      json.jam_selesai,
+      json.jumlah_pertemuan,
+    );
+
+    const existingBookings = await prisma.jadwal.findMany({
+      where: {
+        ruang_id: json.ruang_id,
+        OR: meetingsDates.map((date) => {
+          const endDate = new Date(date.selesai);
+          const startDate = new Date(date.mulai);
+          startDate.setSeconds(startDate.getSeconds() + 1);
+          endDate.setSeconds(endDate.getSeconds() - 1);
+          return {
+            mulai: {
+              lte: endDate,
+            },
+            selesai: {
+              gte: startDate,
+            },
+          };
+        }),
+      },
+    });
+
+    if (existingBookings.length > 0) {
+      return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
+    }
+
+    // cek jika event sudah ada
+    const event = await prisma.event.findFirst({
+      where: {
+        jenis: EventType.praktikum,
+        mulai: {
+          lte: meetingsDates[0].mulai,
+        },
+        selesai: {
+          gte: meetingsDates[meetingsDates.length - 1].selesai,
         },
       },
-      kelaspraktikum: {
-        select: {
-          id: true,
-          nama: true,
+    });
+
+    if (!event) {
+      return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
+    }
+
+    await prisma.jadwal.createMany({
+      data: meetingsDates.map((date) => ({
+        kelas_id: json.kelas_id,
+        ruang_id: json.ruang_id,
+        mulai: date.mulai,
+        selesai: date.selesai,
+      })),
+    });
+
+    const jadwal = await prisma.jadwal.findMany({
+      where: {
+        kelas_id: json.kelas_id,
+        ruang_id: json.ruang_id,
+        mulai: {
+          in: meetingsDates.map((date) => date.mulai),
         },
       },
-    },
-  });
-
-  return c.json({
-    status: true,
-    data: jadwal,
-  });
-});
-
-jadwal.post('/single', async (c) => {
-  const json = await c.req.json<{
-    kelas_praktikum_id: number;
-    ruang_id: number;
-    tanggal_mulai: Date;
-    jam_mulai: string;
-    jam_selesai: string;
-    hari: number;
-  }>();
-
-  const ruang = await prisma.ruang.findFirst({
-    where: {
-      id: json.ruang_id,
-    },
-  });
-
-  if (!ruang) {
-    return c.json({ status: false, message: 'Ruang not found' }, 404);
-  }
-  const kelas = await prisma.kelaspraktikum.findFirst({
-    where: {
-      id: json.kelas_praktikum_id,
-    },
-  });
-
-  if (!kelas) {
-    return c.json({ status: false, message: 'Kelas not found' }, 404);
-  }
-
-  const date = generateSingleDate(
-    json.tanggal_mulai,
-    json.jam_mulai,
-    json.jam_selesai,
-  );
-  const endDate = new Date(date.selesai);
-  const startDate = new Date(date.mulai);
-  startDate.setSeconds(startDate.getSeconds() + 1);
-  endDate.setSeconds(endDate.getSeconds() - 1);
-  const existingBookings = await prisma.jadwalpraktikum.findMany({
-    where: {
-      ruang_id: json.ruang_id,
-      mulai: {
-        lte: endDate,
+      select: {
+        id: true,
       },
-      selesai: {
-        gte: startDate,
+    });
+
+    await prisma.laporan.createMany({
+      data: jadwal.map((j) => ({
+        jadwal_id: j.id,
+      })),
+    });
+
+    return c.json(
+      {
+        status: true,
       },
-    },
-  });
+      201,
+    );
+  },
+);
 
-  if (existingBookings.length > 0) {
-    return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
-  }
-  // cek jika event sudah ada
-  const event = await prisma.event.findFirst({
-    where: {
-      jenis: 'praktikum',
-      mulai: {
-        lte: startDate,
-      },
-      selesai: {
-        gte: endDate,
-      },
-    },
-  });
-
-  if (!event) {
-    return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
-  }
-
-  await prisma.jadwalpraktikum.create({
-    data: {
-      kelas_praktikum_id: json.kelas_praktikum_id,
-      ruang_id: json.ruang_id,
-      mulai: date.mulai,
-      selesai: date.selesai,
-    },
-  });
-
-  return c.json(
-    {
-      status: true,
-    },
-    201,
-  );
-});
-
-jadwal.post('/batch', async (c) => {
-  const json = await c.req.json<{
-    kelas_praktikum_id: number;
-    ruang_id: number;
-    tanggal_mulai: Date;
-    jam_mulai: string;
-    jam_selesai: string;
-    jumlah_pertemuan: number;
-  }>();
-
-  const ruang = await prisma.ruang.findFirst({
-    where: {
-      id: json.ruang_id,
-    },
-  });
-  if (!ruang) {
-    return c.json({ status: false, message: 'Ruang not found' }, 404);
-  }
-
-  const kelas = await prisma.kelaspraktikum.findFirst({
-    where: {
-      id: json.kelas_praktikum_id,
-    },
-  });
-  if (!kelas) {
-    return c.json({ status: false, message: 'Kelas not found' }, 404);
-  }
-
-  const meetingsDates = generateDates(
-    json.tanggal_mulai,
-    json.jam_mulai,
-    json.jam_selesai,
-    json.jumlah_pertemuan,
-  );
-
-  const existingBookings = await prisma.jadwalpraktikum.findMany({
-    where: {
-      ruang_id: json.ruang_id,
-      OR: meetingsDates.map((date) => {
-        const endDate = new Date(date.selesai);
-        const startDate = new Date(date.mulai);
-        startDate.setSeconds(startDate.getSeconds() + 1);
-        endDate.setSeconds(endDate.getSeconds() - 1);
-        return {
-          mulai: {
-            lte: endDate,
-          },
-          selesai: {
-            gte: startDate,
-          },
-        };
+jadwal.put(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      where: z.object({
+        jadwal_id: z.coerce.number().int().positive(),
       }),
-    },
-  });
-
-  if (existingBookings.length > 0) {
-    return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
-  }
-
-  // cek jika event sudah ada
-  const event = await prisma.event.findFirst({
-    where: {
-      jenis: 'praktikum',
-      mulai: {
-        lte: meetingsDates[0].mulai,
+      update: z.object({
+        ruang_id: z.coerce.number().int().positive().optional(),
+        tanggal_mulai: z.coerce.date(),
+        jam_mulai: z.string().min(1),
+        jam_selesai: z.string().min(1),
+      }),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+    const jadwal = await prisma.jadwal.findFirst({
+      where: {
+        id: json.where.jadwal_id,
       },
-      selesai: {
-        gte: meetingsDates[meetingsDates.length - 1].selesai,
+    });
+    if (!jadwal) {
+      return c.json({ status: false, message: 'Jadwal not found' }, 404);
+    }
+
+    const ruang = await prisma.ruangan.findFirst({
+      where: {
+        id: json.update.ruang_id,
       },
-    },
-  });
+    });
+    if (!ruang) {
+      return c.json({ status: false, message: 'Ruang not found' }, 404);
+    }
 
-  if (!event) {
-    return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
-  }
 
-  await prisma.jadwalpraktikum.createMany({
-    data: meetingsDates.map((date) => ({
-      kelas_praktikum_id: json.kelas_praktikum_id,
-      ruang_id: json.ruang_id,
-      mulai: date.mulai,
-      selesai: date.selesai,
-    })),
-  });
-
-  return c.json(
-    {
-      status: true,
-    },
-    201,
-  );
-});
-
-jadwal.put('/', async (c) => {
-  const json = await c.req.json<{
-    jadwal_id: number;
-    ruang_id?: number;
-    tanggal_mulai: Date;
-    jam_mulai: string;
-    jam_selesai: string;
-  }>();
-  const jadwal = await prisma.jadwalpraktikum.findFirst({
-    where: {
-      id: json.jadwal_id,
-    },
-  });
-  if (!jadwal) {
-    return c.json({ status: false, message: 'Jadwal not found' }, 404);
-  }
-
-  const ruang = await prisma.ruang.findFirst({
-    where: {
-      id: json.ruang_id,
-    },
-  });
-  if (!ruang) {
-    return c.json({ status: false, message: 'Ruang not found' }, 404);
-  }
-
-  const date = generateSingleDate(
-    json.tanggal_mulai,
-    json.jam_mulai,
-    json.jam_selesai,
-  );
-
-  const endDate = new Date(date.selesai);
-  const startDate = new Date(date.mulai);
-  startDate.setSeconds(startDate.getSeconds() + 1);
-  endDate.setSeconds(endDate.getSeconds() - 1);
-
-  const existingBookings = await prisma.jadwalpraktikum.findMany({
-    where: {
-      ruang_id: json.ruang_id,
-      mulai: {
-        lte: endDate,
+    const kelas = await prisma.kelas.findFirst({
+      where: {
+        jadwal: {
+          some: {
+            id: json.where.jadwal_id,
+          },
+        }
       },
-      selesai: {
-        gte: startDate,
+      include: {
+        praktikan_kelas: {
+          select: {
+            perangkat: true
+          }
+        }}
+    })
+
+    if (!kelas) {
+      return c.json({ status: false, message: 'Kelas not found' }, 404);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if((ruang.kapasitas as any).mahasiswa < kelas.kapasitas_praktikan!) {
+      return c.json(
+        { status: false, message: 'Ruang tidak cukup untuk kelas ini' },
+        400,
+      );
+    }
+
+    // kapasitas komputer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((ruang.kapasitas as any).komputer < kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
+      return c.json(
+        { status: false, message: 'Ruang tidak cukup untuk komputer' },
+        400,
+      );
+    }
+
+
+    const date = generateSingleDate(
+      json.update.tanggal_mulai,
+      json.update.jam_mulai,
+      json.update.jam_selesai,
+    );
+
+    const endDate = new Date(date.selesai);
+    const startDate = new Date(date.mulai);
+    startDate.setSeconds(startDate.getSeconds() + 1);
+    endDate.setSeconds(endDate.getSeconds() - 1);
+
+    const existingBookings = await prisma.jadwal.findMany({
+      where: {
+        ruang_id: json.update.ruang_id,
+        id: {
+          not: json.where.jadwal_id,
+        },
+        mulai: {
+          lte: endDate,
+        },
+        selesai: {
+          gte: startDate,
+        },
       },
-    },
-  });
+    });
 
-  if (existingBookings.length > 0) {
-    return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
-  }
+    if (existingBookings.length > 0) {
+      return c.json({ status: false, message: 'Ruang sudah terdaftar' }, 400);
+    }
 
-  // cek jika event sudah ada
-  const event = await prisma.event.findFirst({
-    where: {
-      jenis: 'praktikum',
-      mulai: {
-        lte: date.mulai,
+    const existingJadwal = await prisma.jadwal.findMany({
+      where: {
+        kelas_id: jadwal.kelas_id,
+        mulai: {
+          equals: date.mulai,
+        },
+        selesai: {
+          equals: date.selesai,
+        },
       },
-      selesai: {
-        gte: date.selesai,
+    });
+
+    if (existingJadwal.length > 1) {
+      return c.json({ status: false, message: 'Jadwal sudah ada' }, 400);
+    }
+
+    // cek jika event sudah ada
+    const event = await prisma.event.findFirst({
+      where: {
+        jenis: 'praktikum',
+        mulai: {
+          lte: date.mulai,
+        },
+        selesai: {
+          gte: date.selesai,
+        },
       },
-    },
-  });
+    });
 
-  if (!event) {
-    return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
-  }
+    if (!event) {
+      return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
+    }
 
-  let data;
-  if (json.ruang_id) {
-    data = {
-      ruang_id: json.ruang_id,
-      mulai: date.mulai,
-      selesai: date.selesai,
-    };
-  } else {
-    data = {
-      mulai: date.mulai,
-      selesai: date.selesai,
-    };
-  }
+    let data;
+    if (json.update.ruang_id) {
+      data = {
+        ruang_id: json.update.ruang_id,
+        mulai: date.mulai,
+        selesai: date.selesai,
+      };
+    } else {
+      data = {
+        mulai: date.mulai,
+        selesai: date.selesai,
+      };
+    }
 
-  await prisma.jadwalpraktikum.update({
-    where: {
-      id: json.jadwal_id,
-    },
-    data,
-  });
+    await prisma.jadwal.update({
+      where: {
+        id: json.where.jadwal_id,
+      },
+      data,
+    });
 
-  return c.json(
-    {
-      status: true,
-    },
-    202,
-  );
-});
+    return c.json(
+      {
+        status: true,
+      },
+      202,
+    );
+  },
+);
 
-jadwal.delete('/', async (c) => {
-  const json = await c.req.json<{
-    jadwal_id: number;
-  }>();
-  const jadwal = await prisma.jadwalpraktikum.findFirst({
-    where: {
-      id: json.jadwal_id,
-    },
-  });
-  if (!jadwal) {
-    return c.json({ status: false, message: 'Jadwal not found' }, 404);
-  }
-  await prisma.jadwalpraktikum.delete({
-    where: {
-      id: json.jadwal_id,
-    },
-  });
+jadwal.delete(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      jadwal_id: z.coerce.number().int().positive().min(1),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+    const jadwal = await prisma.jadwal.findFirst({
+      where: {
+        id: json.jadwal_id,
+      },
+    });
+    if (!jadwal) {
+      return c.json({ status: false, message: 'Jadwal not found' }, 404);
+    }
+    await prisma.jadwal.delete({
+      where: {
+        id: json.jadwal_id,
+      },
+    });
 
-  return c.json(
-    {
-      status: true,
-    },
-    202,
-  );
-});
+    return c.json(
+      {
+        status: true,
+      },
+      202,
+    );
+  },
+);
 
 jadwal.get('/single/:id', async (c) => {
+  // TODO: cek
   const jadwalId = +c.req.param('id');
-  const jadwal = await prisma.jadwalpraktikum.findFirst({
+  const jadwal = await prisma.jadwal.findFirst({
     where: {
       id: jadwalId,
     },
@@ -351,14 +382,14 @@ jadwal.get('/single/:id', async (c) => {
       id: true,
       mulai: true,
       selesai: true,
-      status: true,
-      ruang: {
+      is_dilaksanakan: true,
+      ruangan: {
         select: {
           id: true,
           nama: true,
         },
       },
-      kelaspraktikum: {
+      kelas: {
         select: {
           id: true,
           nama: true,
@@ -375,26 +406,26 @@ jadwal.get('/single/:id', async (c) => {
   });
 });
 
-jadwal.get('/batch', async (c) => {
+jadwal.get('/', async (c) => {
   const ruangId = c.req.query('ruangId') ? +c.req.query('ruangId')! : undefined;
   const kelasId = c.req.query('kelasId') ? +c.req.query('kelasId')! : undefined;
-  const jadwal = await prisma.jadwalpraktikum.findMany({
+  const jadwal = await prisma.jadwal.findMany({
     where: {
       ruang_id: ruangId,
-      kelas_praktikum_id: kelasId,
+      kelas_id: kelasId,
     },
     select: {
       id: true,
       mulai: true,
       selesai: true,
-      status: true,
-      ruang: {
+      is_dilaksanakan: true,
+      ruangan: {
         select: {
           id: true,
           nama: true,
         },
       },
-      kelaspraktikum: {
+      kelas: {
         select: {
           id: true,
           nama: true,

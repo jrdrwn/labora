@@ -1,11 +1,14 @@
 import prisma from '@db';
+import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
+import { z } from 'zod';
 
+import { KehadiranType } from '../../constants';
 import { JWTPayload } from '../../types';
 
 export const kehadiran = new Hono().basePath('/kehadiran');
 
-kehadiran.get('v2', async (c) => {
+kehadiran.get('/', async (c) => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload;
   const asisten = await prisma.asisten.findFirst({
     where: {
@@ -23,13 +26,13 @@ kehadiran.get('v2', async (c) => {
     );
   }
 
-  const kelasPraktikum = await prisma.kelaspraktikum.findFirst({
+  const kelas = await prisma.kelas.findFirst({
     where: {
       asisten_id: asisten.id,
     },
 
     include: {
-      jadwalpraktikum: {
+      jadwal: {
         select: {
           id: true,
           mulai: true,
@@ -38,7 +41,7 @@ kehadiran.get('v2', async (c) => {
       },
     },
   });
-  if (!kelasPraktikum) {
+  if (!kelas) {
     return c.json(
       {
         status: false,
@@ -48,14 +51,17 @@ kehadiran.get('v2', async (c) => {
     );
   }
 
-  const penilaian = await prisma.penilaian.findMany({
+  const laporan = await prisma.laporan.findMany({
     where: {
-      jadwalpraktikum: {
-        kelas_praktikum_id: kelasPraktikum.id,
+      jadwal: {
+        kelas_id: kelas.id,
       },
     },
-    include: {
-      jadwalpraktikum: {
+    select: {
+      id: true,
+      judul: true,
+      bukti_pertemuan_url: true,
+      jadwal: {
         select: {
           id: true,
           mulai: true,
@@ -65,21 +71,11 @@ kehadiran.get('v2', async (c) => {
     },
   });
 
-  if (penilaian.length === 0) {
-    return c.json(
-      {
-        status: false,
-        message: 'No penilaian found for this kelas praktikum',
-      },
-      404,
-    );
-  }
-
   const praktikan = await prisma.praktikan.findMany({
     where: {
-      kelaspraktikumpraktikan: {
+      praktikan_kelas: {
         some: {
-          kelas_praktikum_id: kelasPraktikum.id,
+          kelas_id: kelas.id,
         },
       },
     },
@@ -87,205 +83,195 @@ kehadiran.get('v2', async (c) => {
       id: true,
       nama: true,
       nim: true,
-      detailpenilaian: {
-        where: {
-          kehadiran: {
-            not: null,
-          },
-        },
+      kehadiran: {
         select: {
-          penilaian: {
+          laporan: {
             select: {
               id: true,
-              jadwal_praktikum_id: true,
+              jadwal_id: true,
             },
           },
-          kehadiran: true,
+          tipe: true,
           id: true,
         },
       },
     },
   });
 
-  if (praktikan.length === 0) {
-    return c.json(
-      {
-        status: false,
-        message: 'No praktikan found for this kelas praktikum',
-      },
-      404,
-    );
-  }
-
   return c.json({
     status: true,
     data: {
       asisten,
-      kelasPraktikum,
+      kelas,
       praktikan,
-      penilaian,
+      laporan,
     },
   });
 });
 
-kehadiran.get('/', async (c) => {
-  const jwtPayload = c.get('jwtPayload') as JWTPayload;
-  const jadwalpraktikum = await prisma.jadwalpraktikum.findMany({
-    where: {
-      kelaspraktikum: {
-        asisten_id: jwtPayload.sub,
-      },
-    },
-  });
-  const penilaian = await prisma.penilaian.findMany({
-    where: {
-      OR: jadwalpraktikum.map((jp) => ({
-        jadwal_praktikum_id: jp.id,
-      })),
-    },
-    select: {
-      id: true,
-      jadwalpraktikum: {
-        select: {
-          id: true,
-          mulai: true,
-          selesai: true,
+kehadiran.post(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      praktikan_id: z.number().int().min(1, 'Praktikan ID is required'),
+      laporan_id: z.number().int().min(1, 'Laporan ID is required'),
+      tipe: z.nativeEnum(KehadiranType, {
+        errorMap: (_issue, _ctx) => {
+          return { message: 'Tipe kehadiran is required' };
         },
+      }),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+
+    const praktikan = await prisma.praktikan.findFirst({
+      where: {
+        id: json.praktikan_id,
       },
-      detailpenilaian: {
-        where: {
-          kehadiran: {
-            not: null,
+    });
+
+    if (!praktikan) {
+      return c.json(
+        {
+          status: false,
+          message: 'Praktikan not found',
+        },
+        404,
+      );
+    }
+
+    const laporan = await prisma.laporan.findFirst({
+      where: {
+        id: json.laporan_id,
+      },
+    });
+
+    if (!laporan) {
+      return c.json(
+        {
+          status: false,
+          message: 'Laporan not found',
+        },
+        404,
+      );
+    }
+
+    if (!laporan.judul || !laporan.bukti_pertemuan_url) {
+      return c.json(
+        {
+          status: false,
+          message: 'Laporan must have a title and meeting proof',
+        },
+        400,
+      );
+    }
+
+    const kehadiran = await prisma.kehadiran.findFirst({
+      where: {
+        laporan_id: json.laporan_id,
+        praktikan_id: json.praktikan_id,
+      },
+    });
+
+    if (kehadiran) {
+      return c.json(
+        {
+          status: false,
+          message: 'Detail penilaian already exists',
+        },
+        409,
+      );
+    }
+
+    await prisma.kehadiran.create({
+      data: {
+        tipe: json.tipe,
+        laporan_id: json.laporan_id,
+        praktikan_id: json.praktikan_id,
+      },
+    });
+
+    return c.json(
+      {
+        status: true,
+      },
+      201,
+    );
+  },
+);
+
+kehadiran.put(
+  '/',
+  zValidator(
+    'json',
+    z.object({
+      where: z.object({
+        kehadiran_id: z
+          .number()
+          .int()
+          .min(1, 'Kehadiran ID is required')
+          .optional(),
+        laporan_id: z
+          .number()
+          .int()
+          .min(1, 'Laporan ID is required')
+          .optional(),
+        praktikan_id: z
+          .number()
+          .int()
+          .min(1, 'Praktikan ID is required')
+          .optional(),
+      }),
+      update: z.object({
+        tipe: z.nativeEnum(KehadiranType, {
+          errorMap: (_issue, _ctx) => {
+            return { message: 'Tipe kehadiran is required' };
           },
-        },
-        select: {
-          id: true,
-          kehadiran: true,
-          praktikan: {
-            select: {
-              id: true,
-              nim: true,
-              nama: true,
-            },
+        }),
+      }),
+    }),
+  ),
+  async (c) => {
+    const json = c.req.valid('json');
+
+    const kehadiran = await prisma.kehadiran.findFirst({
+      where: {
+        OR: [
+          {
+            id: json.where.kehadiran_id,
           },
+          {
+            laporan_id: json.where.laporan_id,
+            praktikan_id: json.where.praktikan_id,
+          },
+        ],
+      },
+    });
+
+    if (!kehadiran) {
+      return c.json(
+        {
+          status: false,
+          message: 'Kehadiran not found',
         },
+        404,
+      );
+    }
+
+    await prisma.kehadiran.update({
+      where: {
+        id: kehadiran.id,
       },
-    },
-  });
+      data: json.update,
+    });
 
-  return c.json({
-    status: true,
-    data: penilaian,
-  });
-});
-
-kehadiran.post('/', async (c) => {
-  const json = await c.req.json<{
-    praktikan_id: number;
-    penilaian_id: number;
-    detail: 'hadir' | 'izin' | 'alpha';
-  }>();
-
-  const praktikan = await prisma.praktikan.findFirst({
-    where: {
-      id: json.praktikan_id,
-    },
-  });
-
-  if (!praktikan) {
     return c.json(
       {
-        status: false,
-        message: 'Praktikan not found',
+        status: true,
       },
-      404,
+      202,
     );
-  }
-
-  const penilaian = await prisma.penilaian.findFirst({
-    where: {
-      id: json.penilaian_id,
-    },
-  });
-
-  if (!penilaian) {
-    return c.json(
-      {
-        status: false,
-        message: 'Penilaian not found',
-      },
-      404,
-    );
-  }
-
-  const detailPenilaian = await prisma.detailpenilaian.findFirst({
-    where: {
-      penilaian_id: json.penilaian_id,
-      praktikan_id: json.praktikan_id,
-    },
-  });
-
-  if (detailPenilaian) {
-    return c.json(
-      {
-        status: false,
-        message: 'Detail penilaian already exists',
-      },
-      409,
-    );
-  }
-
-  await prisma.detailpenilaian.create({
-    data: {
-      kehadiran: json.detail,
-      penilaian_id: json.penilaian_id,
-      praktikan_id: json.praktikan_id,
-    },
-  });
-
-  return c.json(
-    {
-      status: true,
-    },
-    201,
-  );
-});
-
-kehadiran.put('/', async (c) => {
-  const json = await c.req.json<{
-    detail_penilaian_id: number;
-    detail: 'hadir' | 'izin' | 'alpha';
-  }>();
-
-  const detailPenilaian = await prisma.detailpenilaian.findFirst({
-    where: {
-      id: json.detail_penilaian_id,
-    },
-  });
-
-  if (!detailPenilaian) {
-    return c.json(
-      {
-        status: false,
-        message: 'Detail penilaian not found',
-      },
-      404,
-    );
-  }
-
-  await prisma.detailpenilaian.update({
-    where: {
-      id: json.detail_penilaian_id,
-    },
-    data: {
-      kehadiran: json.detail,
-    },
-  });
-
-  return c.json(
-    {
-      status: true,
-    },
-    202,
-  );
-});
+  },
+);

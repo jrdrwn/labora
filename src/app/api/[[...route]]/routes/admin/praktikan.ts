@@ -17,11 +17,11 @@ praktikan.get('/', async (c) => {
       nim: true,
       nama: true,
       email: true,
-      kelaspraktikumpraktikan: {
+      praktikan_kelas: {
         select: {
           id: true,
           perangkat: true,
-          kelaspraktikum: {
+          kelas: {
             select: {
               nama: true,
               id: true,
