@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { Fragment, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 
+import { extractDate, extractTime } from '@/lib/utils';
 import { LaporanList } from './list/columns';
 
 interface Props {
@@ -405,25 +406,4 @@ function RataRataNilaiPerTipe({
   const totalPertemuan = laporanList.laporan.length - 1; // Mengurangi 1 karena responsi tidak dihitung dalam perhitungan rata-rata
 
   return totalPertemuan > 0 ? totalNilai / totalPertemuan : 0;
-}
-
-/**
- * Extract date in format YYYY-MM-DD from Date or ISO string
- */
-export function extractDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  // timezone handling to +0700
-  d.setHours(d.getHours() + 7);
-  // return date in YYYY-MM-DD format
-  return d.toISOString().slice(0, 10);
-}
-
-/**
- * Extract time in format HH:mm from Date or ISO string
- */
-export function extractTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  // timezone handling to +0700
-  d.setHours(d.getHours() + 7);
-  return d.toISOString().slice(11, 16);
 }
