@@ -113,6 +113,43 @@ jadwal.put(
       return c.json({ status: false, message: 'Jadwal diluar event' }, 404);
     }
 
+    const kelas = await prisma.kelas.findFirst({
+      where: {
+        jadwal: {
+          some: {
+            id: json.where.jadwal_id,
+          },
+        }
+      },
+      include: {
+        praktikan_kelas: {
+          select: {
+            perangkat: true
+          }
+        }}
+    })
+
+    if (!kelas) {
+      return c.json({ status: false, message: 'Kelas not found' }, 404);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if((ruang.kapasitas as any).mahasiswa < kelas.kapasitas_praktikan!) {
+      return c.json(
+        { status: false, message: 'Ruang tidak cukup untuk kelas ini' },
+        400,
+      );
+    }
+
+    // kapasitas komputer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((ruang.kapasitas as any).komputer < kelas.praktikan_kelas.filter((pk) => pk.perangkat == 'komputer_lab').length) {
+      return c.json(
+        { status: false, message: 'Ruang tidak cukup untuk komputer' },
+        400,
+      );
+    }
+
     let data;
     if (json.update.ruang_id) {
       data = {

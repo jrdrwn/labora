@@ -46,7 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { cn, extractDate, extractDay, extractTime } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetCookie } from 'cookies-next/client';
 import {
@@ -156,7 +156,7 @@ export default function RegisterForm() {
     defaultValues: {
       kelas_praktikum_id: 0,
       mata_kuliah_praktikum_id: 0,
-      perangkat: '',
+      perangkat: 'laptop',
     },
   });
 
@@ -217,6 +217,7 @@ export default function RegisterForm() {
         'Content-Type': 'application/json',
       },
     });
+    setLoading(false);
     if (res.ok) {
       toast('Pendaftaran Berhasil', {
         icon: <BadgeCheck />,
@@ -235,11 +236,17 @@ export default function RegisterForm() {
       getPraktikan();
       router.refresh();
     } else {
+      if (res.status === 400) {
+        const json = await res.json();
+        toast.error(`Pendaftaran gagal: ${json.message}`, {
+          icon: <BadgeAlert />,
+        });
+        return;
+      }
       toast.error(`Pendaftaran gagal`, {
         icon: <BadgeAlert />,
       });
     }
-    setLoading(false);
   }
   return (
     <Card className="mx-auto">
@@ -386,7 +393,10 @@ export default function RegisterForm() {
                   <FormLabel>Perangkat</FormLabel>
 
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(e) => {
+                      field.onChange(e);
+                      form.setValue('kelas_praktikum_id', 0);
+                    }}
                     defaultValue={field.value}
                     value={field.value}
                   >
@@ -458,6 +468,18 @@ export default function RegisterForm() {
                                 <CommandItem
                                   value={kelas.id.toString()}
                                   key={kelas.id}
+                                  disabled={
+                                    (kelas.jadwal[0]?.ruangan.kapasitas
+                                      .komputer -
+                                      kelas.praktikan_kelas.filter(
+                                        (pk) => pk.perangkat === 'komputer_lab',
+                                      ).length ===
+                                      0 &&
+                                      form.watch('perangkat') ===
+                                        'komputer_lab') ||
+                                    kelas.praktikan_kelas.length >=
+                                      kelas.kapasitas_praktikan
+                                  }
                                   onSelect={(value) => {
                                     form.setValue(
                                       'kelas_praktikum_id',
@@ -477,12 +499,25 @@ export default function RegisterForm() {
                                     ).length}
                                   /{kelas.jadwal[0]?.ruangan.kapasitas.komputer}
                                   <br />
+                                  Jumlah pertemuan: {kelas.jadwal.length}
+                                  <br />
+                                  Tanggal mulai:{' '}
+                                  {extractDate(kelas.jadwal[0].mulai)}
+                                  <br />
+                                  Hari: {extractDay(kelas.jadwal[0].mulai)}
+                                  <br />
+                                  Jam: {extractTime(
+                                    kelas.jadwal[0].mulai,
+                                  )} - {extractTime(kelas.jadwal[0].selesai)}
+                                  <br />
+                                  Ruangan: {kelas.jadwal[0].ruangan.nama}
+                                  <br />
+                                  {/* <br />
                                   {/* Perangkat: {kelas.perangkat} */}
                                   {/* Kuota: {kelas.kuota.tersisa}/{kelas.kuota.total}
                                 <br />
                                 Kuota Komputer: {kelas.kuota.komputer}
                                 <br />
-                                Jadwal: {kelas.jadwal.hari} - {kelas.jadwal.jam}
                                 <br />
                                 Ruang: {kelas.jadwal.ruang}
                                 <br /> */}

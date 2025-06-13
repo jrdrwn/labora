@@ -120,6 +120,22 @@ kelas.put(
     if (!kelas) {
       return c.json({ status: false, message: 'Kelas not found' }, 404);
     }
+    const ruangan = await prisma.ruangan.findMany({
+      where: {
+        jadwal: {
+          some: {
+            kelas_id: json.where.kelas_id,
+          }
+        }
+      }
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (ruangan.some((r) => (r.kapasitas as any).mahasiswa < json.update.kapasitas_praktikan!)) {
+      return c.json(
+        { status: false, message: 'Kapasitas praktikan melebihi kapasitas ruangan' },
+        400,
+      );
+    }
     await prisma.kelas.update({
       where: {
         id: json.where.kelas_id,

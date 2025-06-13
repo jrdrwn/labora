@@ -155,6 +155,71 @@ auth.post(
       });
     }
 
+    const kelas = await prisma.kelas.findUnique({
+      where: {
+        id: json.kelas_praktikum_id,
+      },
+
+      select: {
+        praktikan_kelas: {
+          select: {
+            id: true,
+            perangkat: true,
+            praktikan_id: true,
+          },
+        },
+        id: true,
+        nama: true,
+        kapasitas_praktikan: true,
+        jadwal: {
+          select: {
+            id: true,
+            mulai: true,
+            selesai: true,
+            is_dilaksanakan: true,
+            ruangan: {
+              select: {
+                id: true,
+                nama: true,
+                kapasitas: true,
+              },
+            },
+          },
+        },
+        asisten: {
+          select: {
+            id: true,
+            nama: true,
+            nim: true,
+          },
+        },
+      },
+    });
+
+    if (!kelas) {
+      return c.json(
+        { status: false, message: 'Mata kuliah praktikum not found' },
+        404,
+      );
+    }
+    if (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((kelas?.jadwal[0]?.ruangan?.kapasitas as any).komputer -
+        kelas.praktikan_kelas.filter((pk) => pk.perangkat === 'komputer_lab')
+          .length ===
+        0 &&
+        json.perangkat === 'komputer_lab') ||
+      kelas.praktikan_kelas.length >= kelas.kapasitas_praktikan!
+    ) {
+      return c.json(
+        {
+          status: false,
+          message: 'Kelas praktikum sudah penuh',
+        },
+        400,
+      );
+    }
+
     const kelasPraktikumPraktikan = await prisma.praktikan_kelas.findFirst({
       where: {
         praktikan_id: jwtPayload.sub,

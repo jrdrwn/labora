@@ -92,8 +92,29 @@ export const columns: ColumnDef<Ruangan>[] = [
     },
   },
   {
-    id: 'Kuota Komputer',
-    accessorKey: 'kuota.komputer',
+    id: 'kapasitas Mahasiswa',
+    accessorKey: 'kapasitas.mahasiswa',
+    accessorFn: (row) => row.kapasitas.mahasiswa,
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={column.getToggleSortingHandler()}>
+          Kapasitas Mahasiswa
+          <span className="sr-only">Sort by Kapasitas Mahasiswa</span>
+          {{
+            asc: <ChevronUp />,
+            desc: <ChevronDown />,
+          }[column.getIsSorted() as string] || <ChevronsUpDown />}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.original.kapasitas.mahasiswa;
+      return <span className="pl-2">{value || 0}</span>;
+    },
+  },
+  {
+    id: 'kapasitas Komputer',
+    accessorKey: 'kapasitas.komputer',
     accessorFn: (row) => row.kapasitas.komputer,
     header: ({ column }) => {
       return (

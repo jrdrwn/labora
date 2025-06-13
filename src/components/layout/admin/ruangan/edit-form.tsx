@@ -39,6 +39,7 @@ const formSchema = z.object({
     nama: z.string().min(1).optional(),
     kapasitas: z.object({
       komputer: z.coerce.number().int().min(0).default(0).optional(),
+      mahasiswa: z.coerce.number().int().min(0).default(0).optional(),
     }),
   }),
 });
@@ -62,6 +63,7 @@ function EditFormRuangan({
         nama: defaultValues.nama,
         kapasitas: {
           komputer: defaultValues.kapasitas?.komputer || 0,
+          mahasiswa: defaultValues.kapasitas?.mahasiswa || 0,
         },
       },
     },
@@ -112,6 +114,28 @@ function EditFormRuangan({
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="update.kapasitas.mahasiswa"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Kapasitas Mahasiswa</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="Masukkan Kapasitas Mahasiswa"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Kapasitas Mahasiswa yang tersedia di ruangan ini.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="update.kapasitas.komputer"

@@ -31,6 +31,7 @@ import { z } from 'zod';
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama ruangan harus diisi'),
   kapasitas: z.object({
+    mahasiswa: z.coerce.number().min(1, 'Kuota mahasiswa harus lebih dari 0'),
     komputer: z.coerce.number().min(1, 'Kuota komputer harus lebih dari 0'),
   }),
 });
@@ -49,6 +50,7 @@ function CreateFormRuangan({
       nama: '',
       kapasitas: {
         komputer: 1,
+        mahasiswa: 1,
       },
     },
   });
@@ -87,6 +89,26 @@ function CreateFormRuangan({
               </FormControl>
               <FormDescription>
                 Nama ruangan yang akan ditambahkan.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="kapasitas.mahasiswa"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Kapasitas Mahasiswa</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="Masukkan Kapasitas Mahasiswa"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Kapasitas Mahasiswa yang tersedia di ruangan ini.
               </FormDescription>
               <FormMessage />
             </FormItem>

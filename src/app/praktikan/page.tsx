@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { extractDate, extractTime } from '@/lib/utils';
 import {
   BookOpen,
   Calendar,
@@ -135,19 +136,25 @@ export default async function PraktikanPage() {
               <CardDescription>Jadwal praktikum selanjutnya</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <Calendar className="size-4 text-primary" />
-                <span className="text-muted-foreground">
-                  {extractDate(overview.jadwal_selanjutnya.mulai)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Timer className="size-4 text-primary" />
-                <span className="text-muted-foreground">
-                  {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
-                  {extractTime(overview.jadwal_selanjutnya.selesai)}
-                </span>
-              </div>
+              {overview.jadwal_selanjutnya ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="size-4 text-primary" />
+                    <span className="text-muted-foreground">
+                      {extractDate(overview.jadwal_selanjutnya.mulai)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Timer className="size-4 text-primary" />
+                    <span className="text-muted-foreground">
+                      {extractTime(overview.jadwal_selanjutnya.mulai)} -{' '}
+                      {extractTime(overview.jadwal_selanjutnya.selesai)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>Jadwal sudah selesai</>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -172,26 +179,7 @@ export default async function PraktikanPage() {
     </>
   );
 }
-/**
- * Extract date in format YYYY-MM-DD from Date or ISO string
- */
-export function extractDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  // timezone handling to +0700
-  d.setHours(d.getHours() + 7);
-  // return date in YYYY-MM-DD format
-  return d.toISOString().slice(0, 10);
-}
 
-/**
- * Extract time in format HH:mm from Date or ISO string
- */
-export function extractTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  // timezone handling to +0700
-  d.setHours(d.getHours() + 7);
-  return d.toISOString().slice(11, 16);
-}
 export interface Data {
   total_nilai: number;
   sisa_pertemuan_praktikum: number;

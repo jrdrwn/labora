@@ -69,8 +69,9 @@ const formSchema = z.object({
 interface Ruangan {
   id: number;
   nama: string;
-  kuota: {
+  kapasitas: {
     komputer: number;
+    mahasiswa: number;
   };
   admin: {
     id: number;
@@ -213,7 +214,18 @@ function CreateFormJadwal({
                               form.setValue('ruang_id', Number(value));
                             }}
                           >
-                            {ruang.nama} ({ruang.id})
+                            <span>
+                              ID: {ruang.id}
+                              <br />
+                              NAMA: {ruang.nama}
+                              <br />
+                              KAPASITAS: {ruang.kapasitas.mahasiswa} Mahasiswa
+                              <br />
+                              KAPASITAS KOMPUTER: {
+                                ruang.kapasitas.komputer
+                              }{' '}
+                              Komputer
+                            </span>
                             <Check
                               className={cn(
                                 'ml-auto',
@@ -273,7 +285,13 @@ function CreateFormJadwal({
                               form.setValue('kelas_id', Number(value));
                             }}
                           >
-                            {kelas.nama} ({kelas.id})
+                            <span>
+                              ID: {kelas.id}
+                              <br />
+                              NAMA: {kelas.nama}
+                              <br />
+                              KAPASITAS: {kelas.kapasitas_praktikan} Praktikan
+                            </span>
                             <Check
                               className={cn(
                                 'ml-auto',
@@ -322,7 +340,7 @@ function CreateFormJadwal({
                 <FormControl>
                   <Input type="time" {...field} />
                 </FormControl>
-                <FormDescription>Jam mulai event.</FormDescription>
+                <FormDescription>Jam mulai</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -340,7 +358,7 @@ function CreateFormJadwal({
                     onChange={field.onChange}
                   />
                 </FormControl>
-                <FormDescription>Tanggal selesai event.</FormDescription>
+                <FormDescription>Jam selesai</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -101,6 +101,56 @@ ruangan.put(
     if (!ruang) {
       return c.json({ status: false, message: 'Ruang not found' }, 404);
     }
+    const kelas = await prisma.kelas.findMany({
+      where: {
+        jadwal: {
+          some: {
+            ruang_id: ruang.id,
+          },
+        },
+      },
+      include: {
+        praktikan_kelas: {
+          select: {
+            perangkat: true
+          },
+        }
+      }
+    });
+    if (
+      kelas.some(
+        (k) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          k.kapasitas_praktikan! > (json.update.kapasitas as any).mahasiswa,
+      )
+    ) {
+      return c.json(
+        {
+          status: false,
+          message: 'Kapasitas ruangan  kurang dari kapasitas praktikan',
+        },
+        400,
+      );
+    }
+
+    console.log(kelas)
+
+    if (
+      kelas.some(
+        (k) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          k.praktikan_kelas.filter(pk => pk.perangkat === 'komputer_lab').length! > (json.update.kapasitas as any).komputer,
+      )
+    ) {
+      return c.json(
+        {
+          status: false,
+          message: 'Kapasitas ruangan kurang dari kapasitas perangkat',
+        },
+        400,
+      );
+    }
+
     await prisma.ruangan.update({
       where: {
         id: json.where.ruang_id,
